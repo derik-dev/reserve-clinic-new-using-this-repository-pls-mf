@@ -129,107 +129,109 @@ export default function ConfiguracoesPage() {
   return <>
     <PageHeader title="Configurações" description="Gerencie os dados da sua conta e clínica." />
 
-    {/* Dados da empresa */}
-    <section className="panel settingsSection">
-      <div className="settingsSectionHead"><strong>Dados da empresa</strong><small>Informações exibidas na página pública de agendamento.</small></div>
-      <div className="formGrid">
-        <div className="formRow"><label>Nome da clínica / profissional</label><input value={form.nome} onChange={e => up("nome", e.target.value)} placeholder="Ex.: Clínica Vida Nova" /></div>
-        <div className="formRow split">
-          <div className="formRow"><label>Telefone / WhatsApp</label><input value={form.telefone} onChange={e => up("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
-          <div className="formRow"><label>E-mail de contato</label><input type="email" value={form.email_contato} onChange={e => up("email_contato", e.target.value)} placeholder="contato@clinica.com.br" /></div>
-        </div>
-        <div className="formRow">
-          <label>Link personalizado</label>
-          <input value={form.slug} onChange={e => up("slug", slugify(e.target.value))} placeholder="sua-clinica" />
-          <small style={{ color: "#858d9f" }}>Seu link de agendamento: reserveclinic.com/agendamento/{form.slug || "sua-clinica"} — alterar vai quebrar links já compartilhados.</small>
-        </div>
-      </div>
-    </section>
-
-    {/* Endereço */}
-    <section className="panel settingsSection">
-      <div className="settingsSectionHead"><strong>Endereço</strong><small>Aparece na página pública abaixo do nome da clínica.</small></div>
-      <div className="formGrid">
-        <div className="formRow split">
+    <div className="settingsGrid">
+      {/* Dados da empresa */}
+      <section className="panel settingsSection">
+        <div className="settingsSectionHead"><strong>Dados da empresa</strong><small>Informações exibidas na página pública de agendamento.</small></div>
+        <div className="formGrid">
+          <div className="formRow"><label>Nome da clínica / profissional</label><input value={form.nome} onChange={e => up("nome", e.target.value)} placeholder="Ex.: Clínica Vida Nova" /></div>
+          <div className="formRow split">
+            <div className="formRow"><label>Telefone / WhatsApp</label><input value={form.telefone} onChange={e => up("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
+            <div className="formRow"><label>E-mail de contato</label><input type="email" value={form.email_contato} onChange={e => up("email_contato", e.target.value)} placeholder="contato@clinica.com.br" /></div>
+          </div>
           <div className="formRow">
-            <label>CEP</label>
-            <input value={form.endereco_cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" />
-            {cepLoading && <small style={{ color: "#858d9f" }}>Buscando endereço…</small>}
-          </div>
-          <div className="formRow"><label>Cidade</label><input value={form.endereco_cidade} onChange={e => up("endereco_cidade", e.target.value)} placeholder="São Paulo" /></div>
-        </div>
-        <div className="formRow"><label>Rua / avenida</label><input value={form.endereco_rua} onChange={e => up("endereco_rua", e.target.value)} placeholder="Av. Paulista" /></div>
-        <div className="formRow split">
-          <div className="formRow"><label>Número</label><input value={form.endereco_numero} onChange={e => up("endereco_numero", e.target.value)} placeholder="1200" /></div>
-          <div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={e => up("endereco_uf", e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} /></div>
-        </div>
-      </div>
-    </section>
-
-    {/* Identidade visual */}
-    <section className="panel settingsSection">
-      <div className="settingsSectionHead"><strong>Identidade visual</strong><small>Logo e cores exibidas no painel e no link de agendamento.</small></div>
-      <div className="formGrid">
-        <div className="formRow">
-          <label>Logo</label>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{ width: 60, height: 60, borderRadius: 12, background: "#eef0f6", overflow: "hidden", display: "grid", placeItems: "center", flexShrink: 0, color: "#858d9f" }}>
-              {logoPreview ? <img src={logoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={22} />}
-            </div>
-            <div>
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0] ?? null; if (f) { handleLogoChange(f); extractColors(f); } }} />
-              <button className="secondaryButton" type="button" style={{ height: 34, fontSize: 12 }} onClick={() => fileRef.current?.click()}>
-                {logoUploading ? "Enviando…" : colorsLoading ? <><Sparkles size={13} /> Analisando cores…</> : <><Camera size={13} /> {logoPreview ? "Trocar logo" : "Enviar logo"}</>}
-              </button>
-              <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>PNG, JPG ou SVG. Recomendado 512×512. As cores são extraídas automaticamente.</small>
-            </div>
+            <label>Link personalizado</label>
+            <input value={form.slug} onChange={e => up("slug", slugify(e.target.value))} placeholder="sua-clinica" />
+            <small style={{ color: "#858d9f" }}>reserveclinic.com/agendamento/{form.slug || "sua-clinica"} — alterar quebra links já compartilhados.</small>
           </div>
         </div>
-        <div className="formRow">
-          <label>Cores</label>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 12, color: "#394155", fontWeight: 500 }}>
-              <input type="color" value={form.cor_primaria} onChange={e => up("cor_primaria", e.target.value)} style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #e5e8ef", cursor: "pointer", padding: 2 }} />
-              Primária <code style={{ fontSize: 11, color: "#7d8597" }}>{form.cor_primaria.toUpperCase()}</code>
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 12, color: "#394155", fontWeight: 500 }}>
-              <input type="color" value={form.cor_secundaria} onChange={e => up("cor_secundaria", e.target.value)} style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #e5e8ef", cursor: "pointer", padding: 2 }} />
-              Secundária <code style={{ fontSize: 11, color: "#7d8597" }}>{form.cor_secundaria.toUpperCase()}</code>
-            </label>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    {/* Pagamento */}
-    <section className="panel settingsSection">
-      <div className="settingsSectionHead"><strong>Pagamento via PIX</strong><small>A chave aparece como QR Code ao paciente após confirmar o agendamento.</small></div>
-      <div className="formGrid">
-        <div className="formRow">
-          <label>Chave PIX</label>
-          <input value={form.pix_chave} onChange={e => up("pix_chave", e.target.value)} placeholder="CPF, e-mail, telefone ou chave aleatória" />
-        </div>
-        {pixPayload && (
-          <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", padding: "4px 0 8px" }}>
-            <div style={{ background: "#fff", border: "1px solid #e5e8ef", borderRadius: 12, padding: 14, flexShrink: 0 }}>
-              <QRCode value={pixPayload} size={130} />
-            </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <p style={{ margin: "0 0 6px", fontSize: 11, color: "#7d8597" }}>Prévia do QR Code que o paciente verá após agendar:</p>
-              <code style={{ display: "block", fontSize: 11, background: "#f5f7fb", border: "1px solid #e0e4eb", borderRadius: 8, padding: "7px 10px", wordBreak: "break-all", color: "#2a3244" }}>{form.pix_chave.trim()}</code>
-              <button className="secondaryButton" style={{ marginTop: 8, height: 30, fontSize: 11 }} onClick={async () => { await navigator.clipboard.writeText(form.pix_chave.trim()); setCopiedPix(true); setTimeout(() => setCopiedPix(false), 1600); }}>
-                {copiedPix ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar chave</>}
-              </button>
+      {/* Identidade visual */}
+      <section className="panel settingsSection">
+        <div className="settingsSectionHead"><strong>Identidade visual</strong><small>Logo e cores exibidas no painel e no link de agendamento.</small></div>
+        <div className="formGrid">
+          <div className="formRow">
+            <label>Logo</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 14, background: "#eef0f6", overflow: "hidden", display: "grid", placeItems: "center", flexShrink: 0, color: "#858d9f" }}>
+                {logoPreview ? <img src={logoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={24} />}
+              </div>
+              <div>
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0] ?? null; if (f) { handleLogoChange(f); extractColors(f); } }} />
+                <button className="secondaryButton" type="button" style={{ height: 34, fontSize: 12 }} onClick={() => fileRef.current?.click()}>
+                  {logoUploading ? "Enviando…" : colorsLoading ? <><Sparkles size={13} /> Analisando…</> : <><Camera size={13} /> {logoPreview ? "Trocar logo" : "Enviar logo"}</>}
+                </button>
+                <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>PNG, JPG ou SVG · 512×512 recomendado · cores extraídas automaticamente.</small>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-    </section>
+          <div className="formRow">
+            <label>Cores da marca</label>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+              <label className="settingsColorPicker">
+                <input type="color" value={form.cor_primaria} onChange={e => up("cor_primaria", e.target.value)} />
+                <div><small>Primária</small><strong>{form.cor_primaria.toUpperCase()}</strong></div>
+              </label>
+              <label className="settingsColorPicker">
+                <input type="color" value={form.cor_secundaria} onChange={e => up("cor_secundaria", e.target.value)} />
+                <div><small>Secundária</small><strong>{form.cor_secundaria.toUpperCase()}</strong></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    {error && <div className="onboardingError" style={{ maxWidth: 600 }}>{error}</div>}
+      {/* Endereço */}
+      <section className="panel settingsSection">
+        <div className="settingsSectionHead"><strong>Endereço</strong><small>Aparece na página pública abaixo do nome da clínica.</small></div>
+        <div className="formGrid">
+          <div className="formRow split">
+            <div className="formRow">
+              <label>CEP</label>
+              <input value={form.endereco_cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" />
+              {cepLoading && <small style={{ color: "#858d9f" }}>Buscando…</small>}
+            </div>
+            <div className="formRow"><label>Cidade</label><input value={form.endereco_cidade} onChange={e => up("endereco_cidade", e.target.value)} placeholder="São Paulo" /></div>
+          </div>
+          <div className="formRow"><label>Rua / avenida</label><input value={form.endereco_rua} onChange={e => up("endereco_rua", e.target.value)} placeholder="Av. Paulista" /></div>
+          <div className="formRow split">
+            <div className="formRow"><label>Número</label><input value={form.endereco_numero} onChange={e => up("endereco_numero", e.target.value)} placeholder="1200" /></div>
+            <div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={e => up("endereco_uf", e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} /></div>
+          </div>
+        </div>
+      </section>
 
-    <div style={{ display: "flex", justifyContent: "flex-end", maxWidth: 600, marginTop: 4 }}>
-      <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 140 }}>
+      {/* Pagamento */}
+      <section className="panel settingsSection">
+        <div className="settingsSectionHead"><strong>Pagamento via PIX</strong><small>QR Code exibido ao paciente após confirmar o agendamento.</small></div>
+        <div className="formGrid">
+          <div className="formRow">
+            <label>Chave PIX</label>
+            <input value={form.pix_chave} onChange={e => up("pix_chave", e.target.value)} placeholder="CPF, e-mail, telefone ou chave aleatória" />
+          </div>
+          {pixPayload && (
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ background: "#f9fafb", border: "1px solid #e5e8ef", borderRadius: 12, padding: 12, flexShrink: 0 }}>
+                <QRCode value={pixPayload} size={120} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: "0 0 5px", fontSize: 11, color: "#7d8597" }}>Prévia do QR Code:</p>
+                <code style={{ display: "block", fontSize: 11, background: "#f5f7fb", border: "1px solid #e0e4eb", borderRadius: 8, padding: "7px 10px", wordBreak: "break-all", color: "#2a3244" }}>{form.pix_chave.trim()}</code>
+                <button className="secondaryButton" style={{ marginTop: 8, height: 30, fontSize: 11 }} onClick={async () => { await navigator.clipboard.writeText(form.pix_chave.trim()); setCopiedPix(true); setTimeout(() => setCopiedPix(false), 1600); }}>
+                  {copiedPix ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar chave</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+
+    {error && <div className="onboardingError">{error}</div>}
+
+    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+      <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
         {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
       </button>
     </div>
