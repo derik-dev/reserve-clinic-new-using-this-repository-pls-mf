@@ -176,15 +176,18 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     const inicioMin = timeToMin(diaInfo.dayConfig.inicio);
     const fimMin = timeToMin(diaInfo.dayConfig.fim);
     const dur = config.duracao_min;
+    const now = new Date();
+    const isToday = form.data === toIsoDate(now);
+    const nowMin = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
     const arr: { hora: string; ocupado: boolean }[] = [];
     for (let m = inicioMin; m + dur <= fimMin; m += dur) {
-      const slotStart = m;
       const slotEnd = m + dur;
-      const ocupado = busyRanges.some(r => slotStart < r.fim && r.inicio < slotEnd);
+      const passado = isToday && slotEnd <= nowMin;
+      const ocupado = passado || busyRanges.some(r => m < r.fim && r.inicio < slotEnd);
       arr.push({ hora: minToLabel(m), ocupado });
     }
     return arr;
-  }, [diaInfo, config.duracao_min, busyRanges]);
+  }, [diaInfo, config.duracao_min, busyRanges, form.data]);
 
   const hoje = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
   const calDias = useMemo(() => monthGrid(viewMonth), [viewMonth]);
@@ -221,7 +224,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     return <main className="bookingPage"><div style={{ padding: 40, textAlign: "center", color: "#858d9f" }}>Clínica não encontrada.</div></main>;
   }
 
-  const diaMensagem = diaInfo && (!diaInfo.dayConfig.aberto ? "Não atendemos nesse dia da semana." : diaInfo.feriado ? "Esse dia é feriado — sem atendimento." : slots.length === 0 ? "Nenhum horário disponível." : null);
+  const diaMensagem = diaInfo && (!diaInfo.dayConfig.aberto ? "Não atendemos nesse dia da semana." : diaInfo.feriado ? "Esse dia é feriado — sem atendimento." : slots.length === 0 || slots.every(s => s.ocupado) ? "Nenhum horário disponível." : null);
 
   return <main className="bookingPage" style={{ ["--brand-primary" as string]: primary }}>
     <header className="bookingHeader">
