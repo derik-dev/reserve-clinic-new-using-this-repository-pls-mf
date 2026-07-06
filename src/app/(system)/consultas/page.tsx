@@ -1,7 +1,7 @@
 "use client";
 
-import { CalendarDays, Download, Filter, Plus, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, ChevronDown, Download, Filter, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
@@ -25,6 +25,9 @@ function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+type Periodo = "todos" | "hoje" | "semana" | "mes";
+const PERIODO_LABEL: Record<Periodo, string> = { todos: "Todos", hoje: "Hoje", semana: "Esta semana", mes: "Este mês" };
+
 export default function ConsultasPage() {
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
@@ -34,6 +37,12 @@ export default function ConsultasPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [periodo, setPeriodo] = useState<Periodo>("todos");
+  const [statusFiltro, setStatusFiltro] = useState<ConsultaStatus | "todos">("todos");
+  const [showPeriodo, setShowPeriodo] = useState(false);
+  const [showStatus, setShowStatus] = useState(false);
+  const periodoRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
@@ -48,6 +57,15 @@ export default function ConsultasPage() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (periodoRef.current && !periodoRef.current.contains(e.target as Node)) setShowPeriodo(false);
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setShowStatus(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const today = useMemo(() => new Date(), []);
   const totais = useMemo(() => {
     const hoje = consultas.filter(c => isSameDay(new Date(c.data_hora), today));
@@ -60,10 +78,23 @@ export default function ConsultasPage() {
   }, [consultas, today]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return consultas;
-    const q = query.toLowerCase();
-    return consultas.filter(c => c.paciente_nome.toLowerCase().includes(q) || (c.servico ?? "").toLowerCase().includes(q) || (c.profissional ?? "").toLowerCase().includes(q));
-  }, [consultas, query]);
+    let r = consultas;
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      r = r.filter(c => c.paciente_nome.toLowerCase().includes(q) || (c.servico ?? "").toLowerCase().includes(q) || (c.profissional ?? "").toLowerCase().includes(q));
+    }
+    if (periodo === "hoje") {
+      r = r.filter(c => isSameDay(new Date(c.data_hora), today));
+    } else if (periodo === "semana") {
+      const seg = new Date(today); seg.setDate(today.getDate() - ((today.getDay() + 6) % 7)); seg.setHours(0, 0, 0, 0);
+      const dom = new Date(seg); dom.setDate(seg.getDate() + 6); dom.setHours(23, 59, 59, 999);
+      r = r.filter(c => { const d = new Date(c.data_hora); return d >= seg && d <= dom; });
+    } else if (periodo === "mes") {
+      r = r.filter(c => { const d = new Date(c.data_hora); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); });
+    }
+    if (statusFiltro !== "todos") r = r.filter(c => c.status === statusFiltro);
+    return r;
+  }, [consultas, query, periodo, statusFiltro, today]);
 
   async function handleSave() {
     const nome = form.paciente_id ? (pacientes.find(p => p.id === form.paciente_id)?.nome ?? form.paciente_nome) : form.paciente_nome.trim();
@@ -101,6 +132,21 @@ export default function ConsultasPage() {
     load();
   }
 
+  function exportCSV() {
+    const headers = ["Data", "Hora", "Paciente", "Serviço", "Profissional", "Valor (R$)", "Status"];
+    const rows = filtered.map(c => [
+      formatDate(c.data_hora), formatTime(c.data_hora), c.paciente_nome,
+      c.servico ?? "", c.profissional ?? "",
+      c.valor != null ? String(c.valor) : "", STATUS_LABEL[c.status],
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `consultas_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return <>
     <PageHeader title="Consultas" description="Acompanhe todos os atendimentos da clínica." actions={<button className="primaryButton" onClick={() => setModalOpen(true)}><Plus size={17} /> Nova consulta</button>} />
     <div className="summaryPills">
@@ -112,10 +158,37 @@ export default function ConsultasPage() {
     <section className="panel dataPanel">
       <div className="tableToolbar">
         <label><Search size={17} /><input placeholder="Buscar consulta ou paciente" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-        <div>
-          <button className="dateButton"><CalendarDays size={16} /> Todos</button>
-          <button className="secondaryButton"><Filter size={16} /> Filtros</button>
-          <button className="iconButton" aria-label="Exportar consultas"><Download size={17} /></button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div ref={periodoRef} style={{ position: "relative" }}>
+            <button className={`dateButton${periodo !== "todos" ? " active" : ""}`} onClick={() => { setShowPeriodo(v => !v); setShowStatus(false); }}>
+              <CalendarDays size={16} /> {PERIODO_LABEL[periodo]} <ChevronDown size={13} />
+            </button>
+            {showPeriodo && (
+              <div className="tableDropdown">
+                {(Object.keys(PERIODO_LABEL) as Periodo[]).map(p => (
+                  <button key={p} className={periodo === p ? "active" : ""} onClick={() => { setPeriodo(p); setShowPeriodo(false); }}>
+                    {PERIODO_LABEL[p]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div ref={statusRef} style={{ position: "relative" }}>
+            <button className={`secondaryButton${statusFiltro !== "todos" ? " active" : ""}`} onClick={() => { setShowStatus(v => !v); setShowPeriodo(false); }}>
+              <Filter size={16} /> {statusFiltro === "todos" ? "Filtros" : STATUS_LABEL[statusFiltro]} <ChevronDown size={13} />
+            </button>
+            {showStatus && (
+              <div className="tableDropdown">
+                <button className={statusFiltro === "todos" ? "active" : ""} onClick={() => { setStatusFiltro("todos"); setShowStatus(false); }}>Todos os status</button>
+                {(Object.keys(STATUS_LABEL) as ConsultaStatus[]).map(s => (
+                  <button key={s} className={statusFiltro === s ? "active" : ""} onClick={() => { setStatusFiltro(s); setShowStatus(false); }}>
+                    <span className={`statusBadge ${STATUS_CLASS[s]}`} style={{ pointerEvents: "none" }}>{STATUS_LABEL[s]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className="iconButton" aria-label="Exportar CSV" title="Exportar CSV" onClick={exportCSV}><Download size={17} /></button>
         </div>
       </div>
       <div className="tableScroll">
