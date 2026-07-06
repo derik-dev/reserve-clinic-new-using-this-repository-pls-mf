@@ -167,7 +167,6 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       servico: form.servico || null,
       status: "aguardando",
       observacoes: form.observacoes || null,
-      origem: "publico",
     });
     setSaving(false);
     if (err) { setError("Não foi possível confirmar. Tente novamente."); return; }
