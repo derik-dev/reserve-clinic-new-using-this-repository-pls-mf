@@ -49,11 +49,18 @@ export default function ConfiguracoesPage() {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
       setUserId(session.user.id);
-      const { data } = await supabase.from("perfis")
+      const { data, error: fetchErr } = await supabase.from("perfis")
         .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, cor_primaria, cor_secundaria, pix_chave, logo_url")
         .eq("id", session.user.id).maybeSingle();
-      if (data) {
-        const d = data as Form & { logo_url: string | null };
+
+      const raw = data ?? (fetchErr
+        ? (await supabase.from("perfis")
+            .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, cor_primaria, cor_secundaria, pix_chave, logo_url")
+            .eq("id", session.user.id).maybeSingle()).data
+        : null);
+
+      if (raw) {
+        const d = raw as Form & { logo_url: string | null };
         setForm({
           nome: d.nome ?? "", slug: d.slug ?? "", telefone: d.telefone ?? "", email_contato: d.email_contato ?? "",
           site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
@@ -114,7 +121,9 @@ export default function ConfiguracoesPage() {
     const { error: err } = await supabase.from("perfis").update({
       nome: form.nome.trim(), slug: form.slug.trim() || null,
       telefone: form.telefone || null, email_contato: form.email_contato || null,
-      site: form.site.trim() || null, instagram: form.instagram.trim() || null, tiktok: form.tiktok.trim() || null,
+      ...(form.site !== undefined ? { site: form.site.trim() || null } : {}),
+      ...(form.instagram !== undefined ? { instagram: form.instagram.trim() || null } : {}),
+      ...(form.tiktok !== undefined ? { tiktok: form.tiktok.trim() || null } : {}),
       endereco_cep: form.endereco_cep || null, endereco_rua: form.endereco_rua || null,
       endereco_numero: form.endereco_numero || null, endereco_cidade: form.endereco_cidade || null,
       endereco_uf: form.endereco_uf || null, cor_primaria: form.cor_primaria,
