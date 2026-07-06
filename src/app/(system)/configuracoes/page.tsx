@@ -130,7 +130,11 @@ export default function ConfiguracoesPage() {
   if (loading) return <><PageHeader title="Configurações" description="Gerencie os dados da sua conta." /><section className="panel" style={{ padding: 40, textAlign: "center", color: "#858d9f" }}>Carregando…</section></>;
 
   return <>
-    <PageHeader title="Configurações" description="Gerencie os dados da sua conta e clínica." />
+    <PageHeader title="Configurações" description="Gerencie os dados da sua conta e clínica." actions={
+      <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
+        {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
+      </button>
+    } />
 
     <div className="settingsGrid">
       {/* Dados da empresa */}
