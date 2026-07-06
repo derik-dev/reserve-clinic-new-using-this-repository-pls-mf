@@ -6,4 +6,6 @@ Na area de profissionais a pessoa vai poder adicionar, editar, e deletar profiss
 
 Nome, whatsapp, cpf, especialidade e foto do profissional, acho q anos de experiencia tambem é bom
 
-#
+# Tabelas #
+
+Cria tudo no sql e me manda 

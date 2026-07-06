@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays, ChevronDown, ClipboardList, LayoutDashboard,
-  LogOut, Menu, Search, Settings, Stethoscope, Users, X,
+  LogOut, Menu, Search, Settings, Stethoscope, UserRoundCheck, Users, X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
@@ -24,6 +24,7 @@ const navigation = [
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/consultas", label: "Consultas", icon: ClipboardList },
   { href: "/pacientes", label: "Pacientes", icon: Users },
+  { href: "/profissionais", label: "Profissionais", icon: UserRoundCheck },
 ] as const;
 
 function initials(name: string) {
