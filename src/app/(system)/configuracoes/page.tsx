@@ -251,12 +251,13 @@ export default function ConfiguracoesPage() {
       </section>
     </div>
 
-    {error && <div className="onboardingError">{error}</div>}
-
-    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-      <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
-        {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
-      </button>
+    <div style={{ maxWidth: 780, margin: "0 auto" }}>
+      {error && <div className="onboardingError">{error}</div>}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
+        <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
+          {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
+        </button>
+      </div>
     </div>
   </>;
 }
