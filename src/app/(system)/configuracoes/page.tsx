@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Check, Copy, Sparkles } from "lucide-react";
+import { Camera, Check, Copy } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -23,10 +23,10 @@ type Form = {
   nome: string; slug: string; telefone: string; email_contato: string;
   site: string; instagram: string; tiktok: string;
   endereco_cep: string; endereco_rua: string; endereco_numero: string; endereco_cidade: string; endereco_uf: string;
-  cor_primaria: string; cor_secundaria: string; pix_chave: string;
+  pix_chave: string;
 };
 
-const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", site: "", instagram: "", tiktok: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", cor_primaria: "#4c6fff", cor_secundaria: "#34d6c4", pix_chave: "" };
+const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", site: "", instagram: "", tiktok: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", pix_chave: "" };
 
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Form>(emptyForm);
@@ -37,7 +37,6 @@ export default function ConfiguracoesPage() {
   const [saved, setSaved] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
-  const [colorsLoading, setColorsLoading] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -50,12 +49,12 @@ export default function ConfiguracoesPage() {
       if (!session.user) return;
       setUserId(session.user.id);
       const { data, error: fetchErr } = await supabase.from("perfis")
-        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, cor_primaria, cor_secundaria, pix_chave, logo_url")
+        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, logo_url")
         .eq("id", session.user.id).maybeSingle();
 
       const raw = data ?? (fetchErr
         ? (await supabase.from("perfis")
-            .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, cor_primaria, cor_secundaria, pix_chave, logo_url")
+            .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, logo_url")
             .eq("id", session.user.id).maybeSingle()).data
         : null);
 
@@ -66,7 +65,6 @@ export default function ConfiguracoesPage() {
           site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
           endereco_cep: d.endereco_cep ?? "", endereco_rua: d.endereco_rua ?? "", endereco_numero: d.endereco_numero ?? "",
           endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
-          cor_primaria: d.cor_primaria ?? "#4c6fff", cor_secundaria: d.cor_secundaria ?? "#34d6c4",
           pix_chave: d.pix_chave ?? "",
         });
         setLogoPreview(d.logo_url);
@@ -100,21 +98,6 @@ export default function ConfiguracoesPage() {
     if (res.ok) await supabase.from("perfis").update({ logo_url: data.url }).eq("id", userId!);
   }
 
-  async function extractColors(file: File) {
-    setColorsLoading(true);
-    try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve((r.result as string).split(",")[1] ?? "");
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-      const res = await fetch("/api/extract-colors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageBase64: base64, mimeType: file.type || "image/png" }) });
-      const data = await res.json();
-      if (res.ok) setForm(f => ({ ...f, cor_primaria: data.primary, cor_secundaria: data.secondary }));
-    } catch { /* silencioso */ } finally { setColorsLoading(false); }
-  }
-
   async function handleSave() {
     if (!userId || !form.nome.trim()) { setError("O nome é obrigatório."); return; }
     setError(null); setSaving(true);
@@ -126,8 +109,7 @@ export default function ConfiguracoesPage() {
       ...(form.tiktok !== undefined ? { tiktok: form.tiktok.trim() || null } : {}),
       endereco_cep: form.endereco_cep || null, endereco_rua: form.endereco_rua || null,
       endereco_numero: form.endereco_numero || null, endereco_cidade: form.endereco_cidade || null,
-      endereco_uf: form.endereco_uf || null, cor_primaria: form.cor_primaria,
-      cor_secundaria: form.cor_secundaria, pix_chave: form.pix_chave.trim() || null,
+      endereco_uf: form.endereco_uf || null, pix_chave: form.pix_chave.trim() || null,
     }).eq("id", userId);
     setSaving(false);
     if (err) { setError(err.message); return; }
@@ -185,7 +167,7 @@ export default function ConfiguracoesPage() {
 
       {/* Identidade visual */}
       <section className="panel settingsSection">
-        <div className="settingsSectionHead"><strong>Identidade visual</strong><small>Logo e cores exibidas no painel e no link de agendamento.</small></div>
+        <div className="settingsSectionHead"><strong>Identidade visual</strong><small>Logo exibida no painel e no link de agendamento.</small></div>
         <div className="formGrid">
           <div className="formRow">
             <label>Logo</label>
@@ -194,25 +176,12 @@ export default function ConfiguracoesPage() {
                 {logoPreview ? <img src={logoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={24} />}
               </div>
               <div>
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0] ?? null; if (f) { handleLogoChange(f); extractColors(f); } }} />
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0] ?? null; if (f) handleLogoChange(f); }} />
                 <button className="secondaryButton" type="button" style={{ height: 34, fontSize: 12 }} onClick={() => fileRef.current?.click()}>
-                  {logoUploading ? "Enviando…" : colorsLoading ? <><Sparkles size={13} /> Analisando…</> : <><Camera size={13} /> {logoPreview ? "Trocar logo" : "Enviar logo"}</>}
+                  {logoUploading ? "Enviando…" : <><Camera size={13} /> {logoPreview ? "Trocar logo" : "Enviar logo"}</>}
                 </button>
-                <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>PNG, JPG ou SVG · 512×512 recomendado · cores extraídas automaticamente.</small>
+                <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>PNG, JPG ou SVG · 512×512 recomendado.</small>
               </div>
-            </div>
-          </div>
-          <div className="formRow">
-            <label>Cores da marca</label>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <label className="settingsColorPicker">
-                <input type="color" value={form.cor_primaria} onChange={e => up("cor_primaria", e.target.value)} />
-                <div><small>Primária</small><strong>{form.cor_primaria.toUpperCase()}</strong></div>
-              </label>
-              <label className="settingsColorPicker">
-                <input type="color" value={form.cor_secundaria} onChange={e => up("cor_secundaria", e.target.value)} />
-                <div><small>Secundária</small><strong>{form.cor_secundaria.toUpperCase()}</strong></div>
-              </label>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Building2, Sparkles, Stethoscope, Upload, UserCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Building2, Stethoscope, Upload, UserCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type Tipo = "autonomo" | "clinica";
@@ -18,8 +18,6 @@ type Form = {
   endereco_numero: string;
   endereco_cidade: string;
   endereco_uf: string;
-  cor_primaria: string;
-  cor_secundaria: string;
 };
 
 const initial: Form = {
@@ -33,8 +31,6 @@ const initial: Form = {
   endereco_numero: "",
   endereco_cidade: "",
   endereco_uf: "",
-  cor_primaria: "#4c6fff",
-  cor_secundaria: "#34d6c4",
 };
 
 function slugify(s: string) {
@@ -53,8 +49,6 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [cepLoading, setCepLoading] = useState(false);
-  const [colorsLoading, setColorsLoading] = useState(false);
-  const [colorsError, setColorsError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -74,7 +68,6 @@ export default function OnboardingPage() {
 
   function handleLogo(file: File | null) {
     setLogoFile(file);
-    setColorsError(null);
     if (logoPreview) URL.revokeObjectURL(logoPreview);
     setLogoPreview(file ? URL.createObjectURL(file) : null);
   }
@@ -105,37 +98,6 @@ export default function OnboardingPage() {
       // silencioso — usuário pode preencher manualmente
     } finally {
       setCepLoading(false);
-    }
-  }
-
-  async function extractColorsFromLogo() {
-    if (!logoFile) return;
-    setColorsError(null);
-    setColorsLoading(true);
-    try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1] ?? "");
-        };
-        reader.onerror = () => reject(new Error("Falha ao ler o arquivo"));
-        reader.readAsDataURL(logoFile);
-      });
-      const res = await fetch("/api/extract-colors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType: logoFile.type || "image/png" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error ?? "Falha ao extrair cores");
-      }
-      setForm((f) => ({ ...f, cor_primaria: data.primary, cor_secundaria: data.secondary }));
-    } catch (e) {
-      setColorsError(e instanceof Error ? e.message : "Não foi possível extrair as cores.");
-    } finally {
-      setColorsLoading(false);
     }
   }
 
@@ -174,8 +136,6 @@ export default function OnboardingPage() {
         endereco_cidade: form.endereco_cidade || null,
         endereco_uf: form.endereco_uf || null,
         logo_url,
-        cor_primaria: form.cor_primaria,
-        cor_secundaria: form.cor_secundaria,
         onboarding_concluido: true,
       });
       if (perfilError) throw perfilError;
@@ -250,7 +210,7 @@ export default function OnboardingPage() {
 
         {step === 2 && <>
           <h1>{form.tipo === "autonomo" ? "Deixe com a sua cara" : "Deixe com a cara da sua marca"}</h1>
-          <p>{form.tipo === "autonomo" ? "Adicione sua foto ou logo e escolha as cores do seu perfil." : "Personalize a logo e as cores que aparecem no painel e no link de agendamento."}</p>
+          <p>{form.tipo === "autonomo" ? "Adicione sua foto ou logo de perfil." : "Faça o upload da sua logo para personalizar o painel e o link de agendamento."}</p>
           <div className="formGrid">
             <div className="formRow">
               <label>{form.tipo === "autonomo" ? "Foto ou logo" : "Logo"}</label>
@@ -259,15 +219,9 @@ export default function OnboardingPage() {
                 <div style={{ flex: 1 }}>
                   <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleLogo(e.target.files?.[0] ?? null)} />
                   <button type="button" onClick={() => fileRef.current?.click()}><Upload size={13} style={{ display: "inline", marginRight: 6, verticalAlign: "-2px" }} />{logoFile ? "Trocar imagem" : "Enviar imagem"}</button>
-                  {logoFile && <button type="button" onClick={extractColorsFromLogo} disabled={colorsLoading} style={{ marginLeft: 8, background: "#f1edff", border: "1px solid #d9d0f7", color: "#5a3fbf", padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: colorsLoading ? "not-allowed" : "pointer", opacity: colorsLoading ? 0.7 : 1 }}><Sparkles size={13} style={{ display: "inline", marginRight: 6, verticalAlign: "-2px" }} />{colorsLoading ? "Analisando…" : "Usar cores da logo"}</button>}
                   <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 6 }}>PNG, JPG ou SVG. Recomendado 512×512.</small>
-                  {colorsError && <small style={{ display: "block", color: "#b42318", fontSize: 11, marginTop: 4 }}>{colorsError}</small>}
                 </div>
               </div>
-            </div>
-            <div className="colorRow">
-              <div className="colorPicker"><input type="color" value={form.cor_primaria} onChange={(e) => update("cor_primaria", e.target.value)} /><div><small>Primária</small><br/><strong>{form.cor_primaria.toUpperCase()}</strong></div></div>
-              <div className="colorPicker"><input type="color" value={form.cor_secundaria} onChange={(e) => update("cor_secundaria", e.target.value)} /><div><small>Secundária</small><br/><strong>{form.cor_secundaria.toUpperCase()}</strong></div></div>
             </div>
           </div>
         </>}

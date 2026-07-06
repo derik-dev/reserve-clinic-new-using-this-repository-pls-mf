@@ -61,6 +61,8 @@ type Form = {
 
 const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "", profissional_id: "", profissional_nome: "" };
 
+type ProfissionalPublic = { id: string; nome: string; especialidade: string | null; foto_url: string | null };
+
 type PendingBooking = { nome: string; data: string; hora: string; servico: string; profissional: string; clinicNome: string };
 
 function buildWhatsapp(telefone: string | null, b: PendingBooking): string {
@@ -100,6 +102,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const { slug } = use(params);
   const [perfil, setPerfil] = useState<PerfilPublic | null>(null);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
+  const [profissionais, setProfissionais] = useState<ProfissionalPublic[]>([]);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<Form>(emptyForm);
@@ -116,8 +119,13 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave").eq("slug", slug).maybeSingle();
       setPerfil(data as PerfilPublic | null);
       if (data) {
-        const { data: conf } = await supabase.from("configuracoes").select("agenda_config").eq("perfil_id", (data as PerfilPublic).id).maybeSingle();
-        setConfig(mergeConfig(conf?.agenda_config));
+        const perfilId = (data as PerfilPublic).id;
+        const [conf, profs] = await Promise.all([
+          supabase.from("configuracoes").select("agenda_config").eq("perfil_id", perfilId).maybeSingle(),
+          supabase.from("profissionais").select("id, nome, especialidade, foto_url").eq("perfil_id", perfilId).eq("ativo", true).order("nome"),
+        ]);
+        setConfig(mergeConfig(conf.data?.agenda_config));
+        setProfissionais((profs.data as ProfissionalPublic[] | null) ?? []);
       }
       try {
         const stored = localStorage.getItem(`rc_booking_${slug}`);
@@ -325,7 +333,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           <section className="panel" style={{ padding: 22 }}>
             {step === 0 && (
               <div className="formGrid">
-                {config.profissionais.length > 0 && (
+                {profissionais.length > 0 && (
                   <div className="formRow">
                     <label>Profissional</label>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
@@ -336,16 +344,26 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                       >
                         Qualquer um
                       </button>
-                      {config.profissionais.map(p => {
+                      {profissionais.map(p => {
                         const active = form.profissional_id === p.id;
                         return (
                           <button
                             type="button"
                             key={p.id}
                             onClick={() => setForm({ ...form, profissional_id: p.id, profissional_nome: p.nome, data: "", hora: "" })}
-                            style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : "#fff", color: active ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                            style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : "#fff", color: active ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left" }}
                           >
-                            {p.nome}
+                            {p.foto_url ? (
+                              <img src={p.foto_url} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                            ) : (
+                              <span style={{ width: 26, height: 26, borderRadius: "50%", background: active ? "rgba(255,255,255,0.25)" : "#eef0f6", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, color: active ? "#fff" : "#858d9f" }}>
+                                {p.nome.slice(0, 2).toUpperCase()}
+                              </span>
+                            )}
+                            <span>
+                              {p.nome}
+                              {p.especialidade && <span style={{ display: "block", fontSize: 10, fontWeight: 400, opacity: 0.75 }}>{p.especialidade}</span>}
+                            </span>
                           </button>
                         );
                       })}
