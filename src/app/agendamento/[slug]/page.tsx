@@ -55,18 +55,20 @@ type Form = {
   hora: string;
   servico: string;
   observacoes: string;
+  profissional_id: string;
+  profissional_nome: string;
 };
 
-const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "" };
+const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "", profissional_id: "", profissional_nome: "" };
 
-type PendingBooking = { nome: string; data: string; hora: string; servico: string; clinicNome: string };
+type PendingBooking = { nome: string; data: string; hora: string; servico: string; profissional: string; clinicNome: string };
 
 function buildWhatsapp(telefone: string | null, b: PendingBooking): string {
   if (!telefone) return "#";
   const digits = telefone.replace(/\D/g, "");
   const phone = digits.startsWith("55") ? digits : `55${digits}`;
   const dateStr = new Date(`${b.data}T12:00:00`).toLocaleDateString("pt-BR");
-  const msg = `Olá! Me chamo ${b.nome} e agendei${b.servico ? ` ${b.servico}` : " uma consulta"} em ${b.clinicNome} para ${dateStr} às ${b.hora}. Segue o comprovante do pagamento PIX.`;
+  const msg = `Olá! Me chamo ${b.nome} e agendei${b.servico ? ` ${b.servico}` : " uma consulta"}${b.profissional ? ` com ${b.profissional}` : ""} em ${b.clinicNome} para ${dateStr} às ${b.hora}. Segue o comprovante do pagamento PIX.`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -148,6 +150,11 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
 
   const primary = perfil?.cor_primaria ?? "#4c6fff";
 
+  const selectedProf = useMemo(
+    () => config.profissionais.find(p => p.id === form.profissional_id) ?? null,
+    [config.profissionais, form.profissional_id]
+  );
+
   const diaInfo = useMemo(() => {
     if (!form.data) return null;
     const d = new Date(`${form.data}T00:00:00`);
@@ -188,12 +195,13 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       data_hora: dataIso,
       duracao_min: config.duracao_min,
       servico: form.servico || null,
+      profissional: form.profissional_nome || null,
       status: "aguardando",
       observacoes: form.observacoes || null,
     });
     setSaving(false);
     if (err) { setError("Não foi possível confirmar. Tente novamente."); return; }
-    const bookingData: PendingBooking = { nome: form.nome.trim(), data: form.data, hora: form.hora, servico: form.servico, clinicNome: perfil.nome };
+    const bookingData: PendingBooking = { nome: form.nome.trim(), data: form.data, hora: form.hora, servico: form.servico, profissional: form.profissional_nome, clinicNome: perfil.nome };
     try { localStorage.setItem(`rc_booking_${slug}`, JSON.stringify(bookingData)); } catch { /* ignorar */ }
     setDone(true);
   }
@@ -228,6 +236,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             <span><strong>Paciente:</strong> {pendingBooking.nome}</span>
             <span><strong>Data:</strong> {new Date(`${pendingBooking.data}T12:00:00`).toLocaleDateString("pt-BR")} às {pendingBooking.hora}</span>
             {pendingBooking.servico && <span><strong>Serviço:</strong> {pendingBooking.servico}</span>}
+            {pendingBooking.profissional && <span><strong>Profissional:</strong> {pendingBooking.profissional}</span>}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
             {perfil.telefone && (
@@ -255,7 +264,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
 
           {perfil.pix_chave && (() => {
             const pixPayload = gerarPix(perfil.pix_chave, perfil.nome, perfil.endereco_cidade ?? "Brasil");
-            const booking: PendingBooking = { nome: form.nome, data: form.data, hora: form.hora, servico: form.servico, clinicNome: perfil.nome };
+            const booking: PendingBooking = { nome: form.nome, data: form.data, hora: form.hora, servico: form.servico, profissional: form.profissional_nome, clinicNome: perfil.nome };
             return (
               <section className="panel bookingPixCard">
                 <div className="bookingPixHeader">
@@ -293,7 +302,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           })()}
 
           {!perfil.pix_chave && perfil.telefone && (() => {
-            const booking: PendingBooking = { nome: form.nome, data: form.data, hora: form.hora, servico: form.servico, clinicNome: perfil.nome };
+            const booking: PendingBooking = { nome: form.nome, data: form.data, hora: form.hora, servico: form.servico, profissional: form.profissional_nome, clinicNome: perfil.nome };
             return (
               <section className="panel" style={{ padding: 24, textAlign: "center" }}>
                 <p style={{ margin: "0 0 14px", fontSize: 13, color: "#7d8597" }}>Entre em contato com a clínica para combinar o pagamento:</p>
@@ -316,6 +325,33 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           <section className="panel" style={{ padding: 22 }}>
             {step === 0 && (
               <div className="formGrid">
+                {config.profissionais.length > 0 && (
+                  <div className="formRow">
+                    <label>Profissional</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, profissional_id: "", profissional_nome: "", data: "", hora: "" })}
+                        style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${!form.profissional_id ? primary : "#dfe3eb"}`, background: !form.profissional_id ? primary : "#fff", color: !form.profissional_id ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                      >
+                        Qualquer um
+                      </button>
+                      {config.profissionais.map(p => {
+                        const active = form.profissional_id === p.id;
+                        return (
+                          <button
+                            type="button"
+                            key={p.id}
+                            onClick={() => setForm({ ...form, profissional_id: p.id, profissional_nome: p.nome, data: "", hora: "" })}
+                            style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : "#fff", color: active ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
+                          >
+                            {p.nome}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="formRow"><label>Serviço (opcional)</label><input value={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.value })} placeholder="Consulta clínica" /></div>
                 <div className="formRow">
                   <label>Selecione uma data</label>
@@ -337,7 +373,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                         const isPast = d < hoje;
                         const key = jsDayToKey(d);
                         const feriado = config.feriados.includes(iso);
-                        const fechado = !config.dias[key].aberto || feriado;
+                        const fechado = !config.dias[key].aberto || feriado || (selectedProf ? !selectedProf.dias.includes(key) : false);
                         const disabled = isPast || outroMes || fechado;
                         return (
                           <button
