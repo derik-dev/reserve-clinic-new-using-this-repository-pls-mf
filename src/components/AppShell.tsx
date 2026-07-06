@@ -57,7 +57,7 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
           <span className="navGroupLabel">GESTÃO</span>
           {navigation.map(({ href, label, icon: Icon }) => <Link className={pathname === href ? "active" : ""} href={href} key={href} onClick={() => setMenuOpen(false)}><Icon size={18} /><span>{label}</span></Link>)}
           <span className="navGroupLabel navGroupSettings">CONTA</span>
-          <Link href="#"><Settings size={18} /><span>Configurações</span></Link>
+          <Link className={pathname === "/configuracoes" ? "active" : ""} href="/configuracoes" onClick={() => setMenuOpen(false)}><Settings size={18} /><span>Configurações</span></Link>
         </nav>
         <div className="sidebarUser"><span className="userAvatar">{userInitials}</span><div><strong>{perfil.email ?? "Usuário"}</strong><small>Administrador</small></div><button onClick={handleLogout} aria-label="Sair" style={{ background: "transparent", border: 0, cursor: "pointer", color: "inherit", padding: 0 }}><LogOut size={17} /></button></div>
       </aside>

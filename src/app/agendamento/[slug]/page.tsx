@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin, Stethoscope, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, MapPin, Stethoscope, Check } from "lucide-react";
+import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -18,6 +19,7 @@ type PerfilPublic = {
   endereco_numero: string | null;
   endereco_cidade: string | null;
   endereco_uf: string | null;
+  pix_chave: string | null;
 };
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
@@ -57,6 +59,10 @@ type Form = {
 
 const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "" };
 
+function pixField(id: string, value: string) { return `${id}${String(value.length).padStart(2, "0")}${value}`; }
+function crc16(str: string) { let c = 0xffff; for (let i = 0; i < str.length; i++) { c ^= str.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) c = (c & 0x8000) ? (c << 1) ^ 0x1021 : c << 1; } return ((c & 0xffff).toString(16).toUpperCase().padStart(4, "0")); }
+function gerarPix(chave: string, nome: string, cidade: string) { const mai = pixField("00", "BR.GOV.BCB.PIX") + pixField("01", chave); const body = [pixField("00", "01"), pixField("26", mai), pixField("52", "0000"), pixField("53", "986"), pixField("58", "BR"), pixField("59", nome.slice(0, 25)), pixField("60", (cidade || "Brasil").slice(0, 15)), pixField("62", pixField("05", "***")), "6304"].join(""); return body + crc16(body); }
+
 function timeToMin(t: string) { const [h, m] = t.split(":").map(Number); return h * 60 + m; }
 function minToLabel(min: number) { return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`; }
 function jsDayToKey(d: Date): DayKey { return DAY_ORDER[(d.getDay() + 6) % 7]; }
@@ -88,11 +94,12 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [copiedPix, setCopiedPix] = useState(false);
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf").eq("slug", slug).maybeSingle();
+      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave").eq("slug", slug).maybeSingle();
       setPerfil(data as PerfilPublic | null);
       if (data) {
         const { data: conf } = await supabase.from("configuracoes").select("agenda_config").eq("perfil_id", (data as PerfilPublic).id).maybeSingle();
@@ -194,11 +201,43 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       </section>
 
       {done ? (
-        <section className="panel" style={{ padding: 32, textAlign: "center" }}>
-          <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#e8f8f3", color: "#15967e", display: "grid", placeItems: "center", margin: "0 auto 14px" }}><Check size={26} /></div>
-          <h2 style={{ margin: "0 0 6px", fontSize: 18 }}>Solicitação enviada!</h2>
-          <p style={{ margin: 0, color: "#7d8597", fontSize: 13 }}>A clínica vai confirmar em breve pelo contato informado.</p>
-        </section>
+        <>
+          <section className="panel" style={{ padding: 28, textAlign: "center" }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#e8f8f3", color: "#15967e", display: "grid", placeItems: "center", margin: "0 auto 12px" }}><Check size={24} /></div>
+            <h2 style={{ margin: "0 0 5px", fontSize: 18 }}>Solicitação enviada!</h2>
+            <p style={{ margin: 0, color: "#7d8597", fontSize: 13 }}>A clínica vai confirmar em breve pelo contato informado.</p>
+          </section>
+
+          {perfil.pix_chave && (() => {
+            const pixPayload = gerarPix(perfil.pix_chave, perfil.nome, perfil.endereco_cidade ?? "Brasil");
+            return (
+              <section className="panel bookingPixCard">
+                <div className="bookingPixHeader">
+                  <strong>Pagamento via PIX</strong>
+                  <small>Escaneie o QR Code no seu banco para pagar</small>
+                </div>
+                <div className="bookingPixBody">
+                  <div className="bookingPixQr">
+                    <QRCode value={pixPayload} size={160} />
+                  </div>
+                  <div className="bookingPixInfo">
+                    <p>Beneficiário</p>
+                    <strong>{perfil.nome}</strong>
+                    <p style={{ marginTop: 12 }}>Chave PIX</p>
+                    <code>{perfil.pix_chave}</code>
+                    <button
+                      className="secondaryButton"
+                      style={{ marginTop: 10, height: 32, fontSize: 12 }}
+                      onClick={async () => { await navigator.clipboard.writeText(perfil.pix_chave!); setCopiedPix(true); setTimeout(() => setCopiedPix(false), 1600); }}
+                    >
+                      {copiedPix ? <><Check size={13} /> Copiado</> : <><Copy size={13} /> Copiar chave</>}
+                    </button>
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+        </>
       ) : (
         <>
           <div className="bookingSteps">

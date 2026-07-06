@@ -7,6 +7,10 @@
 ALTER TABLE consultas
   ADD COLUMN IF NOT EXISTS origem TEXT DEFAULT 'interno';
 
+-- perfis: chave PIX do profissional/clínica
+ALTER TABLE perfis
+  ADD COLUMN IF NOT EXISTS pix_chave TEXT;
+
 -- pacientes: campos extras do cadastro
 ALTER TABLE pacientes
   ADD COLUMN IF NOT EXISTS cpf              TEXT,

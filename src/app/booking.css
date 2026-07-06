@@ -10,4 +10,14 @@
 .bookingCalCell.isOtherMonth{opacity:0;pointer-events:none}
 .bookingCalCell.isClosed{color:#c4c8d2;cursor:default}
 .bookingCalCell:disabled:not(.isOtherMonth){color:#c4c8d2;cursor:default}
+.bookingPixCard{padding:24px;margin-top:16px}
+.bookingPixHeader{margin-bottom:16px}
+.bookingPixHeader strong{display:block;font-size:14px;color:#1b2335;margin-bottom:3px}
+.bookingPixHeader small{font-size:11px;color:#7d8597}
+.bookingPixBody{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.bookingPixQr{background:#fff;border:1px solid #e5e8ef;border-radius:12px;padding:14px;flex-shrink:0}
+.bookingPixInfo{flex:1;min-width:160px}
+.bookingPixInfo p{margin:0 0 4px;font-size:10px;font-weight:600;color:#9098a9;letter-spacing:.06em;text-transform:uppercase}
+.bookingPixInfo strong{font-size:13px;color:#1b2335}
+.bookingPixInfo code{display:block;font-size:11px;background:#f5f7fb;border:1px solid #e0e4eb;border-radius:7px;padding:7px 9px;word-break:break-all;color:#2a3244;margin-top:2px}
 .bookingFooter{max-width:none;padding:0 20px 28px;text-align:center;color:#949bad;font-size:8px}@media(max-width:800px){.bookingGrid{grid-template-columns:1fr}.bookingProfessional{border-right:0;border-bottom:1px solid #e7e9ef;display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.bookingProfessional>.bookingLabel{grid-column:1/-1}.bookingProfessional>button{margin:0}.bookingProfessional button svg{display:none}}@media(max-width:560px){.bookingSteps strong{display:none}.bookingSteps>i{margin:0 7px}.bookingContainer{padding:25px 14px 40px}.bookingProfessional{grid-template-columns:1fr}.bookingSchedule{padding:20px 14px}.dateStrip{gap:5px}.availableTimes>div{grid-template-columns:repeat(3,1fr)}.bookingSummary{align-items:flex-end;gap:10px}.bookingSummary>button{padding:0 12px}}
