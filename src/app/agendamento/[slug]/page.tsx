@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Copy, MapPin, Stethoscope, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Stethoscope, Check } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
@@ -59,6 +59,17 @@ type Form = {
 
 const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "" };
 
+type PendingBooking = { nome: string; data: string; hora: string; servico: string; clinicNome: string };
+
+function buildWhatsapp(telefone: string | null, b: PendingBooking): string {
+  if (!telefone) return "#";
+  const digits = telefone.replace(/\D/g, "");
+  const phone = digits.startsWith("55") ? digits : `55${digits}`;
+  const dateStr = new Date(`${b.data}T12:00:00`).toLocaleDateString("pt-BR");
+  const msg = `Olá! Me chamo ${b.nome} e agendei${b.servico ? ` ${b.servico}` : " uma consulta"} em ${b.clinicNome} para ${dateStr} às ${b.hora}. Segue o comprovante do pagamento PIX.`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+}
+
 function pixField(id: string, value: string) { return `${id}${String(value.length).padStart(2, "0")}${value}`; }
 function crc16(str: string) { let c = 0xffff; for (let i = 0; i < str.length; i++) { c ^= str.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) c = (c & 0x8000) ? (c << 1) ^ 0x1021 : c << 1; } return ((c & 0xffff).toString(16).toUpperCase().padStart(4, "0")); }
 function gerarPix(chave: string, nome: string, cidade: string) { const mai = pixField("00", "BR.GOV.BCB.PIX") + pixField("01", chave); const body = [pixField("00", "01"), pixField("26", mai), pixField("52", "0000"), pixField("53", "986"), pixField("58", "BR"), pixField("59", nome.slice(0, 25)), pixField("60", (cidade || "Brasil").slice(0, 15)), pixField("62", pixField("05", "***")), "6304"].join(""); return body + crc16(body); }
@@ -94,6 +105,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState<PendingBooking | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
 
@@ -105,6 +117,10 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         const { data: conf } = await supabase.from("configuracoes").select("agenda_config").eq("perfil_id", (data as PerfilPublic).id).maybeSingle();
         setConfig(mergeConfig(conf?.agenda_config));
       }
+      try {
+        const stored = localStorage.getItem(`rc_booking_${slug}`);
+        if (stored) setPendingBooking(JSON.parse(stored));
+      } catch { /* ignorar */ }
       setLoading(false);
     })();
   }, [slug]);
@@ -177,6 +193,8 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     });
     setSaving(false);
     if (err) { setError("Não foi possível confirmar. Tente novamente."); return; }
+    const bookingData: PendingBooking = { nome: form.nome.trim(), data: form.data, hora: form.hora, servico: form.servico, clinicNome: perfil.nome };
+    try { localStorage.setItem(`rc_booking_${slug}`, JSON.stringify(bookingData)); } catch { /* ignorar */ }
     setDone(true);
   }
 
@@ -200,16 +218,44 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         <div><h1>{perfil.nome}</h1>{endereco && <p><MapPin size={15} /> {endereco}</p>}</div>
       </section>
 
-      {done ? (
+      {pendingBooking && !done ? (
+        /* Tela de aguardando confirmação — aparece ao voltar ao link */
+        <section className="panel bookingPendingCard">
+          <div className="bookingPendingIcon"><Clock size={26} /></div>
+          <h2>Aguardando confirmação</h2>
+          <p>Assim que a clínica confirmar o PIX, você receberá uma mensagem confirmando sua consulta.</p>
+          <div className="bookingPendingDetails">
+            <span><strong>Paciente:</strong> {pendingBooking.nome}</span>
+            <span><strong>Data:</strong> {new Date(`${pendingBooking.data}T12:00:00`).toLocaleDateString("pt-BR")} às {pendingBooking.hora}</span>
+            {pendingBooking.servico && <span><strong>Serviço:</strong> {pendingBooking.servico}</span>}
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
+            {perfil.telefone && (
+              <a className="bookingWhatsappBtn" href={buildWhatsapp(perfil.telefone, pendingBooking)} target="_blank" rel="noreferrer">
+                <MessageCircle size={16} /> Reenviar comprovante
+              </a>
+            )}
+            <button className="secondaryButton" onClick={() => {
+              try { localStorage.removeItem(`rc_booking_${slug}`); } catch { /* ignorar */ }
+              setPendingBooking(null);
+              setForm(emptyForm);
+              setStep(0);
+            }}>
+              Novo agendamento
+            </button>
+          </div>
+        </section>
+      ) : done ? (
         <>
           <section className="panel" style={{ padding: 28, textAlign: "center" }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#e8f8f3", color: "#15967e", display: "grid", placeItems: "center", margin: "0 auto 12px" }}><Check size={24} /></div>
             <h2 style={{ margin: "0 0 5px", fontSize: 18 }}>Solicitação enviada!</h2>
-            <p style={{ margin: 0, color: "#7d8597", fontSize: 13 }}>A clínica vai confirmar em breve pelo contato informado.</p>
+            <p style={{ margin: 0, color: "#7d8597", fontSize: 13 }}>Pague via PIX abaixo e envie o comprovante para a clínica pelo WhatsApp.</p>
           </section>
 
           {perfil.pix_chave && (() => {
             const pixPayload = gerarPix(perfil.pix_chave, perfil.nome, perfil.endereco_cidade ?? "Brasil");
+            const booking: PendingBooking = { nome: form.nome, data: form.data, hora: form.hora, servico: form.servico, clinicNome: perfil.nome };
             return (
               <section className="panel bookingPixCard">
                 <div className="bookingPixHeader">
@@ -234,6 +280,26 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                     </button>
                   </div>
                 </div>
+                {perfil.telefone && (
+                  <div style={{ borderTop: "1px solid #eef0f6", marginTop: 20, paddingTop: 18, textAlign: "center" }}>
+                    <p style={{ margin: "0 0 12px", fontSize: 13, color: "#7d8597" }}>Após pagar, envie o comprovante para a clínica confirmar sua consulta:</p>
+                    <a className="bookingWhatsappBtn" href={buildWhatsapp(perfil.telefone, booking)} target="_blank" rel="noreferrer">
+                      <MessageCircle size={16} /> Enviar comprovante pelo WhatsApp
+                    </a>
+                  </div>
+                )}
+              </section>
+            );
+          })()}
+
+          {!perfil.pix_chave && perfil.telefone && (() => {
+            const booking: PendingBooking = { nome: form.nome, data: form.data, hora: form.hora, servico: form.servico, clinicNome: perfil.nome };
+            return (
+              <section className="panel" style={{ padding: 24, textAlign: "center" }}>
+                <p style={{ margin: "0 0 14px", fontSize: 13, color: "#7d8597" }}>Entre em contato com a clínica para combinar o pagamento:</p>
+                <a className="bookingWhatsappBtn" href={buildWhatsapp(perfil.telefone, booking)} target="_blank" rel="noreferrer">
+                  <MessageCircle size={16} /> Enviar comprovante pelo WhatsApp
+                </a>
               </section>
             );
           })()}

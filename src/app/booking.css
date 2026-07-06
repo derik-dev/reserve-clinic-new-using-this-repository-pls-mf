@@ -10,6 +10,14 @@
 .bookingCalCell.isOtherMonth{opacity:0;pointer-events:none}
 .bookingCalCell.isClosed{color:#c4c8d2;cursor:default}
 .bookingCalCell:disabled:not(.isOtherMonth){color:#c4c8d2;cursor:default}
+.bookingWhatsappBtn{display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;border:0;border-radius:10px;padding:11px 20px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .12s}
+.bookingWhatsappBtn:hover{background:#1ebe5a}
+.bookingPendingCard{padding:32px 24px;text-align:center;margin-bottom:16px}
+.bookingPendingIcon{width:54px;height:54px;border-radius:50%;background:#fff8e8;color:#e8a020;display:grid;place-items:center;margin:0 auto 14px}
+.bookingPendingCard h2{margin:0 0 8px;font-size:18px}
+.bookingPendingCard p{margin:0 0 16px;color:#7d8597;font-size:13px;max-width:400px;margin-left:auto;margin-right:auto}
+.bookingPendingDetails{display:inline-flex;flex-direction:column;gap:6px;background:#f5f7fb;border:1px solid #e5e8ef;border-radius:10px;padding:12px 18px;text-align:left;font-size:12px;color:#394155;margin-bottom:4px}
+.bookingPendingDetails strong{color:#1b2335}
 .bookingPixCard{padding:24px;margin-top:16px}
 .bookingPixHeader{margin-bottom:16px}
 .bookingPixHeader strong{display:block;font-size:14px;color:#1b2335;margin-bottom:3px}
