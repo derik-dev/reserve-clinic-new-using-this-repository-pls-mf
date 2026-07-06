@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Stethoscope, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Stethoscope, Check } from "lucide-react";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -60,6 +60,13 @@ const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "",
 function timeToMin(t: string) { const [h, m] = t.split(":").map(Number); return h * 60 + m; }
 function minToLabel(min: number) { return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`; }
 function jsDayToKey(d: Date): DayKey { return DAY_ORDER[(d.getDay() + 6) % 7]; }
+function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+function toIsoDate(d: Date) { return d.toISOString().slice(0, 10); }
+function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function monthGrid(view: Date) { const first = startOfMonth(view); const start = addDays(first, -first.getDay()); return Array.from({ length: 42 }, (_, i) => addDays(start, i)); }
+
+const WEEKDAY_LABELS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
 function mergeConfig(raw: unknown): AgendaConfig {
   const r = (raw ?? {}) as Partial<AgendaConfig>;
   return {
@@ -81,6 +88,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
 
   useEffect(() => {
     (async () => {
@@ -140,7 +148,8 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     return arr;
   }, [diaInfo, config.duracao_min, busyRanges]);
 
-  const minDataAtendida = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const hoje = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+  const calDias = useMemo(() => monthGrid(viewMonth), [viewMonth]);
 
   async function handleConfirm() {
     if (!perfil) return;
@@ -203,9 +212,43 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           <section className="panel" style={{ padding: 22 }}>
             {step === 0 && (
               <div className="formGrid">
-                <div className="formRow split">
-                  <div className="formRow"><label>Data</label><input type="date" value={form.data} min={minDataAtendida} onChange={(e) => setForm({ ...form, data: e.target.value, hora: "" })} /></div>
-                  <div className="formRow"><label>Serviço (opcional)</label><input value={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.value })} placeholder="Consulta clínica" /></div>
+                <div className="formRow"><label>Serviço (opcional)</label><input value={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.value })} placeholder="Consulta clínica" /></div>
+                <div className="formRow">
+                  <label>Selecione uma data</label>
+                  <div className="bookingCalendarWrap">
+                    <div className="bookingCalHead">
+                      <button type="button" className="iconButton" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} aria-label="Mês anterior"><ChevronLeft size={16} /></button>
+                      <span style={{ fontWeight: 600, fontSize: 13, color: "#1b2335", textTransform: "capitalize" }}>{viewMonth.toLocaleDateString("pt-BR", { month: "long" })} <small style={{ fontWeight: 400, color: "#7d8597" }}>{viewMonth.getFullYear()}</small></span>
+                      <button type="button" className="iconButton" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} aria-label="Próximo mês"><ChevronRight size={16} /></button>
+                    </div>
+                    <div className="bookingCalWeek">
+                      {WEEKDAY_LABELS.map(l => <span key={l}>{l}</span>)}
+                    </div>
+                    <div className="bookingCalGrid">
+                      {calDias.map(d => {
+                        const iso = toIsoDate(d);
+                        const outroMes = d.getMonth() !== viewMonth.getMonth();
+                        const ehHoje = isSameDay(d, hoje);
+                        const selected = form.data === iso;
+                        const isPast = d < hoje;
+                        const key = jsDayToKey(d);
+                        const feriado = config.feriados.includes(iso);
+                        const fechado = !config.dias[key].aberto || feriado;
+                        const disabled = isPast || outroMes || fechado;
+                        return (
+                          <button
+                            type="button"
+                            key={iso + d.getMonth()}
+                            disabled={disabled}
+                            onClick={() => setForm({ ...form, data: iso, hora: "" })}
+                            className={`bookingCalCell${selected ? " isSelected" : ""}${ehHoje ? " isToday" : ""}${outroMes ? " isOtherMonth" : ""}${fechado && !outroMes ? " isClosed" : ""}`}
+                          >
+                            {d.getDate()}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
                 {form.data && (
                   <div className="formRow">
