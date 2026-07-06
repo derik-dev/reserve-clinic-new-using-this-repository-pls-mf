@@ -217,8 +217,8 @@ export default function ProfissionaisPage() {
     </section>
 
     {modalOpen && (
-      <div className="modalBackdrop" onClick={closeModal}>
-        <div className="modalCard" onClick={(e) => e.stopPropagation()}>
+      <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
+        <div className="modalCard">
           <header className="modalHeader">
             <h2>{editing ? "Editar profissional" : "Novo profissional"}</h2>
             <button className="iconButton" onClick={closeModal} aria-label="Fechar"><X size={17} /></button>

@@ -105,8 +105,8 @@ export default function PacientesPage() {
     </section>
 
     {modalOpen && (
-      <div className="modalBackdrop" onClick={() => setModalOpen(false)}>
-        <div className="modalCard" onClick={(e) => e.stopPropagation()}>
+      <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
+        <div className="modalCard">
           <header className="modalHeader"><h2>Novo paciente</h2><button className="iconButton" onClick={() => setModalOpen(false)} aria-label="Fechar"><X size={17} /></button></header>
           <div className="modalBody">
             <div className="formRow"><label>Nome completo</label><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Maria da Silva" /></div>

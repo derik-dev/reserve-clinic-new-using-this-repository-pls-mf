@@ -128,7 +128,37 @@ export default function ConsultasPage() {
   }
 
   async function updateStatus(c: Consulta, status: ConsultaStatus) {
-    await supabase.from("consultas").update({ status }).eq("id", c.id);
+    let pacienteId = c.paciente_id;
+
+    if (status === "confirmada" && !c.paciente_id) {
+      const { data: session } = await supabase.auth.getUser();
+      if (session.user) {
+        const { data: existente } = await supabase
+          .from("pacientes")
+          .select("id")
+          .eq("perfil_id", session.user.id)
+          .ilike("nome", c.paciente_nome)
+          .maybeSingle();
+
+        if (existente) {
+          pacienteId = existente.id;
+        } else {
+          const { data: novo } = await supabase
+            .from("pacientes")
+            .insert({
+              perfil_id: session.user.id,
+              nome: c.paciente_nome,
+              telefone: c.paciente_telefone ?? null,
+              email: c.paciente_email ?? null,
+            })
+            .select("id")
+            .single();
+          if (novo) pacienteId = novo.id;
+        }
+      }
+    }
+
+    await supabase.from("consultas").update({ status, paciente_id: pacienteId }).eq("id", c.id);
     load();
   }
 
@@ -219,8 +249,8 @@ export default function ConsultasPage() {
     </section>
 
     {modalOpen && (
-      <div className="modalBackdrop" onClick={() => setModalOpen(false)}>
-        <div className="modalCard" onClick={(e) => e.stopPropagation()}>
+      <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}>
+        <div className="modalCard">
           <header className="modalHeader"><h2>Nova consulta</h2><button className="iconButton" onClick={() => setModalOpen(false)} aria-label="Fechar"><X size={17} /></button></header>
           <div className="modalBody">
             <div className="formRow"><label>Paciente</label>
