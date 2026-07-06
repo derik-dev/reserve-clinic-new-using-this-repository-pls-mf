@@ -75,12 +75,25 @@ export default function DashboardPage() {
     (async () => {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
-      const [{ data: p }, { data: conf }, { data: ps }] = await Promise.all([
+      const [{ data: p, error: pErr }, { data: conf }, { data: ps }] = await Promise.all([
         supabase.from("perfis").select("nome, slug, tipo").eq("id", session.user.id).maybeSingle(),
         supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
         supabase.from("pacientes").select("*"),
       ]);
-      if (p) { const pp = p as { nome: string; slug: string; tipo: string }; setPerfilNome(pp.nome ?? ""); setPerfilSlug(pp.slug ?? null); setPerfilTipo((pp.tipo === "autonomo" ? "autonomo" : "clinica")); }
+      if (p) {
+        const pp = p as { nome: string; slug: string; tipo: string };
+        setPerfilNome(pp.nome ?? "");
+        setPerfilSlug(pp.slug ?? null);
+        setPerfilTipo(pp.tipo === "autonomo" ? "autonomo" : "clinica");
+      } else if (pErr) {
+        // coluna `tipo` pode não existir ainda — busca sem ela para não perder slug e nome
+        const { data: pFallback } = await supabase.from("perfis").select("nome, slug").eq("id", session.user.id).maybeSingle();
+        if (pFallback) {
+          const pf = pFallback as { nome: string; slug: string };
+          setPerfilNome(pf.nome ?? "");
+          setPerfilSlug(pf.slug ?? null);
+        }
+      }
       setConfig(mergeConfig(conf?.agenda_config));
       setPacientes((ps as Paciente[] | null) ?? []);
     })();
