@@ -11,6 +11,12 @@ ALTER TABLE consultas
 ALTER TABLE perfis
   ADD COLUMN IF NOT EXISTS pix_chave TEXT;
 
+-- perfis: redes sociais e site
+ALTER TABLE perfis
+  ADD COLUMN IF NOT EXISTS site      TEXT,
+  ADD COLUMN IF NOT EXISTS instagram TEXT,
+  ADD COLUMN IF NOT EXISTS tiktok    TEXT;
+
 -- pacientes: campos extras do cadastro
 ALTER TABLE pacientes
   ADD COLUMN IF NOT EXISTS cpf              TEXT,

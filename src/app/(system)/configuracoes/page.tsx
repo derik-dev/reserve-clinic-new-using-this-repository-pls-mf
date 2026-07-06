@@ -21,11 +21,12 @@ function gerarPix(chave: string, nome: string, cidade: string) { const mai = pix
 
 type Form = {
   nome: string; slug: string; telefone: string; email_contato: string;
+  site: string; instagram: string; tiktok: string;
   endereco_cep: string; endereco_rua: string; endereco_numero: string; endereco_cidade: string; endereco_uf: string;
   cor_primaria: string; cor_secundaria: string; pix_chave: string;
 };
 
-const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", cor_primaria: "#4c6fff", cor_secundaria: "#34d6c4", pix_chave: "" };
+const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", site: "", instagram: "", tiktok: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", cor_primaria: "#4c6fff", cor_secundaria: "#34d6c4", pix_chave: "" };
 
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Form>(emptyForm);
@@ -49,12 +50,13 @@ export default function ConfiguracoesPage() {
       if (!session.user) return;
       setUserId(session.user.id);
       const { data } = await supabase.from("perfis")
-        .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, cor_primaria, cor_secundaria, pix_chave, logo_url")
+        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, cor_primaria, cor_secundaria, pix_chave, logo_url")
         .eq("id", session.user.id).maybeSingle();
       if (data) {
         const d = data as Form & { logo_url: string | null };
         setForm({
           nome: d.nome ?? "", slug: d.slug ?? "", telefone: d.telefone ?? "", email_contato: d.email_contato ?? "",
+          site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
           endereco_cep: d.endereco_cep ?? "", endereco_rua: d.endereco_rua ?? "", endereco_numero: d.endereco_numero ?? "",
           endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
           cor_primaria: d.cor_primaria ?? "#4c6fff", cor_secundaria: d.cor_secundaria ?? "#34d6c4",
@@ -112,6 +114,7 @@ export default function ConfiguracoesPage() {
     const { error: err } = await supabase.from("perfis").update({
       nome: form.nome.trim(), slug: form.slug.trim() || null,
       telefone: form.telefone || null, email_contato: form.email_contato || null,
+      site: form.site.trim() || null, instagram: form.instagram.trim() || null, tiktok: form.tiktok.trim() || null,
       endereco_cep: form.endereco_cep || null, endereco_rua: form.endereco_rua || null,
       endereco_numero: form.endereco_numero || null, endereco_cidade: form.endereco_cidade || null,
       endereco_uf: form.endereco_uf || null, cor_primaria: form.cor_primaria,
@@ -143,6 +146,26 @@ export default function ConfiguracoesPage() {
             <label>Link personalizado</label>
             <input value={form.slug} onChange={e => up("slug", slugify(e.target.value))} placeholder="sua-clinica" />
             <small style={{ color: "#858d9f" }}>reserveclinic.com/agendamento/{form.slug || "sua-clinica"} — alterar quebra links já compartilhados.</small>
+          </div>
+          <div className="formRow">
+            <label>Site</label>
+            <input value={form.site} onChange={e => up("site", e.target.value)} placeholder="https://suaclinica.com.br" type="url" />
+          </div>
+          <div className="formRow split">
+            <div className="formRow">
+              <label>Instagram</label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#858d9f", fontSize: 13, pointerEvents: "none" }}>@</span>
+                <input value={form.instagram} onChange={e => up("instagram", e.target.value.replace(/^@/, ""))} placeholder="suaclinica" style={{ paddingLeft: 24 }} />
+              </div>
+            </div>
+            <div className="formRow">
+              <label>TikTok</label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#858d9f", fontSize: 13, pointerEvents: "none" }}>@</span>
+                <input value={form.tiktok} onChange={e => up("tiktok", e.target.value.replace(/^@/, ""))} placeholder="suaclinica" style={{ paddingLeft: 24 }} />
+              </div>
+            </div>
           </div>
         </div>
       </section>
