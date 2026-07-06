@@ -1,0 +1,81 @@
+.dataPanel{overflow:hidden}
+.tableToolbar{display:flex;justify-content:space-between;gap:15px;padding:16px 18px;border-bottom:1px solid #eceef3}
+.tableToolbar>label{width:min(380px,45%);height:37px;border:1px solid #e0e4eb;border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 11px;color:#8d96a7}
+.tableToolbar input{border:0;outline:0;width:100%;font-size:11px}.tableToolbar>div{display:flex;gap:8px}.tableScroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px}th{text-align:left;background:#fafbfc;padding:11px 18px;color:#9098a9;font-size:8px;letter-spacing:.06em}
+td{padding:14px 18px;border-top:1px solid #eef0f4;color:#50586b;font-size:10px}td>strong,td>small{display:block}td>strong{color:#2a3244;font-size:10px}td>small{color:#979eae;font-size:8px;margin-top:4px}.patientCell{display:flex;align-items:center;gap:10px}
+.tablePagination{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-top:1px solid #eceef3;color:#8991a2;font-size:9px}.tablePagination button{width:29px;height:29px;border:1px solid #e0e4eb;background:#fff;color:#6f7789}.tablePagination button.current{background:#4c6fff;color:#fff}
+.summaryPills{display:flex;gap:10px;margin-bottom:16px}.summaryPills>div{background:#fff;border:1px solid #e5e8ef;border-radius:9px;padding:10px 15px;display:flex;gap:12px;align-items:center}.summaryPills span{font-size:9px;color:#8d95a6}.summaryPills strong{font-size:11px}.mintText{color:#169b82}.amberText{color:#cf811c}
+.agendaToolbar{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.agendaToolbar strong{font:600 13px var(--font-space);color:#1c2437;margin-left:8px}
+.agendaFilter{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #dfe3eb;border-radius:9px;height:38px;padding:0 10px 0 12px}
+.agendaFilter label{font-size:11px;color:#858d9f;font-weight:600}
+.agendaFilter select{border:0;outline:0;background:transparent;font-size:12px;font-weight:600;color:#40485a;cursor:pointer;padding-right:8px}
+.agendaEmpty{background:#fff;border:1px solid #e5e8ef;border-radius:14px;padding:48px 16px;text-align:center;color:#858d9f;font-size:13px;margin:0}
+.linkButton{background:transparent;border:0;color:var(--brand-primary,#4c6fff);font-weight:600;cursor:pointer;font-size:13px;text-decoration:underline}
+.agendaGridPanel{overflow:hidden;position:relative}
+.agendaGridScroll{overflow:auto;max-width:100%}
+.agendaGridHeader{display:grid;position:sticky;top:0;background:#fff;z-index:2;border-bottom:1px solid #eceef3;min-width:640px}
+.agendaGridHeader>span{border-right:1px solid #eff1f5}
+.agendaDayHead{padding:14px 12px;border-right:1px solid #eff1f5;display:flex;flex-direction:column;align-items:center;gap:2px;text-transform:capitalize;color:#727b8e}
+.agendaDayHead>span{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#959cad}
+.agendaDayHead>strong{font:600 18px var(--font-space);color:#1c2437}
+.agendaDayHead>em{font-style:normal;font-size:9px;font-weight:600;color:#c77b16;background:#fff4e4;padding:2px 6px;border-radius:99px;margin-top:2px}
+.agendaDayHead.isToday>strong{background:var(--brand-primary,#4c6fff);color:#fff;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px}
+.agendaDayHead.isHoliday{background:#fffaf1}
+.agendaGridBody{display:grid;position:relative;min-width:640px}
+.agendaHourCol{border-right:1px solid #eff1f5;display:flex;flex-direction:column}
+.agendaHourCol>span{color:#9098a9;font-size:10px;padding:6px 12px;border-top:1px solid #f3f4f8}
+.agendaHourCol>span:first-child{border-top:0}
+.agendaDayCol{position:relative;border-right:1px solid #eff1f5;background:repeating-linear-gradient(to bottom,transparent 0,transparent 61px,#f3f4f8 61px,#f3f4f8 62px)}
+.agendaDayCol.isHoliday{background-color:#fffaf1;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 61px,#f5eddc 61px,#f5eddc 62px)}
+.agendaClosed{position:absolute;left:0;right:0;background:repeating-linear-gradient(45deg,#f6f7fa 0,#f6f7fa 6px,#eef0f4 6px,#eef0f4 12px);pointer-events:none}
+.agendaEvent{position:absolute;left:6px;right:6px;border-radius:8px;padding:8px 10px;display:flex;gap:8px;align-items:flex-start;overflow:hidden;cursor:pointer;border-left:3px solid;box-shadow:0 1px 2px rgba(20,30,60,.04);transition:transform .12s}
+.agendaEvent:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(20,30,60,.1)}
+.agendaEventAvatar{width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.6);display:grid;place-items:center;font-size:9px;font-weight:700;flex:none}
+.agendaEvent>div:last-child{min-width:0;flex:1}
+.agendaEvent strong,.agendaEvent span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agendaEvent strong{font-size:11px}
+.agendaEvent span{font-size:10px;opacity:.75;margin-top:2px}
+.agendaEvent.blue{background:#edf0ff;color:#435bc7;border-color:#4c6fff}
+.agendaEvent.mint{background:#e8f8f4;color:#157f6f;border-color:#34bda9}
+.agendaEvent.purple{background:#f1edff;color:#7658c8;border-color:#9676e5}
+.agendaEvent.amber{background:#fff3e3;color:#b86b12;border-color:#e49a35}
+.agendaLoading{padding:12px 20px;color:#858d9f;font-size:12px}
+.modalLg{width:min(720px,100%)}
+.tabsRow{display:flex;gap:2px;padding:0 22px;border-bottom:1px solid #eceef3;background:#fafbfc}
+.tabsRow button{background:transparent;border:0;padding:12px 14px;font-size:12px;font-weight:600;color:#858d9f;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabsRow button.active{color:var(--brand-primary,#4c6fff);border-color:var(--brand-primary,#4c6fff)}
+.ajustesDuracao{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;background:#f5f7ff;border:1px solid #dfe4ff;border-radius:10px;margin-bottom:16px}
+.ajustesDuracao strong,.ajustesDuracao small{display:block}
+.ajustesDuracao strong{font-size:13px;color:#1c2437}
+.ajustesDuracao small{font-size:11px;color:#7d8597;margin-top:3px}
+.ajustesDuracaoInput{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #dfe3eb;border-radius:8px;padding:0 10px}
+.ajustesDuracaoInput input{width:56px;height:34px;border:0;outline:0;font-size:13px;font-weight:600;color:#1c2437;text-align:right}
+.ajustesDuracaoInput span{font-size:11px;color:#858d9f}
+.agendaDayHead.isClosed{opacity:.6}
+.agendaDayHead .closedTag{background:#eef1f6;color:#697387}
+.agendaDayCol.isClosedDay{background:#fafbfc;background-image:none}
+.ajustesHint{margin:0 0 14px;color:#7d8597;font-size:12px}
+.ajustesDias{display:flex;flex-direction:column;gap:8px}
+.ajustesDia{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid #e5e8ef;border-radius:10px;background:#fafbfc;transition:background .15s}
+.ajustesDia.isOpen{background:#fff}
+.ajustesSwitch{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#1c2437;text-transform:capitalize;cursor:pointer}
+.ajustesSwitch input{width:18px;height:18px;accent-color:var(--brand-primary,#4c6fff);cursor:pointer}
+.ajustesHoras{display:flex;align-items:center;gap:8px}
+.ajustesHoras input{height:34px;border:1px solid #dfe3eb;border-radius:8px;padding:0 10px;font-size:12px;color:#1c2437;outline:0}
+.ajustesHoras input:disabled{background:#f5f7fb;color:#b3b8c4;cursor:not-allowed}
+.ajustesHoras em{font-style:normal;font-size:11px;color:#858d9f}
+.ajustesAddRow{display:flex;gap:8px;margin-bottom:14px}
+.ajustesAddRow input{flex:1;height:38px;border:1px solid #dfe3eb;border-radius:9px;padding:0 12px;font-size:13px;outline:0}
+.ajustesEmpty{margin:0;padding:24px 12px;text-align:center;color:#a8afbe;font-size:12px;border:1px dashed #dfe3eb;border-radius:10px}
+.ajustesLista{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.ajustesLista>li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e5e8ef;border-radius:9px;background:#fff;font-size:12px;color:#1c2437;text-transform:capitalize}
+.ajustesLista>li>span{flex:1}
+.ajustesProf{flex-wrap:wrap}
+.ajustesProf>input{flex:1;min-width:140px;height:32px;border:1px solid transparent;border-radius:7px;padding:0 8px;font-size:13px;font-weight:600;color:#1c2437;background:transparent;outline:0}
+.ajustesProf>input:focus{border-color:#dfe3eb;background:#fafbfc}
+.ajustesProfDias{display:flex;gap:4px;flex-wrap:wrap}
+.ajustesProfDias button{padding:5px 9px;border:1px solid #dfe3eb;border-radius:6px;background:#fff;font-size:10px;font-weight:600;color:#858d9f;cursor:pointer;text-transform:none}
+.ajustesProfDias button.active{background:var(--brand-primary,#4c6fff);color:#fff;border-color:var(--brand-primary,#4c6fff)}
+@media(max-width:560px){.ajustesDia{flex-direction:column;align-items:stretch;gap:10px}.ajustesHoras{justify-content:space-between}}
