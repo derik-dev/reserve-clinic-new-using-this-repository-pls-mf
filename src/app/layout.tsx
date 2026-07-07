@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+import { IBM_Plex_Sans, Space_Grotesk, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import "./product.css";
 import "./product-tables.css";
@@ -19,6 +19,13 @@ const space = Space_Grotesk({
   variable: "--font-space",
 });
 
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+});
+
 export const metadata: Metadata = {
   title: "Reserve Clinic — Gestão inteligente para clínicas",
   description:
@@ -27,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${plex.variable} ${space.variable}`}>
+    <html lang="pt-BR" className={`${plex.variable} ${space.variable} ${serif.variable}`}>
       <body>{children}</body>
     </html>
   );
