@@ -23,10 +23,10 @@ type Form = {
   nome: string; slug: string; telefone: string; email_contato: string;
   site: string; instagram: string; tiktok: string;
   endereco_cep: string; endereco_rua: string; endereco_numero: string; endereco_cidade: string; endereco_uf: string;
-  pix_chave: string;
+  pix_chave: string; valor_consulta: string;
 };
 
-const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", site: "", instagram: "", tiktok: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", pix_chave: "" };
+const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", site: "", instagram: "", tiktok: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", pix_chave: "", valor_consulta: "" };
 
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Form>(emptyForm);
@@ -49,7 +49,7 @@ export default function ConfiguracoesPage() {
       if (!session.user) return;
       setUserId(session.user.id);
       const { data, error: fetchErr } = await supabase.from("perfis")
-        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, logo_url")
+        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
         .eq("id", session.user.id).maybeSingle();
 
       const raw = data ?? (fetchErr
@@ -59,13 +59,14 @@ export default function ConfiguracoesPage() {
         : null);
 
       if (raw) {
-        const d = raw as Form & { logo_url: string | null };
+        const d = raw as Form & { logo_url: string | null; valor_consulta: number | null };
         setForm({
           nome: d.nome ?? "", slug: d.slug ?? "", telefone: d.telefone ?? "", email_contato: d.email_contato ?? "",
           site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
           endereco_cep: d.endereco_cep ?? "", endereco_rua: d.endereco_rua ?? "", endereco_numero: d.endereco_numero ?? "",
           endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
           pix_chave: d.pix_chave ?? "",
+          valor_consulta: d.valor_consulta != null ? String(d.valor_consulta) : "",
         });
         setLogoPreview(d.logo_url);
       }
@@ -110,6 +111,7 @@ export default function ConfiguracoesPage() {
       endereco_cep: form.endereco_cep || null, endereco_rua: form.endereco_rua || null,
       endereco_numero: form.endereco_numero || null, endereco_cidade: form.endereco_cidade || null,
       endereco_uf: form.endereco_uf || null, pix_chave: form.pix_chave.trim() || null,
+      ...(form.valor_consulta !== undefined ? { valor_consulta: form.valor_consulta ? Number(form.valor_consulta.replace(",", ".")) : null } : {}),
     }).eq("id", userId);
     setSaving(false);
     if (err) { setError(err.message); return; }
@@ -136,6 +138,11 @@ export default function ConfiguracoesPage() {
           <div className="formRow split">
             <div className="formRow"><label>Telefone / WhatsApp</label><input value={form.telefone} onChange={e => up("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
             <div className="formRow"><label>E-mail de contato</label><input type="email" value={form.email_contato} onChange={e => up("email_contato", e.target.value)} placeholder="contato@clinica.com.br" /></div>
+          </div>
+          <div className="formRow" style={{ maxWidth: 240 }}>
+            <label>Valor da consulta (R$)</label>
+            <input value={form.valor_consulta} onChange={e => up("valor_consulta", e.target.value)} placeholder="150,00" inputMode="decimal" />
+            <small style={{ color: "#858d9f" }}>Exibido no link de agendamento como referência para o paciente.</small>
           </div>
           <div className="formRow">
             <label>Link personalizado</label>

@@ -20,7 +20,7 @@ export type Perfil = {
 };
 
 const navigation = [
-  { href: "/dashboard", label: "Início", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Início", icon: LayoutDashboard }, 
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/consultas", label: "Consultas", icon: ClipboardList },
   { href: "/pacientes", label: "Pacientes", icon: Users },

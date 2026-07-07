@@ -17,6 +17,10 @@ ALTER TABLE perfis
   ADD COLUMN IF NOT EXISTS instagram TEXT,
   ADD COLUMN IF NOT EXISTS tiktok    TEXT;
 
+-- perfis: valor padrão da consulta (exibido no link de agendamento)
+ALTER TABLE perfis
+  ADD COLUMN IF NOT EXISTS valor_consulta NUMERIC(10,2);
+
 -- pacientes: campos extras do cadastro
 ALTER TABLE pacientes
   ADD COLUMN IF NOT EXISTS cpf              TEXT,

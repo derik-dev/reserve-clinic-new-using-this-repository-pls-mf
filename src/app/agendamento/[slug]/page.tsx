@@ -20,6 +20,7 @@ type PerfilPublic = {
   endereco_cidade: string | null;
   endereco_uf: string | null;
   pix_chave: string | null;
+  valor_consulta: number | null;
 };
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
@@ -116,7 +117,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave").eq("slug", slug).maybeSingle();
+      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, valor_consulta").eq("slug", slug).maybeSingle();
       setPerfil(data as PerfilPublic | null);
       if (data) {
         const perfilId = (data as PerfilPublic).id;
@@ -234,7 +235,15 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     <div className="bookingContainer">
       <section className="bookingClinic">
         <div className="clinicLogo" style={{ background: primary, color: "#fff", overflow: "hidden" }}>{perfil.logo_url ? <img src={perfil.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : perfil.nome.slice(0, 1)}</div>
-        <div><h1>{perfil.nome}</h1>{endereco && <p><MapPin size={15} /> {endereco}</p>}</div>
+        <div>
+          <h1>{perfil.nome}</h1>
+          {endereco && <p><MapPin size={15} /> {endereco}</p>}
+          {perfil.valor_consulta != null && (
+            <p style={{ margin: "6px 0 0", display: "inline-flex", alignItems: "center", gap: 6, background: "#f0f4ff", color: primary, borderRadius: 20, padding: "4px 12px", fontSize: 13, fontWeight: 600 }}>
+              Consulta: {perfil.valor_consulta.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+            </p>
+          )}
+        </div>
       </section>
 
       {pendingBooking && !done ? (
