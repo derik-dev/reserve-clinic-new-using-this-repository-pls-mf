@@ -51,6 +51,7 @@ const DEFAULT_CONFIG: AgendaConfig = {
 
 type Form = {
   nome: string;
+  cpf: string;
   telefone: string;
   email: string;
   data: string;
@@ -61,7 +62,7 @@ type Form = {
   profissional_nome: string;
 };
 
-const emptyForm: Form = { nome: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "", profissional_id: "", profissional_nome: "" };
+const emptyForm: Form = { nome: "", cpf: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "", profissional_id: "", profissional_nome: "" };
 
 type ProfissionalPublic = { id: string; nome: string; especialidade: string | null; foto_url: string | null };
 
@@ -262,6 +263,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       <PixCheckout
         agendamentoId={agendamentoId}
         clienteNome={form.nome}
+        clienteCpf={form.cpf || undefined}
         clienteEmail={form.email || undefined}
         valor={perfil.valor_consulta}
       />
@@ -323,6 +325,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#e8f8f3", color: "#15967e", display: "grid", placeItems: "center", margin: "0 auto 12px" }}><Check size={24} /></div>
             <h2 style={{ margin: "0 0 5px", fontSize: 18 }}>Solicitação enviada!</h2>
             <p style={{ margin: 0, color: "#7d8597", fontSize: 13 }}>Pague via PIX abaixo e envie o comprovante para a clínica pelo WhatsApp.</p>
+            {error && <p style={{ margin: "12px 0 0", color: "#dc2626", fontSize: 12, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "8px 12px" }}>{error}</p>}
           </section>
 
           {perfil.pix_chave && (() => {
@@ -492,6 +495,12 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                   <div className="formRow"><label>Telefone</label><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 99999-9999" /></div>
                   <div className="formRow"><label>E-mail</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" /></div>
                 </div>
+                {perfil.valor_consulta && (
+                  <div className="formRow" style={{ maxWidth: 240 }}>
+                    <label>CPF <span style={{ color: "#858d9f", fontWeight: 400 }}>(obrigatório para pagamento PIX)</span></label>
+                    <input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" inputMode="numeric" />
+                  </div>
+                )}
                 <div className="formRow"><label>Observações (opcional)</label><textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Convênio, sintomas, etc." /></div>
                 {error && <div className="onboardingError">{error}</div>}
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
