@@ -3,12 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://sandbox.asaas.com/api/v3";
 
-function asaas(path: string, init?: RequestInit) {
+function asaas(apiKey: string, path: string, init?: RequestInit) {
   return fetch(`${ASAAS_BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      access_token: process.env.ASAAS_API_KEY!,
+      access_token: apiKey,
       ...(init?.headers ?? {}),
     },
   });
@@ -20,6 +20,26 @@ function adminSupabase() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } }
   );
+}
+
+async function resolveApiKey(agendamentoId: string): Promise<string> {
+  const admin = adminSupabase();
+  const { data: ag } = await admin
+    .from("agendamentos")
+    .select("perfil_id")
+    .eq("id", agendamentoId)
+    .maybeSingle();
+
+  if (ag?.perfil_id) {
+    const { data: perfil } = await admin
+      .from("perfis")
+      .select("asaas_api_key")
+      .eq("id", ag.perfil_id)
+      .maybeSingle();
+    if (perfil?.asaas_api_key) return perfil.asaas_api_key;
+  }
+
+  return process.env.ASAAS_API_KEY!;
 }
 
 export async function POST(req: NextRequest) {
@@ -40,8 +60,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Resolução da API key: sub-conta do perfil > chave global
+    const apiKey = await resolveApiKey(agendamentoId);
+
     // 1. Criar cliente na Asaas
-    const custRes = await asaas("/customers", {
+    const custRes = await asaas(apiKey, "/customers", {
       method: "POST",
       body: JSON.stringify({
         name: clienteNome,
@@ -57,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Criar cobrança PIX (lean payments)
     const dueDate = new Date().toISOString().slice(0, 10);
-    const payRes = await asaas("/lean/payments", {
+    const payRes = await asaas(apiKey, "/lean/payments", {
       method: "POST",
       body: JSON.stringify({
         customer: customer.id,
@@ -75,7 +98,7 @@ export async function POST(req: NextRequest) {
     const payment = (await payRes.json()) as { id: string };
 
     // 3. Buscar QR Code
-    const qrRes = await asaas(`/payments/${payment.id}/pixQrCode`);
+    const qrRes = await asaas(apiKey, `/payments/${payment.id}/pixQrCode`);
     if (!qrRes.ok) throw new Error("Erro ao buscar QR Code PIX.");
     const qrData = (await qrRes.json()) as { encodedImage: string; payload: string };
 

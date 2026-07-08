@@ -15,6 +15,19 @@ function formatCep(raw: string) {
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
 }
 
+function formatCpfCnpj(raw: string) {
+  const d = raw.replace(/\D/g, "").slice(0, 14);
+  if (d.length <= 11) {
+    return d.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})$/, "$1.$2.$3-$4")
+            .replace(/(\d{3})(\d{3})(\d{1,3})$/, "$1.$2.$3")
+            .replace(/(\d{3})(\d{1,3})$/, "$1.$2");
+  }
+  return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{1,2})$/, "$1.$2.$3/$4-$5")
+          .replace(/(\d{2})(\d{3})(\d{3})(\d{1,4})$/, "$1.$2.$3/$4")
+          .replace(/(\d{2})(\d{3})(\d{1,3})$/, "$1.$2.$3")
+          .replace(/(\d{2})(\d{1,3})$/, "$1.$2");
+}
+
 function pixField(id: string, v: string) { return `${id}${String(v.length).padStart(2, "0")}${v}`; }
 function crc16(s: string) { let c = 0xffff; for (let i = 0; i < s.length; i++) { c ^= s.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) c = (c & 0x8000) ? (c << 1) ^ 0x1021 : c << 1; } return ((c & 0xffff).toString(16).toUpperCase().padStart(4, "0")); }
 function gerarPix(chave: string, nome: string, cidade: string) { const mai = pixField("00", "BR.GOV.BCB.PIX") + pixField("01", chave); const body = [pixField("00", "01"), pixField("26", mai), pixField("52", "0000"), pixField("53", "986"), pixField("58", "BR"), pixField("59", nome.slice(0, 25)), pixField("60", (cidade || "Brasil").slice(0, 15)), pixField("62", pixField("05", "***")), "6304"].join(""); return body + crc16(body); }
@@ -22,11 +35,20 @@ function gerarPix(chave: string, nome: string, cidade: string) { const mai = pix
 type Form = {
   nome: string; slug: string; telefone: string; email_contato: string;
   site: string; instagram: string; tiktok: string;
-  endereco_cep: string; endereco_rua: string; endereco_numero: string; endereco_cidade: string; endereco_uf: string;
+  cpf_cnpj: string;
+  endereco_cep: string; endereco_rua: string; endereco_numero: string;
+  endereco_bairro: string; endereco_cidade: string; endereco_uf: string;
   pix_chave: string; valor_consulta: string;
 };
 
-const emptyForm: Form = { nome: "", slug: "", telefone: "", email_contato: "", site: "", instagram: "", tiktok: "", endereco_cep: "", endereco_rua: "", endereco_numero: "", endereco_cidade: "", endereco_uf: "", pix_chave: "", valor_consulta: "" };
+const emptyForm: Form = {
+  nome: "", slug: "", telefone: "", email_contato: "",
+  site: "", instagram: "", tiktok: "",
+  cpf_cnpj: "",
+  endereco_cep: "", endereco_rua: "", endereco_numero: "",
+  endereco_bairro: "", endereco_cidade: "", endereco_uf: "",
+  pix_chave: "", valor_consulta: "",
+};
 
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Form>(emptyForm);
@@ -39,6 +61,7 @@ export default function ConfiguracoesPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   const up = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
@@ -49,7 +72,7 @@ export default function ConfiguracoesPage() {
       if (!session.user) return;
       setUserId(session.user.id);
       const { data, error: fetchErr } = await supabase.from("perfis")
-        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
+        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, cpf_cnpj, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
         .eq("id", session.user.id).maybeSingle();
 
       const raw = data ?? (fetchErr
@@ -63,8 +86,9 @@ export default function ConfiguracoesPage() {
         setForm({
           nome: d.nome ?? "", slug: d.slug ?? "", telefone: d.telefone ?? "", email_contato: d.email_contato ?? "",
           site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
+          cpf_cnpj: d.cpf_cnpj ?? "",
           endereco_cep: d.endereco_cep ?? "", endereco_rua: d.endereco_rua ?? "", endereco_numero: d.endereco_numero ?? "",
-          endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
+          endereco_bairro: d.endereco_bairro ?? "", endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
           pix_chave: d.pix_chave ?? "",
           valor_consulta: d.valor_consulta != null ? String(d.valor_consulta) : "",
         });
@@ -83,7 +107,13 @@ export default function ConfiguracoesPage() {
     try {
       const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
       const data = await res.json();
-      if (data && !data.erro) setForm(f => ({ ...f, endereco_rua: data.logradouro || f.endereco_rua, endereco_cidade: data.localidade || f.endereco_cidade, endereco_uf: data.uf || f.endereco_uf }));
+      if (data && !data.erro) setForm(f => ({
+        ...f,
+        endereco_rua: data.logradouro || f.endereco_rua,
+        endereco_bairro: data.bairro || f.endereco_bairro,
+        endereco_cidade: data.localidade || f.endereco_cidade,
+        endereco_uf: data.uf || f.endereco_uf,
+      }));
     } catch { /* silencioso */ } finally { setCepLoading(false); }
   }
 
@@ -108,8 +138,11 @@ export default function ConfiguracoesPage() {
       ...(form.site !== undefined ? { site: form.site.trim() || null } : {}),
       ...(form.instagram !== undefined ? { instagram: form.instagram.trim() || null } : {}),
       ...(form.tiktok !== undefined ? { tiktok: form.tiktok.trim() || null } : {}),
+      cpf_cnpj: form.cpf_cnpj.replace(/\D/g, "") || null,
       endereco_cep: form.endereco_cep || null, endereco_rua: form.endereco_rua || null,
-      endereco_numero: form.endereco_numero || null, endereco_cidade: form.endereco_cidade || null,
+      endereco_numero: form.endereco_numero || null,
+      endereco_bairro: form.endereco_bairro || null,
+      endereco_cidade: form.endereco_cidade || null,
       endereco_uf: form.endereco_uf || null, pix_chave: form.pix_chave.trim() || null,
       ...(form.valor_consulta !== undefined ? { valor_consulta: form.valor_consulta ? Number(form.valor_consulta.replace(",", ".")) : null } : {}),
     }).eq("id", userId);
@@ -139,10 +172,22 @@ export default function ConfiguracoesPage() {
             <div className="formRow"><label>Telefone / WhatsApp</label><input value={form.telefone} onChange={e => up("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
             <div className="formRow"><label>E-mail de contato</label><input type="email" value={form.email_contato} onChange={e => up("email_contato", e.target.value)} placeholder="contato@clinica.com.br" /></div>
           </div>
-          <div className="formRow" style={{ maxWidth: 240 }}>
-            <label>Valor da consulta (R$)</label>
-            <input value={form.valor_consulta} onChange={e => up("valor_consulta", e.target.value)} placeholder="150,00" inputMode="decimal" />
-            <small style={{ color: "#858d9f" }}>Exibido no link de agendamento como referência para o paciente.</small>
+          <div className="formRow split">
+            <div className="formRow" style={{ maxWidth: 240 }}>
+              <label>CPF / CNPJ</label>
+              <input
+                value={form.cpf_cnpj}
+                onChange={e => up("cpf_cnpj", formatCpfCnpj(e.target.value))}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+              />
+              <small style={{ color: "#858d9f" }}>Necessário para receber pagamentos via Asaas.</small>
+            </div>
+            <div className="formRow" style={{ maxWidth: 240 }}>
+              <label>Valor da consulta (R$)</label>
+              <input value={form.valor_consulta} onChange={e => up("valor_consulta", e.target.value)} placeholder="150,00" inputMode="decimal" />
+              <small style={{ color: "#858d9f" }}>Exibido no link de agendamento.</small>
+            </div>
           </div>
           <div className="formRow">
             <label>Link personalizado</label>
@@ -209,6 +254,7 @@ export default function ConfiguracoesPage() {
           <div className="formRow"><label>Rua / avenida</label><input value={form.endereco_rua} onChange={e => up("endereco_rua", e.target.value)} placeholder="Av. Paulista" /></div>
           <div className="formRow split">
             <div className="formRow"><label>Número</label><input value={form.endereco_numero} onChange={e => up("endereco_numero", e.target.value)} placeholder="1200" /></div>
+            <div className="formRow"><label>Bairro</label><input value={form.endereco_bairro} onChange={e => up("endereco_bairro", e.target.value)} placeholder="Centro" /></div>
             <div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={e => up("endereco_uf", e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} /></div>
           </div>
         </div>
@@ -238,6 +284,7 @@ export default function ConfiguracoesPage() {
           )}
         </div>
       </section>
+
     </div>
 
     <div style={{ maxWidth: 780, margin: "0 auto" }}>
@@ -248,5 +295,6 @@ export default function ConfiguracoesPage() {
         </button>
       </div>
     </div>
+
   </>;
 }

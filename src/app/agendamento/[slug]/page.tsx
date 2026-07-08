@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Stethosc
 import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
+import { PixCheckout } from "@/components/PixCheckout";
 
 type PerfilPublic = {
   id: string;
@@ -111,6 +112,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [agendamentoId, setAgendamentoId] = useState<string | null>(null);
   const [pendingBooking, setPendingBooking] = useState<PendingBooking | null>(null);
   const [copiedPix, setCopiedPix] = useState(false);
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
@@ -198,7 +200,10 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     if (!form.nome.trim() || !form.data || !form.hora) { setError("Preencha nome, data e horário."); return; }
     setError(null);
     setSaving(true);
+
     const dataIso = new Date(`${form.data}T${form.hora}:00`).toISOString();
+
+    // 1. Cria consulta no dashboard
     const { error: err } = await supabase.from("consultas").insert({
       perfil_id: perfil.id,
       paciente_nome: form.nome.trim(),
@@ -211,10 +216,36 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       status: "aguardando",
       observacoes: form.observacoes || null,
     });
+    if (err) { setSaving(false); setError("Não foi possível confirmar. Tente novamente."); return; }
+
+    // 2. Se há valor_consulta, cria agendamento via API (service role, sem RLS)
+    let agId: string | null = null;
+    if (perfil.valor_consulta) {
+      try {
+        const res = await fetch("/api/criar-agendamento", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            perfilId: perfil.id,
+            clienteNome: form.nome.trim(),
+            clienteTelefone: form.telefone || undefined,
+            clienteEmail: form.email || undefined,
+            data: form.data,
+            hora: form.hora,
+          }),
+        });
+        const data = await res.json() as { id?: string; error?: string };
+        if (res.ok && data.id) agId = data.id;
+        else setError(`Erro ao criar agendamento: ${data.error ?? "desconhecido"}`);
+      } catch {
+        setError("Erro de conexão ao criar agendamento.");
+      }
+    }
+
     setSaving(false);
-    if (err) { setError("Não foi possível confirmar. Tente novamente."); return; }
     const bookingData: PendingBooking = { nome: form.nome.trim(), data: form.data, hora: form.hora, servico: form.servico, profissional: form.profissional_nome, clinicNome: perfil.nome };
     try { localStorage.setItem(`rc_booking_${slug}`, JSON.stringify(bookingData)); } catch { /* ignorar */ }
+    setAgendamentoId(agId);
     setDone(true);
   }
 
@@ -223,6 +254,18 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   }
   if (!perfil) {
     return <main className="bookingPage"><div style={{ padding: 40, textAlign: "center", color: "#858d9f" }}>Clínica não encontrada.</div></main>;
+  }
+
+  // Fluxo PIX Asaas: substitui a página inteira pelo checkout
+  if (done && agendamentoId && perfil.valor_consulta) {
+    return (
+      <PixCheckout
+        agendamentoId={agendamentoId}
+        clienteNome={form.nome}
+        clienteEmail={form.email || undefined}
+        valor={perfil.valor_consulta}
+      />
+    );
   }
 
   const diaMensagem = diaInfo && (!diaInfo.dayConfig.aberto ? "Não atendemos nesse dia da semana." : diaInfo.feriado ? "Esse dia é feriado — sem atendimento." : slots.length === 0 || slots.every(s => s.ocupado) ? "Nenhum horário disponível." : null);
