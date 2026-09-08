@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
+const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
+
 function adminSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,57 +25,86 @@ export async function POST(req: NextRequest) {
     if (!agendamentoId || !clienteNome || !valor) {
       return NextResponse.json({ error: "Parâmetros obrigatórios ausentes." }, { status: 400 });
     }
-
-    const dateOfExpiration = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-
-    const body = {
-      transaction_amount: valor,
-      description: "Agendamento Reserve Clinic",
-      payment_method_id: "pix",
-      external_reference: agendamentoId,
-      date_of_expiration: dateOfExpiration,
-      payer: {
-        email: clienteEmail ?? `paciente.${agendamentoId.slice(0, 8)}@reserveclinic.com`,
-        first_name: clienteNome.split(" ")[0],
-        last_name: clienteNome.split(" ").slice(1).join(" ") || clienteNome.split(" ")[0],
-        ...(clienteCpf ? {
-          identification: { type: "CPF", number: clienteCpf.replace(/\D/g, "") },
-        } : {}),
-      },
-    };
-
-    const res = await fetch("https://api.mercadopago.com/v1/payments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-        "X-Idempotency-Key": agendamentoId,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as { message?: string; cause?: unknown[] };
-      throw new Error(err.message ?? "Erro ao criar pagamento PIX.");
+    if (!clienteEmail?.trim()) {
+      return NextResponse.json({ error: "E-mail do paciente é obrigatório para pagamento PIX." }, { status: 400 });
+    }
+    if (!clienteCpf?.trim()) {
+      return NextResponse.json({ error: "CPF do paciente é obrigatório para pagamento PIX." }, { status: 400 });
     }
 
-    const pagamento = (await res.json()) as {
-      id: number;
-      point_of_interaction: {
-        transaction_data: { qr_code_base64: string; qr_code: string };
-      };
+    const asaasKey = process.env.ASAAS_API_KEY ?? "";
+
+    const headers = {
+      "Content-Type": "application/json",
+      access_token: asaasKey,
     };
+
+    // 1. Criar ou recuperar cliente na Asaas pelo CPF
+    const cpfDigits = clienteCpf.replace(/\D/g, "");
+    const customerRes = await fetch(`${ASAAS_BASE}/customers`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        name: clienteNome,
+        cpfCnpj: cpfDigits,
+        email: clienteEmail.trim(),
+        externalReference: agendamentoId,
+      }),
+    });
+
+    if (!customerRes.ok) {
+      const err = await customerRes.json().catch(() => ({})) as { errors?: { description: string }[] };
+      throw new Error(err?.errors?.[0]?.description ?? "Erro ao criar cliente na Asaas.");
+    }
+    const customer = (await customerRes.json()) as { id: string };
+
+    // 2. Criar cobrança PIX
+    const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 10);
+    const paymentRes = await fetch(`${ASAAS_BASE}/payments`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        customer: customer.id,
+        billingType: "PIX",
+        value: valor,
+        dueDate,
+        description: "Agendamento Reserve Clinic",
+        externalReference: agendamentoId,
+      }),
+    });
+
+    if (!paymentRes.ok) {
+      const err = await paymentRes.json().catch(() => ({})) as { errors?: { description: string }[] };
+      throw new Error(err?.errors?.[0]?.description ?? "Erro ao criar cobrança PIX na Asaas.");
+    }
+    const payment = (await paymentRes.json()) as { id: string };
+
+    // 3. Buscar QR Code PIX — produção pode levar até ~15 s para gerar
+    let qrCodeBase64 = "";
+    let copiaECola = "";
+    for (let tentativa = 0; tentativa < 6; tentativa++) {
+      if (tentativa > 0) await new Promise(r => setTimeout(r, 3000));
+      const qrRes = await fetch(`${ASAAS_BASE}/payments/${payment.id}/pixQrCode`, { headers });
+      if (qrRes.ok) {
+        const qrData = (await qrRes.json()) as { encodedImage?: string; payload?: string };
+        if (qrData.encodedImage && qrData.payload) {
+          qrCodeBase64 = qrData.encodedImage;
+          copiaECola = qrData.payload;
+          break;
+        }
+      }
+    }
+
+    if (!qrCodeBase64) {
+      throw new Error("QR Code PIX não disponível ainda. Tente novamente em instantes.");
+    }
 
     await adminSupabase()
       .from("agendamentos")
-      .update({ pix_id: String(pagamento.id) })
+      .update({ pix_id: payment.id })
       .eq("id", agendamentoId);
 
-    return NextResponse.json({
-      pixId: String(pagamento.id),
-      qrCodeBase64: pagamento.point_of_interaction.transaction_data.qr_code_base64,
-      copiaECola: pagamento.point_of_interaction.transaction_data.qr_code,
-    });
+    return NextResponse.json({ pixId: payment.id, qrCodeBase64, copiaECola });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro interno ao gerar PIX.";
     return NextResponse.json({ error: msg }, { status: 500 });

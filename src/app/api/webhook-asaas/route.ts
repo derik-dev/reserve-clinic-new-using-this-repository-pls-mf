@@ -12,10 +12,13 @@ function adminSupabase() {
 const EVENTOS_CONFIRMACAO = new Set(["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"]);
 
 export async function POST(req: NextRequest) {
-  // Token inválido → 401 (Asaas não recoloca na fila para respostas 4xx)
-  const token = req.headers.get("asaas-access-token");
-  if (!process.env.ASAAS_WEBHOOK_TOKEN || token !== process.env.ASAAS_WEBHOOK_TOKEN) {
-    return NextResponse.json({ received: false }, { status: 401 });
+  // Valida token apenas se ASAAS_WEBHOOK_TOKEN estiver configurado
+  const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
+  if (webhookToken) {
+    const token = req.headers.get("asaas-access-token");
+    if (token !== webhookToken) {
+      return NextResponse.json({ received: false }, { status: 401 });
+    }
   }
 
   // Sempre retorna 200 após validar o token — erros internos são silenciados

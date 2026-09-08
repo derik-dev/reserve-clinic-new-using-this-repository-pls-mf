@@ -199,6 +199,10 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   async function handleConfirm() {
     if (!perfil) return;
     if (!form.nome.trim() || !form.data || !form.hora) { setError("Preencha nome, data e horário."); return; }
+    if (perfil.valor_consulta) {
+      if (!form.email.trim()) { setError("Informe seu e-mail para realizar o pagamento PIX."); return; }
+      if (!form.cpf.trim()) { setError("Informe seu CPF para realizar o pagamento PIX."); return; }
+    }
     setError(null);
     setSaving(true);
 
@@ -493,12 +497,15 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                 <div className="formRow"><label>Nome completo</label><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Seu nome" /></div>
                 <div className="formRow split">
                   <div className="formRow"><label>Telefone</label><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 99999-9999" /></div>
-                  <div className="formRow"><label>E-mail</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" /></div>
+                  <div className="formRow">
+                    <label>E-mail {perfil.valor_consulta && <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span>}</label>
+                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" required={!!perfil.valor_consulta} />
+                  </div>
                 </div>
                 {perfil.valor_consulta && (
                   <div className="formRow" style={{ maxWidth: 240 }}>
-                    <label>CPF <span style={{ color: "#858d9f", fontWeight: 400 }}>(obrigatório para pagamento PIX)</span></label>
-                    <input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" inputMode="numeric" />
+                    <label>CPF <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span> <span style={{ color: "#858d9f", fontWeight: 400 }}>(obrigatório para PIX)</span></label>
+                    <input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" inputMode="numeric" required />
                   </div>
                 )}
                 <div className="formRow"><label>Observações (opcional)</label><textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Convênio, sintomas, etc." /></div>

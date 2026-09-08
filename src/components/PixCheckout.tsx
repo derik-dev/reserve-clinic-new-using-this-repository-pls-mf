@@ -47,6 +47,7 @@ export function PixCheckout({
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const successRef   = useRef<HTMLDivElement>(null);
@@ -72,7 +73,7 @@ export function PixCheckout({
       }
     })();
     return () => { cancelled = true; };
-  }, [agendamentoId, clienteNome, clienteCpf, clienteEmail, valor]);
+  }, [agendamentoId, clienteNome, clienteCpf, clienteEmail, valor, tentativa]);
 
   // ── 2. Realtime — aguarda confirmação de pagamento
   useEffect(() => {
@@ -88,6 +89,21 @@ export function PixCheckout({
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [agendamentoId]);
+
+  // ── 2b. Polling — fallback para quando o Realtime não dispara
+  // (webhook aponta para localhost em dev, ou Realtime não habilitado na tabela)
+  useEffect(() => {
+    if (!pix || confirmado) return;
+    const id = setInterval(async () => {
+      const { data } = await supabase
+        .from("agendamentos")
+        .select("status")
+        .eq("id", agendamentoId)
+        .maybeSingle();
+      if (data?.status === "confirmado") setConfirmado(true);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [pix, confirmado, agendamentoId]);
 
   // ── 3. GSAP — entrada do card
   useEffect(() => {
@@ -248,7 +264,7 @@ export function PixCheckout({
                 <AlertCircle size={28} style={{ margin: "0 auto 10px", display: "block" }} />
                 <p style={{ margin: "0 0 16px", fontSize: 14, lineHeight: 1.5 }}>{fetchError}</p>
                 <button
-                  onClick={() => { setFetchError(null); setLoadingPix(true); }}
+                  onClick={() => { setFetchError(null); setLoadingPix(true); setTentativa(t => t + 1); }}
                   style={{
                     background: "transparent",
                     border: `1px solid #f87171`,
