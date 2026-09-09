@@ -185,10 +185,11 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     const now = new Date();
     const isToday = form.data === toIsoDate(now);
     const nowMin = isToday ? now.getHours() * 60 + now.getMinutes() : -1;
+    const ANTECEDENCIA = 10;
     const arr: { hora: string; ocupado: boolean }[] = [];
     for (let m = inicioMin; m + dur <= fimMin; m += dur) {
       const slotEnd = m + dur;
-      const passado = isToday && slotEnd <= nowMin;
+      const passado = isToday && m - nowMin <= ANTECEDENCIA;
       const ocupado = passado || busyRanges.some(r => m < r.fim && r.inicio < slotEnd);
       arr.push({ hora: minToLabel(m), ocupado });
     }
