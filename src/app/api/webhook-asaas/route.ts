@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { enviarWhatsapp } from "@/lib/enviarWhatsapp";
 
 function adminSupabase() {
   return createClient(
@@ -12,7 +13,6 @@ function adminSupabase() {
 const EVENTOS_CONFIRMACAO = new Set(["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"]);
 
 export async function POST(req: NextRequest) {
-  // Valida token apenas se ASAAS_WEBHOOK_TOKEN estiver configurado
   const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
   if (webhookToken) {
     const token = req.headers.get("asaas-access-token");
@@ -21,8 +21,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Sempre retorna 200 após validar o token — erros internos são silenciados
-  // para evitar loop de reenvio da Asaas
   try {
     const body = (await req.json()) as {
       event: string;
@@ -30,13 +28,41 @@ export async function POST(req: NextRequest) {
     };
 
     if (EVENTOS_CONFIRMACAO.has(body.event) && body.payment?.externalReference) {
-      await adminSupabase()
+      const agendamentoId = body.payment.externalReference;
+      const admin = adminSupabase();
+
+      // Busca dados do agendamento e status atual (idempotência + dados para WhatsApp)
+      const { data: agendamento } = await admin
+        .from("agendamentos")
+        .select("status, cliente_nome, cliente_telefone, data, hora")
+        .eq("id", agendamentoId)
+        .maybeSingle();
+
+      const jaConfirmado = agendamento?.status === "confirmado";
+
+      await admin
         .from("agendamentos")
         .update({ status: "confirmado" })
-        .eq("id", body.payment.externalReference);
+        .eq("id", agendamentoId);
+
+      // Envia WhatsApp apenas se era a primeira confirmação (evita reenvio)
+      if (!jaConfirmado && agendamento?.cliente_telefone) {
+        try {
+          const [ano, mes, dia] = (agendamento.data as string).split("-");
+          const dataFormatada = `${dia}/${mes}/${ano}`;
+          const mensagem =
+            `Olá, ${agendamento.cliente_nome}! ` +
+            `Seu agendamento no Centro Auditivo Macaé foi confirmado para ` +
+            `${dataFormatada} às ${agendamento.hora}. ` +
+            `Te esperamos! 💙`;
+          await enviarWhatsapp(agendamento.cliente_telefone, mensagem);
+        } catch (errWpp) {
+          console.error("[webhook-asaas] falha ao enviar WhatsApp:", errWpp);
+        }
+      }
     }
   } catch {
-    // Silencioso — responde 200 de qualquer forma
+    // Silencioso — responde 200 de qualquer forma para evitar loop de reenvio
   }
 
   return NextResponse.json({ received: true });
