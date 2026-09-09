@@ -144,7 +144,9 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       if (!perfil || !form.data) { setBusyRanges([]); return; }
       const inicio = new Date(`${form.data}T00:00:00`);
       const fim = new Date(`${form.data}T23:59:59`);
-      const { data } = await supabase.from("consultas").select("data_hora, duracao_min").eq("perfil_id", perfil.id).gte("data_hora", inicio.toISOString()).lte("data_hora", fim.toISOString());
+      let query = supabase.from("consultas").select("data_hora, duracao_min").eq("perfil_id", perfil.id).gte("data_hora", inicio.toISOString()).lte("data_hora", fim.toISOString());
+      if (form.profissional_nome) query = query.eq("profissional", form.profissional_nome);
+      const { data } = await query;
       const ranges = ((data as { data_hora: string; duracao_min: number }[] | null) ?? []).map(c => {
         const dt = new Date(c.data_hora);
         const start = dt.getHours() * 60 + dt.getMinutes();
@@ -152,7 +154,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       });
       setBusyRanges(ranges);
     })();
-  }, [perfil, form.data]);
+  }, [perfil, form.data, form.profissional_nome]);
 
   const endereco = useMemo(() => {
     if (!perfil) return "";
