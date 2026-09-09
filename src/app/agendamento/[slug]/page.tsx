@@ -208,45 +208,29 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     setError(null);
     setSaving(true);
 
-    const dataIso = new Date(`${form.data}T${form.hora}:00`).toISOString();
-
-    // 1. Cria consulta no dashboard
-    const { error: err } = await supabase.from("consultas").insert({
-      perfil_id: perfil.id,
-      paciente_nome: form.nome.trim(),
-      paciente_telefone: form.telefone || null,
-      paciente_email: form.email || null,
-      data_hora: dataIso,
-      duracao_min: config.duracao_min,
-      servico: form.servico || null,
-      profissional: form.profissional_nome || null,
-      status: "aguardando",
-      observacoes: form.observacoes || null,
-    });
-    if (err) { setSaving(false); setError("Não foi possível confirmar. Tente novamente."); return; }
-
-    // 2. Se há valor_consulta, cria agendamento via API (service role, sem RLS)
     let agId: string | null = null;
-    if (perfil.valor_consulta) {
-      try {
-        const res = await fetch("/api/criar-agendamento", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            perfilId: perfil.id,
-            clienteNome: form.nome.trim(),
-            clienteTelefone: form.telefone || undefined,
-            clienteEmail: form.email || undefined,
-            data: form.data,
-            hora: form.hora,
-          }),
-        });
-        const data = await res.json() as { id?: string; error?: string };
-        if (res.ok && data.id) agId = data.id;
-        else setError(`Erro ao criar agendamento: ${data.error ?? "desconhecido"}`);
-      } catch {
-        setError("Erro de conexão ao criar agendamento.");
-      }
+    try {
+      const res = await fetch("/api/criar-agendamento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          perfilId: perfil.id,
+          clienteNome: form.nome.trim(),
+          clienteTelefone: form.telefone || undefined,
+          clienteEmail: form.email || undefined,
+          data: form.data,
+          hora: form.hora,
+          duracaoMin: config.duracao_min,
+          servico: form.servico || undefined,
+          profissional: form.profissional_nome || undefined,
+          observacoes: form.observacoes || undefined,
+        }),
+      });
+      const json = await res.json() as { id?: string; error?: string };
+      if (res.ok && json.id) agId = json.id;
+      else { setSaving(false); setError(`Não foi possível confirmar: ${json.error ?? "tente novamente."}`); return; }
+    } catch {
+      setSaving(false); setError("Erro de conexão. Tente novamente."); return;
     }
 
     setSaving(false);
