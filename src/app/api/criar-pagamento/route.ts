@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { notificarDiscord } from "@/lib/notificarDiscord";
+
+function horaAgora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
 
 const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
 
@@ -107,6 +112,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ pixId: payment.id, qrCodeBase64, copiaECola });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro interno ao gerar PIX.";
+    await notificarDiscord(`🔴 Erro em /api/criar-pagamento às ${horaAgora()}: ${msg}`, "critico");
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

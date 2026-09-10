@@ -1,6 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { enviarWhatsapp } from "@/lib/enviarWhatsapp";
+import { notificarDiscord } from "@/lib/notificarDiscord";
+
+function horaAgora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
 
 function adminSupabase() {
   return createClient(
@@ -59,11 +64,15 @@ export async function POST(req: NextRequest) {
           await enviarWhatsapp(agendamento.cliente_telefone, mensagem);
         } catch (errWpp) {
           console.error("[webhook-asaas] falha ao enviar WhatsApp:", errWpp);
+          const msg = errWpp instanceof Error ? errWpp.message : String(errWpp);
+          await notificarDiscord(`🔴 Erro em /api/webhook-asaas às ${horaAgora()}: falha ao enviar WhatsApp — ${msg}`, "critico");
         }
       }
     }
-  } catch {
+  } catch (err) {
     // Silencioso — responde 200 de qualquer forma para evitar loop de reenvio
+    const msg = err instanceof Error ? err.message : String(err);
+    await notificarDiscord(`🔴 Erro em /api/webhook-asaas às ${horaAgora()}: ${msg}`, "critico");
   }
 
   return NextResponse.json({ received: true });
