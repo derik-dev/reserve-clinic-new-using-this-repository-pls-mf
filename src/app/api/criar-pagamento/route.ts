@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { notificarDiscord } from "@/lib/notificarDiscord";
+import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
 
 function horaAgora() {
   return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
@@ -104,10 +104,13 @@ export async function POST(req: NextRequest) {
       throw new Error("QR Code PIX não disponível ainda. Tente novamente em instantes.");
     }
 
-    await adminSupabase()
-      .from("agendamentos")
-      .update({ pix_id: payment.id })
-      .eq("id", agendamentoId);
+    throwIfSupabaseError(
+      await adminSupabase()
+        .from("agendamentos")
+        .update({ pix_id: payment.id })
+        .eq("id", agendamentoId),
+      "criar-pagamento.update pix_id"
+    );
 
     return NextResponse.json({ pixId: payment.id, qrCodeBase64, copiaECola });
   } catch (e) {

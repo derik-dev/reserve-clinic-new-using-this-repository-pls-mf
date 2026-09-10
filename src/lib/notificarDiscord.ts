@@ -1,5 +1,14 @@
 export type GravidadeDiscord = "critico" | "geral";
 
+type SupabaseResult<T> = { data: T; error: { message: string } | null };
+
+export function throwIfSupabaseError<T>(result: SupabaseResult<T>, contexto: string): SupabaseResult<T> {
+  if (result.error) {
+    throw new Error(`Supabase (${contexto}): ${result.error.message}`);
+  }
+  return result;
+}
+
 export async function notificarDiscord(mensagem: string, gravidade: GravidadeDiscord): Promise<void> {
   const url = gravidade === "critico"
     ? process.env.DISCORD_WEBHOOK_CRITICO

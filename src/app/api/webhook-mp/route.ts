@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
+
+function horaAgora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
 
 function adminSupabase() {
   return createClient(
@@ -67,13 +72,18 @@ export async function POST(req: NextRequest) {
     const pagamento = (await res.json()) as { status: string; external_reference?: string };
 
     if (pagamento.status === "approved" && pagamento.external_reference) {
-      await adminSupabase()
-        .from("agendamentos")
-        .update({ status: "confirmado" })
-        .eq("id", pagamento.external_reference);
+      throwIfSupabaseError(
+        await adminSupabase()
+          .from("agendamentos")
+          .update({ status: "confirmado" })
+          .eq("id", pagamento.external_reference),
+        "webhook-mp.update status"
+      );
     }
   } catch (e) {
     console.error("[webhook-mp]", e);
+    const msg = e instanceof Error ? e.message : String(e);
+    await notificarDiscord(`🔴 Erro em /api/webhook-mp às ${horaAgora()}: ${msg}`, "critico");
   }
 
   // Sempre 200 — MP reenvia em loop se não receber 200

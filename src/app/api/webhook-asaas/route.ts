@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { enviarWhatsapp } from "@/lib/enviarWhatsapp";
-import { notificarDiscord } from "@/lib/notificarDiscord";
+import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
 
 function horaAgora() {
   return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
@@ -37,18 +37,24 @@ export async function POST(req: NextRequest) {
       const admin = adminSupabase();
 
       // Busca dados do agendamento e status atual (idempotência + dados para WhatsApp)
-      const { data: agendamento } = await admin
-        .from("agendamentos")
-        .select("status, cliente_nome, cliente_telefone, data, hora")
-        .eq("id", agendamentoId)
-        .maybeSingle();
+      const { data: agendamento } = throwIfSupabaseError(
+        await admin
+          .from("agendamentos")
+          .select("status, cliente_nome, cliente_telefone, data, hora")
+          .eq("id", agendamentoId)
+          .maybeSingle(),
+        "webhook-asaas.select agendamento"
+      );
 
       const jaConfirmado = agendamento?.status === "confirmado";
 
-      await admin
-        .from("agendamentos")
-        .update({ status: "confirmado" })
-        .eq("id", agendamentoId);
+      throwIfSupabaseError(
+        await admin
+          .from("agendamentos")
+          .update({ status: "confirmado" })
+          .eq("id", agendamentoId),
+        "webhook-asaas.update status"
+      );
 
       // Envia WhatsApp apenas se era a primeira confirmação (evita reenvio)
       if (!jaConfirmado && agendamento?.cliente_telefone) {

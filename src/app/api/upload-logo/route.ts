@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { notificarDiscord } from "@/lib/notificarDiscord";
+
+function horaAgora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
 
 const DEFAULT_BUCKET = "clinic-logos";
 
@@ -45,6 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: pub.publicUrl });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro ao fazer upload.";
+    await notificarDiscord(`🔴 Erro em /api/upload-logo às ${horaAgora()}: ${msg}`, "critico");
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
+
+function horaAgora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
 
 const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
 
@@ -28,11 +33,14 @@ export async function POST(req: NextRequest) {
 
     // 2. Buscar dados do perfil
     const admin = adminSupabase();
-    const { data: perfil } = await admin
-      .from("perfis")
-      .select("nome, email_contato, cpf_cnpj, telefone, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, asaas_conta_id")
-      .eq("id", user.id)
-      .maybeSingle();
+    const { data: perfil } = throwIfSupabaseError(
+      await admin
+        .from("perfis")
+        .select("nome, email_contato, cpf_cnpj, telefone, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, asaas_conta_id")
+        .eq("id", user.id)
+        .maybeSingle(),
+      "conectar-asaas.select perfil"
+    );
 
     if (!perfil) return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
     if (perfil.asaas_conta_id) return NextResponse.json({ error: "Conta Asaas já conectada.", jaConectado: true }, { status: 400 });
@@ -96,18 +104,22 @@ export async function POST(req: NextRequest) {
     }).catch(() => { /* webhook opcional — não bloqueia */ });
 
     // 5. Salvar credenciais no perfil
-    await admin
-      .from("perfis")
-      .update({
-        asaas_conta_id: account.id,
-        asaas_api_key: account.apiKey,
-        asaas_wallet_id: account.walletId ?? account.id,
-      })
-      .eq("id", user.id);
+    throwIfSupabaseError(
+      await admin
+        .from("perfis")
+        .update({
+          asaas_conta_id: account.id,
+          asaas_api_key: account.apiKey,
+          asaas_wallet_id: account.walletId ?? account.id,
+        })
+        .eq("id", user.id),
+      "conectar-asaas.update credenciais"
+    );
 
     return NextResponse.json({ sucesso: true, contaId: account.id });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro interno.";
+    await notificarDiscord(`🔴 Erro em /api/conectar-asaas às ${horaAgora()}: ${msg}`, "critico");
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

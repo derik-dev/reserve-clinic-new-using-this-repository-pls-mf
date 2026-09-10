@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
+
+function horaAgora() {
+  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
+}
 
 function adminSupabase() {
   return createClient(
@@ -67,16 +72,13 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
-    if (agendamentoResult.error) {
-      return NextResponse.json({ error: agendamentoResult.error.message }, { status: 500 });
-    }
-    if (consultaResult.error) {
-      return NextResponse.json({ error: consultaResult.error.message }, { status: 500 });
-    }
+    throwIfSupabaseError(agendamentoResult, "criar-agendamento.insert agendamento");
+    throwIfSupabaseError(consultaResult, "criar-agendamento.insert consulta");
 
     return NextResponse.json({ id: agendamentoId });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro interno.";
+    await notificarDiscord(`🔴 Erro em /api/criar-agendamento às ${horaAgora()}: ${msg}`, "critico");
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
