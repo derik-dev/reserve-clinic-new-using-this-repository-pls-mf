@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChevronDown, Download, Filter, Plus, Search, X } from "lucide-react";
+import { CalendarDays, CalendarX, ChevronDown, Download, Filter, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -41,18 +41,30 @@ export default function ConsultasPage() {
   const [statusFiltro, setStatusFiltro] = useState<ConsultaStatus | "todos">("todos");
   const [showPeriodo, setShowPeriodo] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const periodoRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
-    const [cs, ps] = await Promise.all([
-      supabase.from("consultas").select("*").order("data_hora", { ascending: true }),
-      supabase.from("pacientes").select("*").eq("status", "ativo").order("nome"),
-    ]);
-    setConsultas((cs.data as Consulta[] | null) ?? []);
-    setPacientes((ps.data as Paciente[] | null) ?? []);
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const [cs, ps] = await Promise.race([
+        Promise.all([
+          supabase.from("consultas").select("*").order("data_hora", { ascending: true }),
+          supabase.from("pacientes").select("*").eq("status", "ativo").order("nome"),
+        ]),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
+      ]);
+      setConsultas((cs.data as Consulta[] | null) ?? []);
+      setPacientes((ps.data as Paciente[] | null) ?? []);
+    } catch {
+      setLoadError(true);
+      setConsultas([]);
+      setPacientes([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -226,9 +238,19 @@ export default function ConsultasPage() {
           <thead><tr><th>QUANDO</th><th>PACIENTE / SERVIÇO</th><th>PROFISSIONAL</th><th>VALOR</th><th>STATUS</th><th /></tr></thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ padding: "48px 16px", textAlign: "center", color: "#858d9f", fontSize: 13 }}>Carregando…</td></tr>
+              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Não foi possível carregar as consultas. <button className="linkButton" onClick={load}>Tentar novamente</button></td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: "48px 16px", textAlign: "center", color: "#858d9f", fontSize: 13 }}>{consultas.length === 0 ? "Nenhuma consulta cadastrada." : "Nenhuma consulta encontrada."}</td></tr>
+              <tr><td colSpan={6} style={{ padding: 0 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "72px 24px", color: "var(--text-muted)", textAlign: "center" }}>
+                  <CalendarX size={38} strokeWidth={1.4} style={{ color: "var(--text-subtle)", opacity: .7 }} />
+                  <div>
+                    <strong style={{ display: "block", font: "600 16px var(--font-space)", color: "var(--text)", letterSpacing: "-.01em", marginBottom: 6 }}>{consultas.length === 0 ? "Nenhuma consulta agendada ainda" : "Nenhuma consulta encontrada"}</strong>
+                    <small style={{ display: "block", fontSize: 12, color: "var(--text-muted)", maxWidth: 320 }}>{consultas.length === 0 ? "As consultas que você agendar aparecerão aqui, organizadas por data." : "Ajuste os filtros ou a busca para encontrar outras consultas."}</small>
+                  </div>
+                </div>
+              </td></tr>
             ) : filtered.map(c => (
               <tr key={c.id}>
                 <td><strong>{formatDate(c.data_hora)}</strong><small>{formatTime(c.data_hora)} · {c.duracao_min} min</small></td>

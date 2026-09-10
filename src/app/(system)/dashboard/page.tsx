@@ -196,7 +196,7 @@ export default function DashboardPage() {
   return <>
     <section className="dashHero">
       <div>
-        <h1>{greeting} <span aria-hidden>👋</span></h1>
+        <h1>{greeting}</h1>
         <p>{perfilTipo === "autonomo" ? "Gerencie sua agenda e acompanhe seus pacientes." : "Gerencie os horários e acompanhe os pacientes da equipe."}</p>
       </div>
       {perfilSlug && (

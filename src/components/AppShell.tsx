@@ -20,11 +20,18 @@ export type Perfil = {
 };
 
 const navigation = [
-  { href: "/dashboard", label: "Início", icon: LayoutDashboard }, 
+  { href: "/dashboard", label: "Início", icon: LayoutDashboard },
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/consultas", label: "Consultas", icon: ClipboardList },
   { href: "/pacientes", label: "Pacientes", icon: Users },
   { href: "/profissionais", label: "Profissionais", icon: UserRoundCheck },
+] as const;
+
+const mobileNav = [
+  { href: "/dashboard", label: "Início", icon: LayoutDashboard },
+  { href: "/agenda", label: "Agenda", icon: CalendarDays },
+  { href: "/consultas", label: "Consultas", icon: ClipboardList },
+  { href: "/pacientes", label: "Pacientes", icon: Users },
 ] as const;
 
 function initials(name: string) {
@@ -66,6 +73,18 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
         <header className="appTopbar"><button className="menuTrigger" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><Menu size={21} /></button><label className="globalSearch"><Search size={18} /><input placeholder="Buscar paciente, consulta..." aria-label="Buscar" /><kbd>⌘ K</kbd></label><div className="topbarDate"><span>Hoje</span><strong>{new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</strong></div><button className="notificationButton" aria-label="Notificações">◦</button></header>
         <main className="appContent">{children}</main>
       </div>
+      <nav className="mobileTabbar" aria-label="Navegação">
+        {mobileNav.map(({ href, label, icon: Icon }) => (
+          <Link key={href} href={href} className={pathname === href ? "active" : ""} onClick={() => setMenuOpen(false)}>
+            <Icon size={20} strokeWidth={pathname === href ? 2.2 : 1.8} />
+            <span>{label}</span>
+          </Link>
+        ))}
+        <Link href="/configuracoes" className={pathname === "/configuracoes" ? "active" : ""} onClick={() => setMenuOpen(false)}>
+          <Settings size={20} strokeWidth={pathname === "/configuracoes" ? 2.2 : 1.8} />
+          <span>Config</span>
+        </Link>
+      </nav>
     </div>
   );
 }

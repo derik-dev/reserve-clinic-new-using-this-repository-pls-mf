@@ -68,33 +68,41 @@ export default function ConfiguracoesPage() {
 
   useEffect(() => {
     (async () => {
-      const { data: session } = await supabase.auth.getUser();
-      if (!session.user) return;
-      setUserId(session.user.id);
-      const { data, error: fetchErr } = await supabase.from("perfis")
-        .select("nome, slug, telefone, email_contato, site, instagram, tiktok, cpf_cnpj, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
-        .eq("id", session.user.id).maybeSingle();
+      try {
+        const { data: session } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
+        ]);
+        if (!session.user) { setLoading(false); return; }
+        setUserId(session.user.id);
+        const { data, error: fetchErr } = await supabase.from("perfis")
+          .select("nome, slug, telefone, email_contato, site, instagram, tiktok, cpf_cnpj, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
+          .eq("id", session.user.id).maybeSingle();
 
-      const raw = data ?? (fetchErr
-        ? (await supabase.from("perfis")
-            .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, logo_url")
-            .eq("id", session.user.id).maybeSingle()).data
-        : null);
+        const raw = data ?? (fetchErr
+          ? (await supabase.from("perfis")
+              .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, logo_url")
+              .eq("id", session.user.id).maybeSingle()).data
+          : null);
 
-      if (raw) {
-        const d = raw as Form & { logo_url: string | null; valor_consulta: number | null };
-        setForm({
-          nome: d.nome ?? "", slug: d.slug ?? "", telefone: d.telefone ?? "", email_contato: d.email_contato ?? "",
-          site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
-          cpf_cnpj: d.cpf_cnpj ?? "",
-          endereco_cep: d.endereco_cep ?? "", endereco_rua: d.endereco_rua ?? "", endereco_numero: d.endereco_numero ?? "",
-          endereco_bairro: d.endereco_bairro ?? "", endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
-          pix_chave: d.pix_chave ?? "",
-          valor_consulta: d.valor_consulta != null ? String(d.valor_consulta) : "",
-        });
-        setLogoPreview(d.logo_url);
+        if (raw) {
+          const d = raw as Form & { logo_url: string | null; valor_consulta: number | null };
+          setForm({
+            nome: d.nome ?? "", slug: d.slug ?? "", telefone: d.telefone ?? "", email_contato: d.email_contato ?? "",
+            site: d.site ?? "", instagram: d.instagram ?? "", tiktok: d.tiktok ?? "",
+            cpf_cnpj: d.cpf_cnpj ?? "",
+            endereco_cep: d.endereco_cep ?? "", endereco_rua: d.endereco_rua ?? "", endereco_numero: d.endereco_numero ?? "",
+            endereco_bairro: d.endereco_bairro ?? "", endereco_cidade: d.endereco_cidade ?? "", endereco_uf: d.endereco_uf ?? "",
+            pix_chave: d.pix_chave ?? "",
+            valor_consulta: d.valor_consulta != null ? String(d.valor_consulta) : "",
+          });
+          setLogoPreview(d.logo_url);
+        }
+      } catch {
+        setError("Não foi possível carregar as configurações. Recarregue a página.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     })();
   }, []);
 
@@ -153,7 +161,7 @@ export default function ConfiguracoesPage() {
 
   const pixPayload = form.pix_chave.trim() && form.nome ? gerarPix(form.pix_chave.trim(), form.nome, form.endereco_cidade) : null;
 
-  if (loading) return <><PageHeader title="Configurações" description="Gerencie os dados da sua conta." /><section className="panel" style={{ padding: 40, textAlign: "center", color: "#858d9f" }}>Carregando…</section></>;
+  if (loading) return <><PageHeader title="Configurações" description="Gerencie os dados da sua conta." /><section className="panel" style={{ padding: 72, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</section></>;
 
   return <>
     <PageHeader title="Configurações" description="Gerencie os dados da sua conta e clínica." actions={

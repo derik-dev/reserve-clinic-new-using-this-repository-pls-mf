@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Camera, Pencil, Plus, Search, Stethoscope, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -32,6 +32,7 @@ const emptyForm: FormState = { nome: "", especialidade: "", whatsapp: "", cpf: "
 export default function ProfissionaisPage() {
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Profissional | null>(null);
@@ -45,9 +46,19 @@ export default function ProfissionaisPage() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from("profissionais").select("*").order("nome");
-    setProfissionais((data as Profissional[] | null) ?? []);
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const { data } = await Promise.race([
+        supabase.from("profissionais").select("*").order("nome"),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
+      ]);
+      setProfissionais((data as Profissional[] | null) ?? []);
+    } catch {
+      setLoadError(true);
+      setProfissionais([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, []);
@@ -179,9 +190,19 @@ export default function ProfissionaisPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ padding: "48px 16px", textAlign: "center", color: "#858d9f", fontSize: 13 }}>Carregando…</td></tr>
+              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Não foi possível carregar os profissionais. <button className="linkButton" onClick={load}>Tentar novamente</button></td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: "48px 16px", textAlign: "center", color: "#858d9f", fontSize: 13 }}>{profissionais.length === 0 ? "Nenhum profissional cadastrado." : "Nenhum profissional encontrado."}</td></tr>
+              <tr><td colSpan={6} style={{ padding: 0 }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "72px 24px", color: "var(--text-muted)", textAlign: "center" }}>
+                  <Stethoscope size={38} strokeWidth={1.4} style={{ color: "var(--text-subtle)", opacity: .7 }} />
+                  <div>
+                    <strong style={{ display: "block", font: "600 16px var(--font-space)", color: "var(--text)", letterSpacing: "-.01em", marginBottom: 6 }}>{profissionais.length === 0 ? "Nenhum profissional cadastrado ainda" : "Nenhum profissional encontrado"}</strong>
+                    <small style={{ display: "block", fontSize: 12, color: "var(--text-muted)", maxWidth: 340 }}>{profissionais.length === 0 ? "Cadastre a sua equipe para associar profissionais a horários e consultas." : "Ajuste a busca para encontrar outros profissionais."}</small>
+                  </div>
+                </div>
+              </td></tr>
             ) : filtered.map(p => (
               <tr key={p.id}>
                 <td>
