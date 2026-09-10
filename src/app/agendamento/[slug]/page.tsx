@@ -6,6 +6,7 @@ import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
 import { PixCheckout } from "@/components/PixCheckout";
+import { reportarErroCliente } from "@/lib/reportarErroCliente";
 
 type PerfilPublic = {
   id: string;
@@ -143,7 +144,9 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         const stored = localStorage.getItem(`rc_booking_${slug}`);
         if (stored) setPendingBooking(JSON.parse(stored));
       } catch { /* ignorar */ }
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      void reportarErroCliente(`agendamento/${slug}`, msg);
       setInitError(true);
     } finally {
       setLoading(false);
