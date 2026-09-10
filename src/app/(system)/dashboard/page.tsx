@@ -5,6 +5,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, CircleDollarSign, Clock3, Copy
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type Paciente } from "@/lib/db";
+import { reportarErroCliente } from "@/lib/reportarErroCliente";
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 type DayConfig = { aberto: boolean; inicio: string; fim: string };
@@ -73,6 +74,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     (async () => {
+      try {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
       const [{ data: p, error: pErr }, { data: conf }, { data: ps }] = await Promise.all([
@@ -96,16 +98,26 @@ export default function DashboardPage() {
       }
       setConfig(mergeConfig(conf?.agenda_config));
       setPacientes((ps as Paciente[] | null) ?? []);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        void reportarErroCliente("dashboard.init", msg);
+      }
     })();
   }, []);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const from = startOfMonth(viewMonth);
-      const to = endOfMonth(viewMonth);
-      const { data } = await supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lte("data_hora", to.toISOString()).order("data_hora");
-      setConsultas((data as Consulta[] | null) ?? []);
+      try {
+        const from = startOfMonth(viewMonth);
+        const to = endOfMonth(viewMonth);
+        const { data, error } = await supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lte("data_hora", to.toISOString()).order("data_hora");
+        if (error) throw new Error(error.message);
+        setConsultas((data as Consulta[] | null) ?? []);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        void reportarErroCliente("dashboard.consultas", msg);
+      }
       setLoading(false);
     })();
   }, [viewMonth]);

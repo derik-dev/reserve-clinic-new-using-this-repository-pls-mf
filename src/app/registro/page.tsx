@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, LockKeyhole, Mail, Stethoscope, User } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { reportarErroCliente } from "@/lib/reportarErroCliente";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -24,20 +25,30 @@ export default function RegistroPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { nome } },
-    });
-    setLoading(false);
-    if (error) {
-      setError(error.message === "User already registered" ? "Este e-mail já está cadastrado." : "Não foi possível criar a conta. Tente novamente.");
-      return;
-    }
-    if (data.session) {
-      router.push("/onboarding");
-    } else {
-      setCheckEmail(true);
+    try {
+      const { data, error } = await Promise.race([
+        supabase.auth.signUp({ email, password, options: { data: { nome } } }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout 10s")), 10000)),
+      ]);
+      setLoading(false);
+      if (error) {
+        const status = (error as { status?: number } | null)?.status ?? 0;
+        if (status >= 500) {
+          void reportarErroCliente("registro", `[${status}] ${error.message}`);
+        }
+        setError(error.message === "User already registered" ? "Este e-mail já está cadastrado." : "Não foi possível criar a conta. Tente novamente.");
+        return;
+      }
+      if (data.session) {
+        router.push("/onboarding");
+      } else {
+        setCheckEmail(true);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      void reportarErroCliente("registro", `throw: ${msg}`);
+      setLoading(false);
+      setError("Não foi possível criar a conta agora. Tenta novamente em instantes.");
     }
   }
 

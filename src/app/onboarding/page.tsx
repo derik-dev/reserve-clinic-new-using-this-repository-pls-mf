@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Building2, Stethoscope, Upload, UserCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { reportarErroCliente } from "@/lib/reportarErroCliente";
 
 type Tipo = "autonomo" | "clinica";
 
@@ -146,7 +147,11 @@ export default function OnboardingPage() {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : "Erro desconhecido";
       console.error("[onboarding] handleFinish falhou", e);
-      setError(msg.includes("duplicate") || msg.includes("unique") ? "Esse link personalizado já está em uso. Escolha outro." : `Não foi possível salvar: ${msg}`);
+      const isUserError = msg.includes("duplicate") || msg.includes("unique");
+      if (!isUserError) {
+        void reportarErroCliente("onboarding.finish", msg);
+      }
+      setError(isUserError ? "Esse link personalizado já está em uso. Escolha outro." : `Não foi possível salvar: ${msg}`);
       setLoading(false);
     }
   }
