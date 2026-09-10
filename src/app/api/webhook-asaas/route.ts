@@ -50,10 +50,11 @@ export async function POST(req: NextRequest) {
         try {
           const [ano, mes, dia] = (agendamento.data as string).split("-");
           const dataFormatada = `${dia}/${mes}/${ano}`;
+          const horaFormatada = (agendamento.hora as string).slice(0, 5);
           const mensagem =
             `Olá, ${agendamento.cliente_nome}! ` +
             `Seu agendamento no Centro Auditivo Macaé foi confirmado para ` +
-            `${dataFormatada} às ${agendamento.hora}. ` +
+            `${dataFormatada} às ${horaFormatada}. ` +
             `Te esperamos! 💙`;
           await enviarWhatsapp(agendamento.cliente_telefone, mensagem);
         } catch (errWpp) {

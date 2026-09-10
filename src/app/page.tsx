@@ -79,12 +79,12 @@ export default function Home() {
   return (
     <div className="site">
       <div className="gridBg" /><div className="aurora auroraOne" /><div className="aurora auroraTwo" />
-      <nav><Logo /><div className="navLinks"><a href="#produto">Produto</a><a href="#recursos">Recursos</a><a href="#precos">Preços</a><a href="#clientes">Clínicas parceiras</a></div><div className="navActions"><a href="/login">Entrar</a><a className="button light" href="#cta">Agendar demo</a></div></nav>
+      <nav><Logo /><div className="navLinks"><a href="#produto">Produto</a><a href="#recursos">Recursos</a><a href="#precos">Preços</a><a href="#clientes">Clínicas parceiras</a></div><div className="navActions"><a href="/login">Entrar</a><a className="button light" href="/registro">Registrar</a></div></nav>
       <header>
         <div className="pill"><i /> Feito para clínicas médicas de todos os portes</div>
         <h1>Menos ligação,<br/>mais <span>consulta confirmada.</span></h1>
         <p>O Reserve Clinic organiza a agenda da sua clínica, envia lembretes automáticos e cobra o sinal via Pix antes da consulta — para sua recepção parar de correr atrás de paciente.</p>
-        <div className="heroActions"><a className="button primary" href="#cta">Começar gratuitamente →</a><a className="button ghost" href="#produto">Ver demonstração</a></div>
+        <div className="heroActions"><a className="button primary" href="/registro">Registrar →</a><a className="button ghost" href="/login">Entrar</a></div>
         <div className="trust"><div><i/><i/><i/><i/></div> usado por +500 clínicas em todo o Brasil</div>
       </header>
       <section className="heroVisual" id="produto"><div className="floatCard pix"><small>PIX RECEBIDO</small><strong>R$ 60,00</strong><span>Maria Oliveira</span></div><Dashboard/><div className="floatCard whatsapp"><small>● WhatsApp · agora</small><span>Sua consulta amanhã às 14h foi confirmada ✅</span></div></section>
