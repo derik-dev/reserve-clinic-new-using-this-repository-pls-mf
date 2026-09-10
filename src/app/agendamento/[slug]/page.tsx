@@ -107,6 +107,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
   const [profissionais, setProfissionais] = useState<ProfissionalPublic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initError, setInitError] = useState(false);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<Form>(emptyForm);
   const [busyRanges, setBusyRanges] = useState<{ inicio: number; fim: number }[]>([]);
@@ -118,26 +119,38 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [copiedPix, setCopiedPix] = useState(false);
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, valor_consulta").eq("slug", slug).maybeSingle();
-      setPerfil(data as PerfilPublic | null);
-      if (data) {
-        const perfilId = (data as PerfilPublic).id;
-        const [conf, profs] = await Promise.all([
-          supabase.from("configuracoes").select("agenda_config").eq("perfil_id", perfilId).maybeSingle(),
-          supabase.from("profissionais").select("id, nome, especialidade, foto_url").eq("perfil_id", perfilId).eq("ativo", true).order("nome"),
-        ]);
-        setConfig(mergeConfig(conf.data?.agenda_config));
-        setProfissionais((profs.data as ProfissionalPublic[] | null) ?? []);
-      }
+  async function loadData() {
+    setInitError(false);
+    setLoading(true);
+    try {
+      await Promise.race([
+        (async () => {
+          const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, telefone, email_contato, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, valor_consulta").eq("slug", slug).maybeSingle();
+          setPerfil(data as PerfilPublic | null);
+          if (data) {
+            const perfilId = (data as PerfilPublic).id;
+            const [conf, profs] = await Promise.all([
+              supabase.from("configuracoes").select("agenda_config").eq("perfil_id", perfilId).maybeSingle(),
+              supabase.from("profissionais").select("id, nome, especialidade, foto_url").eq("perfil_id", perfilId).eq("ativo", true).order("nome"),
+            ]);
+            setConfig(mergeConfig(conf.data?.agenda_config));
+            setProfissionais((profs.data as ProfissionalPublic[] | null) ?? []);
+          }
+        })(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
+      ]);
       try {
         const stored = localStorage.getItem(`rc_booking_${slug}`);
         if (stored) setPendingBooking(JSON.parse(stored));
       } catch { /* ignorar */ }
+    } catch {
+      setInitError(true);
+    } finally {
       setLoading(false);
-    })();
-  }, [slug]);
+    }
+  }
+
+  useEffect(() => { loadData(); }, [slug]);
 
   useEffect(() => {
     (async () => {
@@ -241,6 +254,19 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     setDone(true);
   }
 
+  if (initError) {
+    return (
+      <main className="bookingPage" style={{ background: "#08101f", color: "#e6ecf8" }}>
+        <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+          <div style={{ maxWidth: 420, textAlign: "center" }}>
+            <h1 style={{ fontFamily: "var(--font-space)", fontStyle: "italic", fontWeight: 400, fontSize: 44, lineHeight: 1.1, margin: "0 0 16px", color: "#fff" }}>Algo deu errado.</h1>
+            <p style={{ color: "#a4adc7", fontSize: 15, lineHeight: 1.55, margin: "0 0 28px" }}>Não foi possível carregar a agenda no momento. Tenta novamente em instantes.</p>
+            <button onClick={loadData} style={{ background: "#4c6fff", color: "#fff", border: 0, borderRadius: 10, padding: "12px 28px", fontSize: 14, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 24px rgba(76,111,255,.35)" }}>Tentar novamente</button>
+          </div>
+        </div>
+      </main>
+    );
+  }
   if (loading) {
     return <main className="bookingPage"><div style={{ padding: 40, textAlign: "center", color: "#858d9f" }}>Carregando…</div></main>;
   }
