@@ -10,11 +10,16 @@ export async function notificarDiscord(mensagem: string, gravidade: GravidadeDis
     return;
   }
 
+  const content = gravidade === "critico" ? `@everyone ${mensagem}` : mensagem;
+
   try {
     await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: mensagem }),
+      body: JSON.stringify({
+        content,
+        allowed_mentions: { parse: gravidade === "critico" ? ["everyone"] : [] },
+      }),
     });
   } catch (err) {
     console.error("[notificarDiscord] falha ao enviar alerta:", err);
