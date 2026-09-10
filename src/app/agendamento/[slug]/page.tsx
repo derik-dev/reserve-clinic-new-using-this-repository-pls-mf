@@ -263,6 +263,13 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             <p style={{ color: "#a4adc7", fontSize: 15, lineHeight: 1.55, margin: "0 0 28px" }}>Não foi possível carregar a agenda no momento. Tenta novamente em instantes.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
               <button onClick={loadData} style={{ background: "#4c6fff", color: "#fff", border: 0, borderRadius: 10, padding: "12px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 24px rgba(76,111,255,.35)" }}>Tentar novamente</button>
+              {perfil?.telefone && (() => {
+                const digits = perfil.telefone.replace(/\D/g, "");
+                const phone = digits.startsWith("55") ? digits : `55${digits}`;
+                return (
+                  <a href={`https://wa.me/${phone}?text=${encodeURIComponent(`Olá! Estou tentando agendar em ${perfil.nome} mas a página não carregou.`)}`} target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#25d366", color: "#fff", border: 0, borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, textDecoration: "none" }}><MessageCircle size={16} /> Falar com a clínica</a>
+                );
+              })()}
               <a href="https://wa.me/5524992710003?text=Ol%C3%A1%2C%20estou%20com%20problema%20para%20acessar%20a%20agenda." target="_blank" rel="noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.06)", color: "#e6ecf8", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, textDecoration: "none" }}><MessageCircle size={16} /> Falar com suporte</a>
             </div>
           </div>
