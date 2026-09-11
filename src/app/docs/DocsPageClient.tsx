@@ -23,6 +23,7 @@ import {
   Rocket,
   ShieldCheck,
   Stethoscope,
+  UserRoundCheck,
   type LucideIcon,
 } from "lucide-react";
 import styles from "./page.module.css";
@@ -59,6 +60,7 @@ const sections: SectionItem[] = [
   { id: "visao-geral", label: "Visão Geral", eyebrow: "Produto", icon: HeartPulse },
   { id: "stack-tecnica", label: "Stack Técnica", eyebrow: "Arquitetura", icon: Boxes },
   { id: "schema", label: "Schema do Banco", eyebrow: "Dados", icon: Database },
+  { id: "cadastro-profissional", label: "Cadastro de profissional", eyebrow: "Operação", icon: UserRoundCheck },
   { id: "fluxo", label: "Fluxo de Agendamento", eyebrow: "Operação", icon: CalendarClock },
   { id: "integracoes", label: "Integrações Externas", eyebrow: "APIs", icon: Network },
   { id: "ambiente", label: "Variáveis de Ambiente", eyebrow: "Config", icon: KeyRound },
@@ -236,6 +238,33 @@ const bookingSteps = [
   {
     title: "Notificação",
     text: "Na primeira confirmação, se houver telefone, o webhook envia WhatsApp pela Z-API e reporta falhas críticas ao Discord.",
+  },
+];
+
+const professionalSteps = [
+  {
+    title: "Abra Profissionais",
+    text: "No menu interno, acesse `/profissionais` e clique em `Novo profissional` para abrir o formulário de cadastro.",
+  },
+  {
+    title: "Preencha os dados",
+    text: "Informe o nome, que é obrigatório. Especialidade, WhatsApp, CPF e anos de experiência são campos opcionais do formulário.",
+  },
+  {
+    title: "Adicione uma foto (opcional)",
+    text: "Selecione uma imagem no campo de foto. O client envia o arquivo para `/api/upload-logo` no bucket `profissional-fotos` e usa a URL pública retornada no cadastro.",
+  },
+  {
+    title: "Clique em Cadastrar",
+    text: "A tela obtém o usuário autenticado e grava o registro em `profissionais` com `perfil_id` igual ao usuário da clínica, além dos dados preenchidos e da foto, quando enviada.",
+  },
+  {
+    title: "Configure os dias de atendimento",
+    text: "Para que o nome participe da geração de horários, abra `Agenda`, entre em `Ajustes > Profissionais`, adicione o nome e marque os dias em que ele atende. Salve os ajustes.",
+  },
+  {
+    title: "Confira no agendamento público",
+    text: "Profissionais ativos são consultados pelo link `/agendamento/[slug]` e exibidos para o paciente quando a leitura pública estiver liberada pelas policies de RLS aplicadas.",
   },
 ];
 
@@ -523,6 +552,25 @@ export function DocsPageClient() {
                   </article>
                 ))}
               </div>
+            </div>
+          </DocSection>
+
+          <DocSection id="cadastro-profissional" title="Cadastro de profissional" eyebrow="Operação" icon={UserRoundCheck}>
+            <div className={styles.sectionLead}>
+              <p>
+                O cadastro completo acontece em `/profissionais`. A configuração dos dias de atendimento é feita separadamente em `Agenda`, porque ela pertence ao `agenda_config` do tenant.
+              </p>
+            </div>
+            <div className={styles.stepper}>
+              {professionalSteps.map((step, index) => (
+                <article className={styles.stepCard} key={step.title} data-doc-animate>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <div>
+                    <h3>{step.title}</h3>
+                    <p>{step.text}</p>
+                  </div>
+                </article>
+              ))}
             </div>
           </DocSection>
 
