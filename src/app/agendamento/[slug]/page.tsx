@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Stethoscope, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Stethoscope, Check, UsersRound } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
@@ -418,25 +418,29 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             <i />
             <div><span>3</span><strong>Confirmação</strong></div>
           </div>
-          <section className="panel" style={{ padding: 22 }}>
+          <section className="panel bookingFormPanel" style={{ padding: 22 }}>
             {step === 0 && (
               <div className="formGrid">
                 {profissionais.length > 0 && (
-                  <div className="formRow">
+                  <div className="formRow bookingProfessionalPicker">
                     <label>Profissional</label>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                    <div className="bookingProfessionalOptions">
                       <button
                         type="button"
+                        className={`bookingProfessionalOption${!form.profissional_id ? " isSelected" : ""}`}
                         onClick={() => setForm({ ...form, profissional_id: "", profissional_nome: "", data: "", hora: "" })}
                         style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${!form.profissional_id ? primary : "#dfe3eb"}`, background: !form.profissional_id ? primary : "#fff", color: !form.profissional_id ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
                       >
-                        Qualquer um
+                        <UsersRound size={19} />
+                        <span><strong>Qualquer um</strong><small>Todos os profissionais</small></span>
+                        <i aria-hidden />
                       </button>
                       {profissionais.map(p => {
                         const active = form.profissional_id === p.id;
                         return (
                           <button
                             type="button"
+                            className={`bookingProfessionalOption${active ? " isSelected" : ""}`}
                             key={p.id}
                             onClick={() => setForm({ ...form, profissional_id: p.id, profissional_nome: p.nome, data: "", hora: "" })}
                             style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : "#fff", color: active ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left" }}
@@ -448,10 +452,8 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                                 {p.nome.slice(0, 2).toUpperCase()}
                               </span>
                             )}
-                            <span>
-                              {p.nome}
-                              {p.especialidade && <span style={{ display: "block", fontSize: 10, fontWeight: 400, opacity: 0.75 }}>{p.especialidade}</span>}
-                            </span>
+                            <span><strong>{p.nome}</strong>{p.especialidade && <small>{p.especialidade}</small>}</span>
+                            <i aria-hidden />
                           </button>
                         );
                       })}
@@ -505,9 +507,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         {slots.map(s => {
                           const active = form.hora === s.hora;
-                          return (
-                            <button type="button" key={s.hora} disabled={s.ocupado} onClick={() => setForm({ ...form, hora: s.hora })} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : s.ocupado ? "#f3f5f9" : "#fff", color: active ? "#fff" : s.ocupado ? "#b3b8c4" : "#394155", fontSize: 12, fontWeight: 600, cursor: s.ocupado ? "not-allowed" : "pointer", textDecoration: s.ocupado ? "line-through" : "none" }}>{s.hora}</button>
-                          );
+                          return <button type="button" key={s.hora} className={`bookingTimeOption${active ? " isSelected" : ""}${s.ocupado ? " isOccupied" : ""}`} disabled={s.ocupado} onClick={() => setForm({ ...form, hora: s.hora })}>{s.hora}</button>;
                         })}
                       </div>
                     )}
