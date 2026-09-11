@@ -1,10 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus, Settings, X, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, MoreHorizontal, PieChart, Plus, Settings, TrendingDown, TrendingUp, Users, X, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
-import { initials, type Consulta } from "@/lib/db";
+import { initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus } from "@/lib/db";
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 type DayConfig = { aberto: boolean; inicio: string; fim: string };
@@ -35,7 +36,12 @@ const DEFAULT_CONFIG: AgendaConfig = {
   duracao_min: 60,
 };
 
-const EVENT_COLORS = ["blue", "mint", "purple", "amber"] as const;
+const STATUS_TO_COLOR: Record<ConsultaStatus, string> = {
+  confirmada: "blue",
+  aguardando: "amber",
+  concluida: "mint",
+  cancelada: "gray",
+};
 
 function startOfWeek(d: Date) {
   const x = new Date(d);
@@ -61,14 +67,29 @@ function mergeConfig(raw: unknown): AgendaConfig {
   };
 }
 
+type ViewMode = "semana" | "dia" | "lista";
+
 export default function AgendaPage() {
+  const router = useRouter();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [consultas, setConsultas] = useState<Consulta[]>([]);
+  const [prevWeekConsultas, setPrevWeekConsultas] = useState<Consulta[] | null>(null);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
   const [profFiltro, setProfFiltro] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
+  const [now, setNow] = useState<Date>(() => new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>("semana");
+  const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());
+  const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
   const today = useMemo(() => new Date(), []);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const didInitialScrollRef = useRef(false);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -80,14 +101,30 @@ export default function AgendaPage() {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const from = new Date(weekStart);
-      const to = addDays(weekStart, 7);
-      const { data } = await supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lt("data_hora", to.toISOString()).order("data_hora");
-      setConsultas((data as Consulta[] | null) ?? []);
+    let cancelled = false;
+    setLoading(true);
+    setPrevWeekConsultas(null);
+    const from = new Date(weekStart);
+    const to = addDays(weekStart, 7);
+    const prevFrom = addDays(weekStart, -7);
+    const withTimeout = (p: PromiseLike<{ data: unknown }>, ms: number): Promise<{ data: unknown }> =>
+      Promise.race([Promise.resolve(p), new Promise<{ data: unknown }>((r) => setTimeout(() => r({ data: null }), ms))]);
+    withTimeout(
+      supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lt("data_hora", to.toISOString()).order("data_hora"),
+      6000,
+    ).then((res) => {
+      if (cancelled) return;
+      setConsultas((res.data as Consulta[] | null) ?? []);
       setLoading(false);
-    })();
+    });
+    withTimeout(
+      supabase.from("consultas").select("*").gte("data_hora", prevFrom.toISOString()).lt("data_hora", from.toISOString()),
+      6000,
+    ).then((res) => {
+      if (cancelled) return;
+      setPrevWeekConsultas((res.data as Consulta[] | null) ?? []);
+    });
+    return () => { cancelled = true; };
   }, [weekStart]);
 
   const diasVisiveis = useMemo(() => {
@@ -121,11 +158,137 @@ export default function AgendaPage() {
     return `${fmt(weekStart)} — ${fmt(addDays(weekStart, 6))}`;
   }, [weekStart]);
 
+  const weekCapacityMin = useMemo(() => {
+    const semana = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    return semana.reduce((acc, d) => {
+      const key = jsDayToKey(d);
+      const cfg = config.dias[key];
+      if (!cfg.aberto || config.feriados.includes(toIsoDate(d))) return acc;
+      return acc + Math.max(0, timeToMin(cfg.fim) - timeToMin(cfg.inicio));
+    }, 0);
+  }, [weekStart, config]);
+  const weekUsedMin = useMemo(() => consultas.reduce((acc, c) => acc + c.duracao_min, 0), [consultas]);
+  const ocupacaoPct = weekCapacityMin > 0 ? Math.round((weekUsedMin / weekCapacityMin) * 100) : 0;
+  const slotsLivres = weekCapacityMin > 0 && config.duracao_min > 0 ? Math.max(0, Math.floor((weekCapacityMin - weekUsedMin) / config.duracao_min)) : 0;
+
+  const prevWeekReady = prevWeekConsultas !== null;
+  const consultasDelta = useMemo(() => {
+    if (!prevWeekReady) return null;
+    const prev = prevWeekConsultas!.length;
+    if (prev === 0) return null;
+    return Math.round(((consultas.length - prev) / prev) * 100);
+  }, [prevWeekReady, prevWeekConsultas, consultas.length]);
+  const ocupacaoDelta = useMemo(() => {
+    if (!prevWeekReady || weekCapacityMin === 0) return null;
+    const prevUsed = prevWeekConsultas!.reduce((a, c) => a + c.duracao_min, 0);
+    const prevPct = weekCapacityMin > 0 ? Math.round((prevUsed / weekCapacityMin) * 100) : 0;
+    if (prevPct === 0) return null;
+    return ocupacaoPct - prevPct;
+  }, [prevWeekReady, prevWeekConsultas, weekCapacityMin, ocupacaoPct]);
+  const livresDelta = useMemo(() => {
+    if (!prevWeekReady || weekCapacityMin === 0 || config.duracao_min <= 0) return null;
+    const prevUsed = prevWeekConsultas!.reduce((a, c) => a + c.duracao_min, 0);
+    const prevLivres = Math.max(0, Math.floor((weekCapacityMin - prevUsed) / config.duracao_min));
+    if (prevLivres === 0) return null;
+    return Math.round(((slotsLivres - prevLivres) / prevLivres) * 100);
+  }, [prevWeekReady, prevWeekConsultas, weekCapacityMin, config.duracao_min, slotsLivres]);
+
+  const consultasDoDia = useMemo(() => consultas
+    .filter(c => isSameDay(new Date(c.data_hora), selectedDay))
+    .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime()), [consultas, selectedDay]);
+  const diaKey = jsDayToKey(selectedDay);
+  const diaCfg = config.dias[diaKey];
+  const diaCapacidadeMin = diaCfg.aberto && !config.feriados.includes(toIsoDate(selectedDay))
+    ? Math.max(0, timeToMin(diaCfg.fim) - timeToMin(diaCfg.inicio)) : 0;
+  const diaUsadoMin = consultasDoDia.reduce((a, c) => a + c.duracao_min, 0);
+  const diaOcupacaoPct = diaCapacidadeMin > 0 ? Math.round((diaUsadoMin / diaCapacidadeMin) * 100) : 0;
+  const diaLivres = diaCapacidadeMin > 0 && config.duracao_min > 0 ? Math.max(0, Math.floor((diaCapacidadeMin - diaUsadoMin) / config.duracao_min)) : 0;
+  const diaCancelamentos = consultasDoDia.filter(c => c.status === "cancelada").length;
+
+  const calCells = useMemo(() => {
+    const first = new Date(calMonth);
+    const startPad = (first.getDay() + 6) % 7;
+    const gridStart = new Date(first);
+    gridStart.setDate(1 - startPad);
+    return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+  }, [calMonth]);
+  const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
+  const isSameWeek = (d: Date) => d >= weekStart && d <= new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate(), 23, 59, 59);
+
   const HOUR_PX = 62;
-  const gridColumns = `88px repeat(${diasVisiveis.length}, minmax(120px, 1fr))`;
+  const diasParaGrid = viewMode === "dia"
+    ? diasVisiveis.filter(d => isSameDay(d.date, selectedDay))
+    : diasVisiveis;
+  const gridColumns = `88px repeat(${Math.max(1, diasParaGrid.length)}, minmax(120px, 1fr))`;
+  const baseMinGlobal = Math.floor(minAbertura / 60) * 60;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowInRange = nowMinutes >= baseMinGlobal && nowMinutes <= baseMinGlobal + linhasHora.length * 60;
+  const nowTop = nowInRange ? ((nowMinutes - baseMinGlobal) / 60) * HOUR_PX : 0;
+
+  useEffect(() => {
+    if (didInitialScrollRef.current) return;
+    if (!scrollRef.current || linhasHora.length === 0) return;
+    if (!diasVisiveis.some(d => isSameDay(d.date, now))) { didInitialScrollRef.current = true; return; }
+    const el = scrollRef.current;
+    const target = Math.max(0, ((nowMinutes - baseMinGlobal) / 60) * HOUR_PX - el.clientHeight / 2 + 60);
+    el.scrollTop = target;
+    didInitialScrollRef.current = true;
+  }, [linhasHora.length, diasVisiveis, now, nowMinutes, baseMinGlobal]);
+
+  function handleSlotClick(e: MouseEvent<HTMLDivElement>, date: Date, aberto: boolean) {
+    if (!aberto) return;
+    if ((e.target as HTMLElement).closest(".agendaEvent")) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const step = Math.max(5, config.duracao_min);
+    const rawMin = baseMinGlobal + (y / HOUR_PX) * 60;
+    const snappedMin = Math.max(baseMinGlobal, Math.round(rawMin / step) * step);
+    const hh = String(Math.floor(snappedMin / 60)).padStart(2, "0");
+    const mm = String(snappedMin % 60).padStart(2, "0");
+    const iso = toIsoDate(date);
+    router.push(`/consultas?nova=1&data=${iso}&hora=${hh}:${mm}`);
+  }
+
+  function layoutOverlaps(eventos: Consulta[]) {
+    const items = eventos.map((c) => {
+      const dt = new Date(c.data_hora);
+      const start = dt.getHours() * 60 + dt.getMinutes();
+      return { c, start, end: start + c.duracao_min };
+    }).sort((a, b) => a.start - b.start || a.end - b.end);
+    const columns: { end: number }[] = [];
+    const placements = new Map<string, { col: number }>();
+    const groups: { members: string[] }[] = [];
+    let currentGroup: string[] = [];
+    let currentEnd = -1;
+    for (const it of items) {
+      let colIdx = columns.findIndex(col => col.end <= it.start);
+      if (colIdx === -1) { columns.push({ end: it.end }); colIdx = columns.length - 1; }
+      else columns[colIdx].end = it.end;
+      placements.set(it.c.id, { col: colIdx });
+      if (it.start >= currentEnd) {
+        if (currentGroup.length) groups.push({ members: currentGroup });
+        currentGroup = [it.c.id];
+        currentEnd = it.end;
+      } else {
+        currentGroup.push(it.c.id);
+        currentEnd = Math.max(currentEnd, it.end);
+      }
+    }
+    if (currentGroup.length) groups.push({ members: currentGroup });
+    const groupCols = new Map<string, number>();
+    for (const g of groups) {
+      const maxCol = Math.max(...g.members.map(id => placements.get(id)!.col)) + 1;
+      for (const id of g.members) groupCols.set(id, maxCol);
+    }
+    return items.map(({ c, start, end }) => ({
+      c, start, end,
+      col: placements.get(c.id)!.col,
+      cols: groupCols.get(c.id) ?? 1,
+    }));
+  }
 
   return <>
-    <PageHeader title="Agenda" description="Sua semana em um só lugar." actions={<>
+    <PageHeader title="Agenda" description="Visualize e organize sua semana com clareza." actions={<>
       {config.profissionais.length > 0 && (
         <div className="agendaFilter">
           <label>Profissional</label>
@@ -137,24 +300,40 @@ export default function AgendaPage() {
         </div>
       )}
       <button className="secondaryButton" onClick={() => setConfigOpen(true)}><Settings size={16} /> Ajustes</button>
-      <button className="primaryButton" onClick={() => (window.location.href = "/consultas")}><Plus size={17} /> Nova consulta</button>
+      <button className="primaryButton" onClick={() => router.push("/consultas?nova=1")}><Plus size={17} /> Nova consulta</button>
     </>} />
 
-    <div className="agendaToolbar">
-      <button className="iconButton" aria-label="Semana anterior" onClick={() => setWeekStart(addDays(weekStart, -7))}><ChevronLeft size={17} /></button>
-      <button className="iconButton" aria-label="Próxima semana" onClick={() => setWeekStart(addDays(weekStart, 7))}><ChevronRight size={17} /></button>
-      <button className="todayButton" onClick={() => setWeekStart(startOfWeek(new Date()))}>Hoje</button>
-      <strong>{rotuloSemana}</strong>
-    </div>
+    <section className="agendaStats">
+      <StatCard icon={<CalendarDays size={18} />} label="Consultas da semana" value={String(consultas.length)} delta={consultasDelta} deltaLabel="vs. semana anterior" />
+      <StatCard icon={<Users size={18} />} label="Profissionais cadastrados" value={String(config.profissionais.length)} />
+      <StatCard icon={<PieChart size={18} />} label="Taxa de ocupação" value={weekCapacityMin > 0 ? `${ocupacaoPct}%` : "—"} delta={ocupacaoDelta} deltaSuffix="pp" deltaLabel="vs. semana anterior" />
+      <StatCard icon={<Clock size={18} />} label="Horários livres" value={weekCapacityMin > 0 ? String(slotsLivres) : "—"} delta={livresDelta} deltaLabel="vs. semana anterior" />
+    </section>
 
-    {diasVisiveis.length === 0 ? (
-      <div className="agendaEmpty">Nenhum dia de funcionamento configurado. <button className="linkButton" onClick={() => setConfigOpen(true)}>Ajustar horários</button></div>
-    ) : (
+    <div className="agendaLayout">
+      <div className="agendaMainCol">
+        <div className="agendaToolbar">
+          <button className="iconButton" aria-label="Semana anterior" onClick={() => setWeekStart(addDays(weekStart, -7))}><ChevronLeft size={17} /></button>
+          <button className="iconButton" aria-label="Próxima semana" onClick={() => setWeekStart(addDays(weekStart, 7))}><ChevronRight size={17} /></button>
+          <button className="todayButton" onClick={() => { setWeekStart(startOfWeek(new Date())); setSelectedDay(new Date()); }}>Hoje</button>
+          <strong>{rotuloSemana}</strong>
+          <div className="agendaViewTabs">
+            {(["semana", "dia", "lista"] as ViewMode[]).map(v => (
+              <button key={v} className={viewMode === v ? "active" : ""} onClick={() => setViewMode(v)}>{v === "semana" ? "Semana" : v === "dia" ? "Dia" : "Lista"}</button>
+            ))}
+          </div>
+        </div>
+
+        {viewMode === "lista" ? (
+          <ListaView consultas={consultasFiltradas} onOpen={(c) => router.push(`/consultas?editar=${c.id}`)} />
+        ) : diasParaGrid.length === 0 ? (
+          <div className="agendaEmpty">Nenhum dia de funcionamento configurado. <button className="linkButton" onClick={() => setConfigOpen(true)}>Ajustar horários</button></div>
+        ) : (
       <section className="panel agendaGridPanel">
-        <div className="agendaGridScroll">
+        <div className="agendaGridScroll" ref={scrollRef}>
           <div className="agendaGridHeader" style={{ gridTemplateColumns: gridColumns }}>
             <span />
-            {diasVisiveis.map(({ date, key, aberto, feriado }) => {
+            {diasParaGrid.map(({ date, key, aberto, feriado }) => {
               const ehHoje = isSameDay(date, today);
               return (
                 <div key={key + date.toISOString()} className={`agendaDayHead ${ehHoje ? "isToday" : ""} ${feriado ? "isHoliday" : ""} ${!aberto ? "isClosed" : ""}`}>
@@ -169,27 +348,46 @@ export default function AgendaPage() {
             <div className="agendaHourCol">
               {linhasHora.map(m => <span key={m} style={{ height: HOUR_PX }}>{minToLabel(m)}</span>)}
             </div>
-            {diasVisiveis.map(({ date, key, aberto, feriado }) => {
+            {diasParaGrid.map(({ date, key, aberto, feriado }) => {
               const dayConfig = config.dias[key];
               const inicioMin = aberto ? timeToMin(dayConfig.inicio) : 0;
               const fimMin = aberto ? timeToMin(dayConfig.fim) : 0;
-              const baseMin = Math.floor(minAbertura / 60) * 60;
+              const baseMin = baseMinGlobal;
               const offsetTopFechado = aberto ? ((inicioMin - baseMin) / 60) * HOUR_PX : 0;
               const bottomFechado = aberto ? ((baseMin + linhasHora.length * 60 - fimMin) / 60) * HOUR_PX : 0;
               const eventos = consultasFiltradas.filter(c => isSameDay(new Date(c.data_hora), date));
+              const placed = layoutOverlaps(eventos);
+              const ehHoje = isSameDay(date, today);
               return (
-                <div key={key + date.toISOString()} className={`agendaDayCol ${feriado ? "isHoliday" : ""} ${!aberto ? "isClosedDay" : ""}`}>
+                <div
+                  key={key + date.toISOString()}
+                  className={`agendaDayCol ${ehHoje ? "isTodayCol" : ""} ${feriado ? "isHoliday" : ""} ${!aberto ? "isClosedDay" : ""}`}
+                  onClick={(e) => handleSlotClick(e, date, aberto && !feriado)}
+                >
                   {!aberto && <div className="agendaClosed" style={{ top: 0, bottom: 0 }} />}
                   {aberto && offsetTopFechado > 0 && <div className="agendaClosed" style={{ top: 0, height: offsetTopFechado }} />}
                   {aberto && bottomFechado > 0 && <div className="agendaClosed" style={{ bottom: 0, height: bottomFechado }} />}
-                  {eventos.map((c, idx) => {
+                  {ehHoje && nowInRange && (
+                    <div className="agendaNow" style={{ top: nowTop }}>
+                      <span className="agendaNowDot" />
+                      <span className="agendaNowLine" />
+                    </div>
+                  )}
+                  {placed.map(({ c, start, col, cols }) => {
                     const dt = new Date(c.data_hora);
-                    const minutosDoDia = dt.getHours() * 60 + dt.getMinutes();
-                    const top = ((minutosDoDia - Math.floor(minAbertura / 60) * 60) / 60) * HOUR_PX;
-                    const height = Math.max(30, (c.duracao_min / 60) * HOUR_PX - 4);
-                    const cor = EVENT_COLORS[idx % EVENT_COLORS.length];
+                    const top = ((start - baseMin) / 60) * HOUR_PX;
+                    const height = Math.max(24, (c.duracao_min / 60) * HOUR_PX - 4);
+                    const cor = STATUS_TO_COLOR[c.status] ?? "blue";
+                    const widthPct = 100 / cols;
+                    const leftPct = widthPct * col;
                     return (
-                      <div key={c.id} className={`agendaEvent ${cor}`} style={{ top, height }} title={`${c.paciente_nome}${c.servico ? " · " + c.servico : ""}`}>
+                      <div
+                        key={c.id}
+                        className={`agendaEvent ${cor}`}
+                        style={{ top, height, left: `calc(${leftPct}% + 4px)`, width: `calc(${widthPct}% - 8px)` }}
+                        title={`${c.paciente_nome}${c.servico ? " · " + c.servico : ""}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="agendaEventAvatar">{initials(c.paciente_nome)}</div>
                         <div>
                           <strong>{c.paciente_nome}</strong>
@@ -203,12 +401,179 @@ export default function AgendaPage() {
             })}
           </div>
         </div>
-        {loading && <p className="agendaLoading">Carregando…</p>}
+        {loading && <div className="agendaLoadingOverlay"><span /></div>}
+        {!loading && consultas.length === 0 && (
+          <div className="agendaWeekEmpty">Nenhuma consulta agendada nesta semana ainda.</div>
+        )}
       </section>
-    )}
+        )}
+      </div>
+
+      <aside className="agendaSidebar">
+        <MiniCalendar
+          month={calMonth}
+          cells={calCells}
+          today={today}
+          selectedDay={selectedDay}
+          isSameWeek={isSameWeek}
+          onPrev={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() - 1); setCalMonth(d); }}
+          onNext={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() + 1); setCalMonth(d); }}
+          onPick={(d) => { setSelectedDay(d); setWeekStart(startOfWeek(d)); if (viewMode === "semana") setViewMode("dia"); }}
+        />
+
+        <section className="sidePanel">
+          <header className="sidePanelHeader">
+            <div>
+              <b>Agenda do dia</b>
+              <small>{selectedDay.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</small>
+            </div>
+            <span className="sidePanelBadge">{consultasDoDia.length}</span>
+          </header>
+          {consultasDoDia.length === 0 ? (
+            <div className="sidePanelEmpty">Nenhuma consulta neste dia.</div>
+          ) : (
+            <ul className="agendaDoDiaList">
+              {consultasDoDia.map(c => {
+                const dt = new Date(c.data_hora);
+                const cor = STATUS_TO_COLOR[c.status] ?? "blue";
+                return (
+                  <li key={c.id} className={`agendaDoDiaItem cor-${cor}`} onClick={() => router.push(`/consultas?editar=${c.id}`)}>
+                    <span className="agendaDoDiaHora">{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    <div className="agendaDoDiaBody">
+                      <strong>{c.paciente_nome}</strong>
+                      <small>{c.servico ?? "Consulta"}</small>
+                    </div>
+                    <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
+                    <button className="iconButton" aria-label="Mais opções" onClick={(e) => { e.stopPropagation(); router.push(`/consultas?editar=${c.id}`); }}><MoreHorizontal size={15} /></button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <button
+            className="sidePanelAction"
+            onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`)}
+          >
+            <Plus size={15} /> Nova consulta no dia
+          </button>
+        </section>
+
+        <section className="sidePanel">
+          <header className="sidePanelHeader"><b>Resumo do dia</b></header>
+          <div className="resumoGrid">
+            <ResumoCell icon={<CalendarDays size={15} />} value={String(consultasDoDia.length)} label="Consultas agendadas" />
+            <ResumoCell icon={<PieChart size={15} />} value={diaCapacidadeMin > 0 ? `${diaOcupacaoPct}%` : "—"} label="Taxa de ocupação" />
+            <ResumoCell icon={<Clock size={15} />} value={diaCapacidadeMin > 0 ? String(diaLivres) : "—"} label="Horários livres" />
+            <ResumoCell icon={<X size={15} />} value={String(diaCancelamentos)} label="Cancelamentos" />
+          </div>
+        </section>
+      </aside>
+    </div>
 
     {configOpen && <AjustesModal config={config} onClose={() => setConfigOpen(false)} onSaved={(c) => { setConfig(c); setConfigOpen(false); }} />}
   </>;
+}
+
+function StatCard({ icon, label, value, delta, deltaSuffix, deltaLabel }: { icon: ReactNode; label: string; value: string; delta?: number | null; deltaSuffix?: string; deltaLabel?: string }) {
+  const showDelta = delta !== null && delta !== undefined;
+  const isUp = showDelta && delta! >= 0;
+  return (
+    <article className="statCard">
+      <div className="statCardIcon">{icon}</div>
+      <div className="statCardBody">
+        <small>{label}</small>
+        <strong>{value}</strong>
+        {showDelta && (
+          <div className={`statCardDelta ${isUp ? "up" : "down"}`}>
+            {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            <span>{isUp ? "+" : ""}{delta}{deltaSuffix ?? "%"}</span>
+            {deltaLabel && <em>{deltaLabel}</em>}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ResumoCell({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
+  return (
+    <div className="resumoCell">
+      <span className="resumoIcon">{icon}</span>
+      <div>
+        <strong>{value}</strong>
+        <small>{label}</small>
+      </div>
+    </div>
+  );
+}
+
+function MiniCalendar({ month, cells, today, selectedDay, isSameWeek, onPrev, onNext, onPick }: {
+  month: Date; cells: Date[]; today: Date; selectedDay: Date;
+  isSameWeek: (d: Date) => boolean;
+  onPrev: () => void; onNext: () => void; onPick: (d: Date) => void;
+}) {
+  const monthLabel = month.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return (
+    <section className="sidePanel miniCalPanel">
+      <header className="miniCalHeader">
+        <button className="iconButton" aria-label="Mês anterior" onClick={onPrev}><ChevronLeft size={14} /></button>
+        <b>{monthLabel[0].toUpperCase() + monthLabel.slice(1)}</b>
+        <button className="iconButton" aria-label="Próximo mês" onClick={onNext}><ChevronRight size={14} /></button>
+      </header>
+      <div className="miniCalWeekdays">{["S", "T", "Q", "Q", "S", "S", "D"].map((w, i) => <span key={i}>{w}</span>)}</div>
+      <div className="miniCalGrid">
+        {cells.map((d) => {
+          const outside = d.getMonth() !== month.getMonth();
+          const ehHoje = isSameDay(d, today);
+          const selecionado = isSameDay(d, selectedDay);
+          const naSemana = isSameWeek(d);
+          return (
+            <button
+              key={d.toISOString()}
+              className={`miniCalCell ${outside ? "outside" : ""} ${ehHoje ? "today" : ""} ${selecionado ? "selected" : ""} ${naSemana ? "inWeek" : ""}`}
+              onClick={() => onPick(d)}
+            >{d.getDate()}</button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ListaView({ consultas, onOpen }: { consultas: Consulta[]; onOpen: (c: Consulta) => void }) {
+  if (consultas.length === 0) return <div className="agendaWeekEmpty">Nenhuma consulta nesta semana.</div>;
+  const grupos = consultas.reduce<Record<string, Consulta[]>>((acc, c) => {
+    const iso = new Date(c.data_hora).toISOString().slice(0, 10);
+    (acc[iso] ??= []).push(c);
+    return acc;
+  }, {});
+  return (
+    <section className="panel agendaListaPanel">
+      {Object.entries(grupos).map(([iso, itens]) => {
+        const d = new Date(iso + "T00:00");
+        return (
+          <div key={iso} className="agendaListaGroup">
+            <header>{d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</header>
+            <ul>
+              {itens.map(c => {
+                const dt = new Date(c.data_hora);
+                return (
+                  <li key={c.id} onClick={() => onOpen(c)}>
+                    <span className="agendaListaHora">{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                    <div>
+                      <strong>{c.paciente_nome}</strong>
+                      <small>{c.servico ?? "Consulta"} · {c.duracao_min} min</small>
+                    </div>
+                    <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </section>
+  );
 }
 
 function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onClose: () => void; onSaved: (c: AgendaConfig) => void }) {
