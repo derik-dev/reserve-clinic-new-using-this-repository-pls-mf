@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowUpRight, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Plus, UserPlus, Users, Check } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
 import { reportarErroCliente } from "@/lib/reportarErroCliente";
@@ -190,22 +190,31 @@ export default function DashboardPage() {
     })();
   }, []);
 
+  const fetchConsultas = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from("consultas").select("*").order("data_hora");
+      if (error) throw new Error(error.message);
+      setConsultas((data as Consulta[] | null) ?? []);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      void reportarErroCliente("dashboard.consultas", msg);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchConsultas(); }, [fetchConsultas]);
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const from = startOfMonth(viewMonth);
-        const to = endOfMonth(viewMonth);
-        const { data, error } = await supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lte("data_hora", to.toISOString()).order("data_hora");
-        if (error) throw new Error(error.message);
-        setConsultas((data as Consulta[] | null) ?? []);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        void reportarErroCliente("dashboard.consultas", msg);
-      }
-      setLoading(false);
-    })();
-  }, [viewMonth]);
+    function onFocus() { fetchConsultas(); }
+    function onVisibility() { if (document.visibilityState === "visible") fetchConsultas(); }
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [fetchConsultas]);
 
   const linkPublico = useMemo(() => {
     if (!perfilSlug) return "";
@@ -213,23 +222,17 @@ export default function DashboardPage() {
     return `${base}/agendamento/${perfilSlug}`;
   }, [perfilSlug]);
 
-  const metrics = useMemo(() => {
-    const totalMes = consultas.length;
-    const faturamentoMes = consultas.filter(c => c.status === "concluida" || c.status === "confirmada").reduce((s, c) => s + (Number(c.valor) || 0), 0);
-    let slotsSemana = 0;
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const inicioSemana = new Date(hoje); inicioSemana.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7));
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(inicioSemana, i);
-      const k = jsDayToKey(d);
-      const dc = config.dias[k];
-      if (!dc.aberto || config.feriados.includes(toIsoDate(d))) continue;
-      const total = timeToMin(dc.fim) - timeToMin(dc.inicio);
-      slotsSemana += Math.max(0, Math.floor(total / config.duracao_min));
-    }
-    const ocupadosSemana = consultas.filter(c => { const dt = new Date(c.data_hora); return dt >= inicioSemana && dt < addDays(inicioSemana, 7); }).length;
-    return { totalMes, faturamentoMes, livresSemana: Math.max(0, slotsSemana - ocupadosSemana) };
-  }, [consultas, config]);
+  const faturamentoMes = useMemo(() => {
+    const from = startOfMonth(viewMonth).getTime();
+    const to = endOfMonth(viewMonth).getTime();
+    return consultas
+      .filter(c => {
+        if (c.status !== "concluida" && c.status !== "confirmada") return false;
+        const t = new Date(c.data_hora).getTime();
+        return t >= from && t <= to;
+      })
+      .reduce((s, c) => s + (Number(c.valor) || 0), 0);
+  }, [consultas, viewMonth]);
 
   const consultasPorDia = useMemo(() => {
     const map = new Map<string, Consulta[]>();
@@ -367,7 +370,7 @@ export default function DashboardPage() {
           </div>
           <div className="dashChartTotal">
             <span>Total do mês</span>
-            <strong>{formatCurrency(metrics.faturamentoMes)}</strong>
+            <strong>{formatCurrency(faturamentoMes)}</strong>
           </div>
         </header>
         <div className="dashChartBody">
@@ -392,7 +395,7 @@ export default function DashboardPage() {
         <header>
           <div>
             <strong>Status dos agendamentos</strong>
-            <small>Distribuição no mês</small>
+            <small>Distribuição de todas as consultas registradas</small>
           </div>
         </header>
         <div className="dashStatusBody">
