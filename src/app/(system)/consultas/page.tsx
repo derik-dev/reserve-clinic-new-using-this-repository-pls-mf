@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
 
-type Profissional = { id: string; nome: string };
+type Profissional = { id: string; nome: string; especialidade: string | null };
 
 type FormState = {
   paciente_id: string;
@@ -16,13 +16,14 @@ type FormState = {
   hora: string;
   duracao_min: string;
   servico: string;
+  profissional_id: string;
   profissional: string;
   valor: string;
   status: ConsultaStatus;
   observacoes: string;
 };
 
-const emptyForm: FormState = { paciente_id: "", paciente_nome: "", data: "", hora: "", duracao_min: "30", servico: "", profissional: "", valor: "", status: "aguardando", observacoes: "" };
+const emptyForm: FormState = { paciente_id: "", paciente_nome: "", data: "", hora: "", duracao_min: "30", servico: "", profissional_id: "", profissional: "", valor: "", status: "aguardando", observacoes: "" };
 
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -64,21 +65,17 @@ export default function ConsultasPage() {
     setLoading(true);
     setLoadError(false);
     try {
-      const { data: session } = await supabase.auth.getUser();
-      const [cs, ps, cfg] = await Promise.race([
+      const [cs, ps, pr] = await Promise.race([
         Promise.all([
           supabase.from("consultas").select("*").order("data_hora", { ascending: true }),
           supabase.from("pacientes").select("*").eq("status", "ativo").order("nome"),
-          session.user
-            ? supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle()
-            : Promise.resolve({ data: null }),
+          supabase.from("profissionais").select("id, nome, especialidade").eq("ativo", true).order("nome"),
         ]),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
       ]);
       setConsultas((cs.data as Consulta[] | null) ?? []);
       setPacientes((ps.data as Paciente[] | null) ?? []);
-      const raw = (cfg.data as { agenda_config?: { profissionais?: Profissional[] } } | null)?.agenda_config?.profissionais;
-      setProfissionais(Array.isArray(raw) ? raw.map(p => ({ id: p.id, nome: p.nome })) : []);
+      setProfissionais((pr.data as Profissional[] | null) ?? []);
     } catch {
       setLoadError(true);
       setConsultas([]);
@@ -160,6 +157,7 @@ export default function ConsultasPage() {
       data, hora,
       duracao_min: String(c.duracao_min),
       servico: c.servico ?? "",
+      profissional_id: c.profissional_id ?? "",
       profissional: c.profissional ?? "",
       valor: c.valor != null ? String(c.valor).replace(".", ",") : "",
       status: c.status,
@@ -187,6 +185,8 @@ export default function ConsultasPage() {
     if (!session.user) { setSaving(false); return; }
     const paciente = pacientes.find(p => p.id === form.paciente_id);
     const dataIso = new Date(`${form.data}T${form.hora}:00`).toISOString();
+    const profSelecionado = form.profissional_id ? profissionais.find(p => p.id === form.profissional_id) : null;
+    const profissionalNome = profSelecionado?.nome ?? (form.profissional || null);
     const payload = {
       paciente_id: form.paciente_id || null,
       paciente_nome: nome,
@@ -195,7 +195,8 @@ export default function ConsultasPage() {
       data_hora: dataIso,
       duracao_min: Number(form.duracao_min) || 30,
       servico: form.servico || null,
-      profissional: form.profissional || null,
+      profissional_id: form.profissional_id || null,
+      profissional: profissionalNome,
       valor: form.valor ? Number(form.valor.replace(",", ".")) : null,
       status: form.status,
       observacoes: form.observacoes || null,
@@ -375,15 +376,15 @@ export default function ConsultasPage() {
                 <div className="formRow"><label>Serviço</label><input value={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.value })} placeholder="Consulta clínica" /></div>
                 <div className="formRow"><label>Profissional</label>
                   {profissionais.length > 0 ? (
-                    <select value={form.profissional} onChange={(e) => setForm({ ...form, profissional: e.target.value })}>
+                    <select value={form.profissional_id} onChange={(e) => setForm({ ...form, profissional_id: e.target.value })}>
                       <option value="">— Selecionar —</option>
-                      {profissionais.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
-                      {form.profissional && !profissionais.some(p => p.nome === form.profissional) && (
-                        <option value={form.profissional}>{form.profissional}</option>
+                      {profissionais.map(p => <option key={p.id} value={p.id}>{p.nome}{p.especialidade ? ` — ${p.especialidade}` : ""}</option>)}
+                      {!form.profissional_id && form.profissional && (
+                        <option value="" disabled>Atual: {form.profissional}</option>
                       )}
                     </select>
                   ) : (
-                    <input value={form.profissional} onChange={(e) => setForm({ ...form, profissional: e.target.value })} placeholder="Dr. Ricardo" />
+                    <input value={form.profissional} onChange={(e) => setForm({ ...form, profissional: e.target.value })} placeholder="Cadastre profissionais em /profissionais" />
                   )}
                 </div>
               </div>

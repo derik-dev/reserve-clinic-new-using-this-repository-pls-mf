@@ -9,12 +9,15 @@ import { initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatu
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 type DayConfig = { aberto: boolean; inicio: string; fim: string };
-type Profissional = { id: string; nome: string; dias: DayKey[] };
+type ProfissionalJson = { id: string; nome: string; dias: DayKey[] };
+type ProfissionalSql = { id: string; nome: string; especialidade: string | null };
+type ProfDisponibilidade = { dias: Record<DayKey, DayConfig>; feriados: string[] };
 type AgendaConfig = {
   dias: Record<DayKey, DayConfig>;
   feriados: string[];
-  profissionais: Profissional[];
+  profissionais: ProfissionalJson[];
   duracao_min: number;
+  disponibilidade: Record<string, ProfDisponibilidade>;
 };
 
 const DAY_ORDER: DayKey[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
@@ -34,6 +37,7 @@ const DEFAULT_CONFIG: AgendaConfig = {
   feriados: [],
   profissionais: [],
   duracao_min: 60,
+  disponibilidade: {},
 };
 
 const STATUS_TO_COLOR: Record<ConsultaStatus, string> = {
@@ -64,7 +68,17 @@ function mergeConfig(raw: unknown): AgendaConfig {
     feriados: Array.isArray(r.feriados) ? r.feriados : [],
     profissionais: Array.isArray(r.profissionais) ? r.profissionais : [],
     duracao_min: typeof r.duracao_min === "number" && r.duracao_min > 0 ? r.duracao_min : DEFAULT_CONFIG.duracao_min,
+    disponibilidade: (r.disponibilidade && typeof r.disponibilidade === "object") ? r.disponibilidade as Record<string, ProfDisponibilidade> : {},
   };
+}
+
+function getProfDisp(config: AgendaConfig, profId: string | null): { dias: Record<DayKey, DayConfig>; feriados: string[] } {
+  if (!profId || !config.disponibilidade[profId]) return { dias: config.dias, feriados: [] };
+  return { dias: { ...config.dias, ...config.disponibilidade[profId].dias }, feriados: config.disponibilidade[profId].feriados };
+}
+
+function isFeriado(config: AgendaConfig, profId: string | null, isoDate: string): boolean {
+  return config.feriados.includes(isoDate) || (profId ? (config.disponibilidade[profId]?.feriados ?? []).includes(isoDate) : false);
 }
 
 type ViewMode = "semana" | "dia" | "lista";
@@ -75,6 +89,7 @@ export default function AgendaPage() {
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [prevWeekConsultas, setPrevWeekConsultas] = useState<Consulta[] | null>(null);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
+  const [sqlProfissionais, setSqlProfissionais] = useState<ProfissionalSql[]>([]);
   const [profFiltro, setProfFiltro] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
@@ -95,8 +110,12 @@ export default function AgendaPage() {
     (async () => {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
-      const { data } = await supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle();
-      setConfig(mergeConfig(data?.agenda_config));
+      const [cfgRes, prRes] = await Promise.all([
+        supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
+        supabase.from("profissionais").select("id, nome, especialidade").eq("ativo", true).order("nome"),
+      ]);
+      setConfig(mergeConfig(cfgRes.data?.agenda_config));
+      setSqlProfissionais((prRes.data as ProfissionalSql[] | null) ?? []);
     })();
   }, []);
 
@@ -127,19 +146,26 @@ export default function AgendaPage() {
     return () => { cancelled = true; };
   }, [weekStart]);
 
+  const profAtivo = profFiltro !== "todos" && profFiltro !== "sem" ? profFiltro : null;
+  const profDisp = useMemo(() => getProfDisp(config, profAtivo), [config, profAtivo]);
+
   const diasVisiveis = useMemo(() => {
     const semana = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)).map(d => ({ date: d, key: jsDayToKey(d) }));
     const diasComConsulta = new Set(consultas.map(c => toIsoDate(new Date(c.data_hora))));
-    return semana.map(d => ({ ...d, aberto: config.dias[d.key].aberto, feriado: config.feriados.includes(toIsoDate(d.date)) })).filter(d => d.aberto || diasComConsulta.has(toIsoDate(d.date)));
-  }, [weekStart, config, consultas]);
-  const diasAbertos = useMemo(() => diasVisiveis.filter(d => d.aberto), [diasVisiveis]);
+    return semana.map(d => ({
+      ...d,
+      aberto: profDisp.dias[d.key].aberto,
+      feriado: isFeriado(config, profAtivo, toIsoDate(d.date)),
+    })).filter(d => d.aberto || diasComConsulta.has(toIsoDate(d.date)));
+  }, [weekStart, config, consultas, profDisp, profAtivo]);
+  const diasAbertos = useMemo(() => diasVisiveis.filter(d => d.aberto && !d.feriado), [diasVisiveis]);
 
   const [minAbertura, maxFechamento] = useMemo(() => {
     if (diasAbertos.length === 0) return [8 * 60, 18 * 60];
-    const inicios = diasAbertos.map(d => timeToMin(config.dias[d.key].inicio));
-    const fins = diasAbertos.map(d => timeToMin(config.dias[d.key].fim));
+    const inicios = diasAbertos.map(d => timeToMin(profDisp.dias[d.key].inicio));
+    const fins = diasAbertos.map(d => timeToMin(profDisp.dias[d.key].fim));
     return [Math.min(...inicios), Math.max(...fins)];
-  }, [diasAbertos, config]);
+  }, [diasAbertos, profDisp]);
 
   const linhasHora = useMemo(() => {
     const arr: number[] = [];
@@ -149,8 +175,8 @@ export default function AgendaPage() {
 
   const consultasFiltradas = useMemo(() => {
     if (profFiltro === "todos") return consultas;
-    if (profFiltro === "sem") return consultas.filter(c => !c.profissional);
-    return consultas.filter(c => c.profissional === profFiltro);
+    if (profFiltro === "sem") return consultas.filter(c => !c.profissional_id);
+    return consultas.filter(c => c.profissional_id === profFiltro);
   }, [consultas, profFiltro]);
 
   const rotuloSemana = useMemo(() => {
@@ -162,11 +188,11 @@ export default function AgendaPage() {
     const semana = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
     return semana.reduce((acc, d) => {
       const key = jsDayToKey(d);
-      const cfg = config.dias[key];
-      if (!cfg.aberto || config.feriados.includes(toIsoDate(d))) return acc;
+      const cfg = profDisp.dias[key];
+      if (!cfg.aberto || isFeriado(config, profAtivo, toIsoDate(d))) return acc;
       return acc + Math.max(0, timeToMin(cfg.fim) - timeToMin(cfg.inicio));
     }, 0);
-  }, [weekStart, config]);
+  }, [weekStart, config, profDisp, profAtivo]);
   const weekUsedMin = useMemo(() => consultas.reduce((acc, c) => acc + c.duracao_min, 0), [consultas]);
   const ocupacaoPct = weekCapacityMin > 0 ? Math.round((weekUsedMin / weekCapacityMin) * 100) : 0;
   const slotsLivres = weekCapacityMin > 0 && config.duracao_min > 0 ? Math.max(0, Math.floor((weekCapacityMin - weekUsedMin) / config.duracao_min)) : 0;
@@ -197,8 +223,8 @@ export default function AgendaPage() {
     .filter(c => isSameDay(new Date(c.data_hora), selectedDay))
     .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime()), [consultas, selectedDay]);
   const diaKey = jsDayToKey(selectedDay);
-  const diaCfg = config.dias[diaKey];
-  const diaCapacidadeMin = diaCfg.aberto && !config.feriados.includes(toIsoDate(selectedDay))
+  const diaCfg = profDisp.dias[diaKey];
+  const diaCapacidadeMin = diaCfg.aberto && !isFeriado(config, profAtivo, toIsoDate(selectedDay))
     ? Math.max(0, timeToMin(diaCfg.fim) - timeToMin(diaCfg.inicio)) : 0;
   const diaUsadoMin = consultasDoDia.reduce((a, c) => a + c.duracao_min, 0);
   const diaOcupacaoPct = diaCapacidadeMin > 0 ? Math.round((diaUsadoMin / diaCapacidadeMin) * 100) : 0;
@@ -289,12 +315,12 @@ export default function AgendaPage() {
 
   return <>
     <PageHeader title="Agenda" description="Visualize e organize sua semana com clareza." actions={<>
-      {config.profissionais.length > 0 && (
+      {sqlProfissionais.length > 0 && (
         <div className="agendaFilter">
           <label>Profissional</label>
           <select value={profFiltro} onChange={(e) => setProfFiltro(e.target.value)}>
             <option value="todos">Todos</option>
-            {config.profissionais.map(p => <option key={p.id} value={p.nome}>{p.nome}</option>)}
+            {sqlProfissionais.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
             <option value="sem">Sem profissional</option>
           </select>
         </div>
@@ -305,7 +331,7 @@ export default function AgendaPage() {
 
     <section className="agendaStats">
       <StatCard icon={<CalendarDays size={18} />} label="Consultas da semana" value={String(consultas.length)} delta={consultasDelta} deltaLabel="vs. semana anterior" />
-      <StatCard icon={<Users size={18} />} label="Profissionais cadastrados" value={String(config.profissionais.length)} />
+      <StatCard icon={<Users size={18} />} label="Profissionais cadastrados" value={String(sqlProfissionais.length)} />
       <StatCard icon={<PieChart size={18} />} label="Taxa de ocupação" value={weekCapacityMin > 0 ? `${ocupacaoPct}%` : "—"} delta={ocupacaoDelta} deltaSuffix="pp" deltaLabel="vs. semana anterior" />
       <StatCard icon={<Clock size={18} />} label="Horários livres" value={weekCapacityMin > 0 ? String(slotsLivres) : "—"} delta={livresDelta} deltaLabel="vs. semana anterior" />
     </section>
@@ -470,7 +496,7 @@ export default function AgendaPage() {
       </aside>
     </div>
 
-    {configOpen && <AjustesModal config={config} onClose={() => setConfigOpen(false)} onSaved={(c) => { setConfig(c); setConfigOpen(false); }} />}
+    {configOpen && <AjustesModal config={config} sqlProfissionais={sqlProfissionais} onClose={() => setConfigOpen(false)} onSaved={(c) => { setConfig(c); setConfigOpen(false); }} />}
   </>;
 }
 
@@ -576,13 +602,19 @@ function ListaView({ consultas, onOpen }: { consultas: Consulta[]; onOpen: (c: C
   );
 }
 
-function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onClose: () => void; onSaved: (c: AgendaConfig) => void }) {
+function AjustesModal({ config, sqlProfissionais, onClose, onSaved }: {
+  config: AgendaConfig;
+  sqlProfissionais: ProfissionalSql[];
+  onClose: () => void;
+  onSaved: (c: AgendaConfig) => void;
+}) {
   const [local, setLocal] = useState<AgendaConfig>(config);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"horarios" | "feriados" | "profissionais">("horarios");
   const [novoFeriado, setNovoFeriado] = useState("");
-  const [novoProfNome, setNovoProfNome] = useState("");
+  const [profSelecionado, setProfSelecionado] = useState<string | null>(sqlProfissionais[0]?.id ?? null);
+  const [novoFeriadoProf, setNovoFeriadoProf] = useState("");
 
   function updateDia(key: DayKey, patch: Partial<DayConfig>) {
     setLocal({ ...local, dias: { ...local.dias, [key]: { ...local.dias[key], ...patch } } });
@@ -596,23 +628,28 @@ function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onCl
   function removeFeriado(f: string) {
     setLocal({ ...local, feriados: local.feriados.filter(x => x !== f) });
   }
-  function addProfissional() {
-    if (!novoProfNome.trim()) return;
-    const novo: Profissional = { id: crypto.randomUUID(), nome: novoProfNome.trim(), dias: (Object.keys(local.dias) as DayKey[]).filter(k => local.dias[k].aberto) };
-    setLocal({ ...local, profissionais: [...local.profissionais, novo] });
-    setNovoProfNome("");
+
+  function getProfLocal(profId: string): ProfDisponibilidade {
+    return local.disponibilidade[profId] ?? { dias: { ...local.dias }, feriados: [] };
   }
-  function removeProfissional(id: string) {
-    setLocal({ ...local, profissionais: local.profissionais.filter(p => p.id !== id) });
+  function updateProfDia(profId: string, key: DayKey, patch: Partial<DayConfig>) {
+    const prev = getProfLocal(profId);
+    setLocal({ ...local, disponibilidade: { ...local.disponibilidade, [profId]: { ...prev, dias: { ...prev.dias, [key]: { ...prev.dias[key], ...patch } } } } });
   }
-  function toggleProfDia(id: string, dia: DayKey) {
-    setLocal({
-      ...local,
-      profissionais: local.profissionais.map(p => p.id !== id ? p : { ...p, dias: p.dias.includes(dia) ? p.dias.filter(d => d !== dia) : [...p.dias, dia] }),
-    });
+  function addFeriadoProf(profId: string) {
+    if (!novoFeriadoProf) return;
+    const prev = getProfLocal(profId);
+    if (prev.feriados.includes(novoFeriadoProf)) return;
+    setLocal({ ...local, disponibilidade: { ...local.disponibilidade, [profId]: { ...prev, feriados: [...prev.feriados, novoFeriadoProf].sort() } } });
+    setNovoFeriadoProf("");
   }
-  function updateProfNome(id: string, nome: string) {
-    setLocal({ ...local, profissionais: local.profissionais.map(p => p.id !== id ? p : { ...p, nome }) });
+  function removeFeriadoProf(profId: string, f: string) {
+    const prev = getProfLocal(profId);
+    setLocal({ ...local, disponibilidade: { ...local.disponibilidade, [profId]: { ...prev, feriados: prev.feriados.filter(x => x !== f) } } });
+  }
+  function resetProfDisp(profId: string) {
+    const { [profId]: _, ...rest } = local.disponibilidade;
+    setLocal({ ...local, disponibilidade: rest });
   }
 
   async function handleSave() {
@@ -626,6 +663,9 @@ function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onCl
     onSaved(local);
   }
 
+  const profAtual = profSelecionado ? getProfLocal(profSelecionado) : null;
+  const temCustom = profSelecionado ? !!local.disponibilidade[profSelecionado] : false;
+
   return (
     <div className="modalBackdrop" onClick={onClose}>
       <div className="modalCard modalLg" onClick={(e) => e.stopPropagation()}>
@@ -634,9 +674,9 @@ function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onCl
           <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
         </header>
         <div className="tabsRow">
-          <button className={tab === "horarios" ? "active" : ""} onClick={() => setTab("horarios")}>Horários</button>
+          <button className={tab === "horarios" ? "active" : ""} onClick={() => setTab("horarios")}>Horários da clínica</button>
           <button className={tab === "feriados" ? "active" : ""} onClick={() => setTab("feriados")}>Feriados</button>
-          <button className={tab === "profissionais" ? "active" : ""} onClick={() => setTab("profissionais")}>Profissionais</button>
+          <button className={tab === "profissionais" ? "active" : ""} onClick={() => setTab("profissionais")}>Por profissional</button>
         </div>
         <div className="modalBody">
           {tab === "horarios" && (
@@ -651,7 +691,7 @@ function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onCl
                   <span>min</span>
                 </div>
               </div>
-              <p className="ajustesHint">Marque os dias em que a clínica atende e defina os horários.</p>
+              <p className="ajustesHint">Horários padrão da clínica — usados para profissionais sem configuração própria.</p>
               <div className="ajustesDias">
                 {DAY_ORDER.map(k => {
                   const d = local.dias[k];
@@ -674,7 +714,7 @@ function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onCl
           )}
           {tab === "feriados" && (
             <>
-              <p className="ajustesHint">Dias em que a clínica não atende (mesmo caindo em dia útil).</p>
+              <p className="ajustesHint">Dias em que a clínica não atende (bloqueia todos os profissionais).</p>
               <div className="ajustesAddRow">
                 <input type="date" value={novoFeriado} onChange={(e) => setNovoFeriado(e.target.value)} />
                 <button className="secondaryButton" onClick={addFeriado} disabled={!novoFeriado}><Plus size={15} /> Adicionar</button>
@@ -694,30 +734,69 @@ function AjustesModal({ config, onClose, onSaved }: { config: AgendaConfig; onCl
             </>
           )}
           {tab === "profissionais" && (
-            <>
-              <p className="ajustesHint">Cadastre profissionais e marque em quais dias cada um atende.</p>
-              <div className="ajustesAddRow">
-                <input value={novoProfNome} onChange={(e) => setNovoProfNome(e.target.value)} placeholder="Nome do profissional" onKeyDown={(e) => { if (e.key === "Enter") addProfissional(); }} />
-                <button className="secondaryButton" onClick={addProfissional} disabled={!novoProfNome.trim()}><Plus size={15} /> Adicionar</button>
-              </div>
-              {local.profissionais.length === 0 ? (
-                <p className="ajustesEmpty">Nenhum profissional cadastrado.</p>
-              ) : (
-                <ul className="ajustesLista">
-                  {local.profissionais.map(p => (
-                    <li key={p.id} className="ajustesProf">
-                      <input value={p.nome} onChange={(e) => updateProfNome(p.id, e.target.value)} />
-                      <div className="ajustesProfDias">
-                        {DAY_ORDER.filter(k => local.dias[k].aberto).map(k => (
-                          <button key={k} type="button" className={p.dias.includes(k) ? "active" : ""} onClick={() => toggleProfDia(p.id, k)}>{DAY_LABEL[k]}</button>
-                        ))}
-                      </div>
-                      <button className="iconButton" onClick={() => removeProfissional(p.id)} aria-label="Remover"><Trash2 size={15} /></button>
-                    </li>
+            sqlProfissionais.length === 0 ? (
+              <p className="ajustesEmpty">Nenhum profissional ativo. Cadastre em <strong>Profissionais</strong>.</p>
+            ) : (
+              <>
+                <p className="ajustesHint">Configure horários e folgas individuais. Feriados gerais da clínica já bloqueiam automaticamente.</p>
+                <div className="ajustesProfSelect">
+                  {sqlProfissionais.map(p => (
+                    <button key={p.id} type="button" className={`ajustesProfTab${profSelecionado === p.id ? " active" : ""}${local.disponibilidade[p.id] ? " hasCustom" : ""}`} onClick={() => setProfSelecionado(p.id)}>
+                      {p.nome}
+                    </button>
                   ))}
-                </ul>
-              )}
-            </>
+                </div>
+                {profSelecionado && profAtual && (
+                  <div className="ajustesProfBody">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                      <small style={{ color: "var(--text-muted)" }}>
+                        {temCustom ? "Horário personalizado ativo" : "Usando horários da clínica (padrão)"}
+                      </small>
+                      {temCustom && (
+                        <button className="secondaryButton" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => resetProfDisp(profSelecionado)}>
+                          Restaurar padrão
+                        </button>
+                      )}
+                    </div>
+                    <div className="ajustesDias">
+                      {DAY_ORDER.map(k => {
+                        const d = profAtual.dias[k];
+                        return (
+                          <div className={`ajustesDia ${d.aberto ? "isOpen" : ""}`} key={k}>
+                            <label className="ajustesSwitch">
+                              <input type="checkbox" checked={d.aberto} onChange={(e) => updateProfDia(profSelecionado, k, { aberto: e.target.checked })} />
+                              <span>{DAY_LABEL_FULL[k]}</span>
+                            </label>
+                            <div className="ajustesHoras">
+                              <input type="time" value={d.inicio} disabled={!d.aberto} onChange={(e) => updateProfDia(profSelecionado, k, { inicio: e.target.value })} />
+                              <em>até</em>
+                              <input type="time" value={d.fim} disabled={!d.aberto} onChange={(e) => updateProfDia(profSelecionado, k, { fim: e.target.value })} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="ajustesHint" style={{ marginTop: 16 }}>Folgas exclusivas deste profissional (somam-se aos feriados da clínica).</p>
+                    <div className="ajustesAddRow">
+                      <input type="date" value={novoFeriadoProf} onChange={(e) => setNovoFeriadoProf(e.target.value)} />
+                      <button className="secondaryButton" onClick={() => addFeriadoProf(profSelecionado)} disabled={!novoFeriadoProf}><Plus size={15} /> Adicionar</button>
+                    </div>
+                    {profAtual.feriados.length === 0 ? (
+                      <p className="ajustesEmpty">Nenhuma folga individual.</p>
+                    ) : (
+                      <ul className="ajustesLista">
+                        {profAtual.feriados.map(f => (
+                          <li key={f}>
+                            <span>{new Date(f + "T00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</span>
+                            <button className="iconButton" onClick={() => removeFeriadoProf(profSelecionado, f)} aria-label="Remover"><Trash2 size={15} /></button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </>
+            )
           )}
           {error && <div className="onboardingError">{error}</div>}
         </div>

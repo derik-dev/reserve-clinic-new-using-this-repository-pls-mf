@@ -24,6 +24,7 @@ export type Consulta = {
   duracao_min: number;
   servico: string | null;
   profissional: string | null;
+  profissional_id: string | null;
   valor: number | null;
   status: ConsultaStatus;
   observacoes: string | null;

@@ -27,11 +27,13 @@ type PerfilPublic = {
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 type DayConfig = { aberto: boolean; inicio: string; fim: string };
+type ProfDisponibilidade = { dias: Record<DayKey, DayConfig>; feriados: string[] };
 type AgendaConfig = {
   dias: Record<DayKey, DayConfig>;
   feriados: string[];
   profissionais: { id: string; nome: string; dias: DayKey[] }[];
   duracao_min: number;
+  disponibilidade: Record<string, ProfDisponibilidade>;
 };
 
 const DAY_ORDER: DayKey[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
@@ -48,6 +50,7 @@ const DEFAULT_CONFIG: AgendaConfig = {
   feriados: [],
   profissionais: [],
   duracao_min: 60,
+  disponibilidade: {},
 };
 
 type Form = {
@@ -99,7 +102,17 @@ function mergeConfig(raw: unknown): AgendaConfig {
     feriados: Array.isArray(r.feriados) ? r.feriados : [],
     profissionais: Array.isArray(r.profissionais) ? r.profissionais : [],
     duracao_min: typeof r.duracao_min === "number" && r.duracao_min > 0 ? r.duracao_min : 60,
+    disponibilidade: (r.disponibilidade && typeof r.disponibilidade === "object") ? r.disponibilidade as Record<string, ProfDisponibilidade> : {},
   };
+}
+
+function getProfDisp(config: AgendaConfig, profId: string | null): { dias: Record<DayKey, DayConfig>; feriados: string[] } {
+  if (!profId || !config.disponibilidade[profId]) return { dias: config.dias, feriados: [] };
+  return { dias: { ...config.dias, ...config.disponibilidade[profId].dias }, feriados: config.disponibilidade[profId].feriados };
+}
+
+function isFeriado(config: AgendaConfig, profId: string | null, isoDate: string): boolean {
+  return config.feriados.includes(isoDate) || (profId ? (config.disponibilidade[profId]?.feriados ?? []).includes(isoDate) : false);
 }
 
 export default function AgendamentoPublicoPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -161,7 +174,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
       const inicio = new Date(`${form.data}T00:00:00`);
       const fim = new Date(`${form.data}T23:59:59`);
       let query = supabase.from("consultas").select("data_hora, duracao_min").eq("perfil_id", perfil.id).gte("data_hora", inicio.toISOString()).lte("data_hora", fim.toISOString());
-      if (form.profissional_nome) query = query.eq("profissional", form.profissional_nome);
+      if (form.profissional_id) query = query.eq("profissional_id", form.profissional_id);
       const { data } = await query;
       const ranges = ((data as { data_hora: string; duracao_min: number }[] | null) ?? []).map(c => {
         const dt = new Date(c.data_hora);
@@ -181,17 +194,20 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const primary = perfil?.cor_primaria ?? "#4c6fff";
 
   const selectedProf = useMemo(
-    () => config.profissionais.find(p => p.id === form.profissional_id) ?? null,
-    [config.profissionais, form.profissional_id]
+    () => profissionais.find(p => p.id === form.profissional_id) ?? null,
+    [profissionais, form.profissional_id]
   );
+
+  const profId = form.profissional_id || null;
+  const profDisp = useMemo(() => getProfDisp(config, profId), [config, profId]);
 
   const diaInfo = useMemo(() => {
     if (!form.data) return null;
     const d = new Date(`${form.data}T00:00:00`);
     const key = jsDayToKey(d);
-    const feriado = config.feriados.includes(form.data);
-    return { key, dayConfig: config.dias[key], feriado };
-  }, [form.data, config]);
+    const feriado = isFeriado(config, profId, form.data);
+    return { key, dayConfig: profDisp.dias[key], feriado };
+  }, [form.data, config, profId, profDisp]);
 
   const slots = useMemo(() => {
     if (!diaInfo || !diaInfo.dayConfig.aberto || diaInfo.feriado) return [];
@@ -480,8 +496,8 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                         const selected = form.data === iso;
                         const isPast = d < hoje;
                         const key = jsDayToKey(d);
-                        const feriado = config.feriados.includes(iso);
-                        const fechado = !config.dias[key].aberto || feriado || (selectedProf ? !selectedProf.dias.includes(key) : false);
+                        const feriado = isFeriado(config, profId, iso);
+                        const fechado = !profDisp.dias[key].aberto || feriado;
                         const disabled = isPast || outroMes || fechado;
                         return (
                           <button
