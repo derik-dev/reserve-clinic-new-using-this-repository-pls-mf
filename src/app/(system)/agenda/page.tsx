@@ -315,19 +315,22 @@ export default function AgendaPage() {
 
   return <>
     <PageHeader title="Agenda" description="Visualize e organize sua semana com clareza." actions={<>
-      {sqlProfissionais.length > 0 && (
-        <div className="agendaFilter">
-          <label>Profissional</label>
-          <select value={profFiltro} onChange={(e) => setProfFiltro(e.target.value)}>
-            <option value="todos">Todos</option>
-            {sqlProfissionais.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-            <option value="sem">Sem profissional</option>
-          </select>
-        </div>
-      )}
       <button className="secondaryButton" onClick={() => setConfigOpen(true)}><Settings size={16} /> Ajustes</button>
       <button className="primaryButton" onClick={() => router.push("/consultas?nova=1")}><Plus size={17} /> Nova consulta</button>
     </>} />
+
+    {sqlProfissionais.length > 0 && (
+      <div className="profFiltroBar">
+        <button className={`profFiltroBtn${profFiltro === "todos" ? " active" : ""}`} onClick={() => setProfFiltro("todos")}>
+          <Users size={14} /> Todos
+        </button>
+        {sqlProfissionais.map(p => (
+          <button key={p.id} className={`profFiltroBtn${profFiltro === p.id ? " active" : ""}`} onClick={() => setProfFiltro(p.id)}>
+            {p.nome}
+          </button>
+        ))}
+      </div>
+    )}
 
     <section className="agendaStats">
       <StatCard icon={<CalendarDays size={18} />} label="Consultas da semana" value={String(consultas.length)} delta={consultasDelta} deltaLabel="vs. semana anterior" />
@@ -411,13 +414,13 @@ export default function AgendaPage() {
                         key={c.id}
                         className={`agendaEvent ${cor}`}
                         style={{ top, height, left: `calc(${leftPct}% + 4px)`, width: `calc(${widthPct}% - 8px)` }}
-                        title={`${c.paciente_nome}${c.servico ? " · " + c.servico : ""}`}
+                        title={`${c.paciente_nome}${c.profissional ? " · " + c.profissional : ""}${c.servico ? " · " + c.servico : ""}`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="agendaEventAvatar">{initials(c.paciente_nome)}</div>
                         <div>
                           <strong>{c.paciente_nome}</strong>
-                          <span>{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}{c.servico ? ` · ${c.servico}` : ""}</span>
+                          <span>{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}{c.profissional ? ` · ${c.profissional}` : ""}</span>
                         </div>
                       </div>
                     );

@@ -256,6 +256,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           duracaoMin: config.duracao_min,
           servico: form.servico || undefined,
           profissional: form.profissional_nome || undefined,
+          profissionalId: form.profissional_id || undefined,
           observacoes: form.observacoes || undefined,
         }),
       });

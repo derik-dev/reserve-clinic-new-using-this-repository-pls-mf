@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       duracaoMin,
       servico,
       profissional,
+      profissionalId,
       observacoes,
     } = (await req.json()) as {
       perfilId: string;
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
       duracaoMin?: number;
       servico?: string;
       profissional?: string;
+      profissionalId?: string;
       observacoes?: string;
     };
 
@@ -67,6 +69,7 @@ export async function POST(req: NextRequest) {
         duracao_min: duracaoMin ?? 60,
         servico: servico || null,
         profissional: profissional || null,
+        profissional_id: profissionalId || null,
         status: "aguardando",
         observacoes: observacoes || null,
       }),
