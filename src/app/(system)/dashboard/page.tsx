@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase";
 import { formatCurrency, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
 import { reportarErroCliente } from "@/lib/reportarErroCliente";
 import AsaasTransfersPanel from "@/components/AsaasTransfersPanel";
-import { SetupChecklist } from "@/components/ProductTour";
 
 type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
 type DayConfig = { aberto: boolean; inicio: string; fim: string };
@@ -364,8 +363,6 @@ export default function DashboardPage() {
         </div>
       )}
     </section>
-
-    <SetupChecklist accountCreatedAt={perfilCreatedAt} />
 
     <div className="dashOverviewGrid">
       <section className="dashChartCard">
