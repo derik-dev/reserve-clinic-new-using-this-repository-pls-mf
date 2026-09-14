@@ -445,6 +445,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             <i />
             <div><span>3</span><strong>Confirmação</strong></div>
           </div>
+          <p className="bookingStepHint">Escolha um profissional e um horário. Leva menos de 2 minutos.</p>
           <section className="panel bookingFormPanel" style={{ padding: 22 }}>
             {step === 0 && (
               <div className="formGrid">
@@ -458,6 +459,8 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                           <button
                             type="button"
                             className={`bookingProfessionalOption${active ? " isSelected" : ""}`}
+                            aria-pressed={active}
+                            aria-label={`${p.nome}${p.especialidade ? `, ${p.especialidade}` : ""}`}
                             key={p.id}
                             onClick={() => setForm({ ...form, profissional_id: p.id, profissional_nome: p.nome, data: "", hora: "" })}
                             style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : "#fff", color: active ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left" }}
@@ -507,6 +510,8 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                             disabled={disabled}
                             onClick={() => setForm({ ...form, data: iso, hora: "" })}
                             className={`bookingCalCell${selected ? " isSelected" : ""}${ehHoje ? " isToday" : ""}${outroMes ? " isOtherMonth" : ""}${fechado && !outroMes ? " isClosed" : ""}`}
+                            aria-label={d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}
+                            aria-pressed={selected}
                           >
                             {d.getDate()}
                           </button>
