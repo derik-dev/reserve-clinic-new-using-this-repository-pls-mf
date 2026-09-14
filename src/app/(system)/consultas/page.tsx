@@ -65,12 +65,13 @@ export default function ConsultasPage() {
     setLoading(true);
     setLoadError(false);
     try {
-      // Remove apenas reservas não pagas expiradas — confirmada/concluida são histórico
+      // Remove reservas não pagas com mais de 3 dias desde a criação
+      const limite3dias = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
       await supabase
         .from("consultas")
         .delete()
         .eq("status", "aguardando")
-        .lt("data_hora", new Date().toISOString());
+        .lt("created_at", limite3dias);
 
       const [cs, ps, pr] = await Promise.race([
         Promise.all([
