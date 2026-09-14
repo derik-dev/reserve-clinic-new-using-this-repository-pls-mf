@@ -29,8 +29,18 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
       event: string;
+      type?: string;
       payment?: { id: string; externalReference?: string; value?: number };
+      transfer?: { id?: string };
     };
+
+    // A validação de saque exige uma operação local previamente registrada.
+    // Como essa versão ainda não possui esse registro, recusa explicitamente
+    // qualquer solicitação de aprovação em vez de liberar uma transferência desconhecida.
+    if (body.type === "TRANSFER") {
+      console.warn("[webhook-asaas] validação de transferência recusada: operação local não registrada", body.transfer?.id ?? "(sem id)");
+      return NextResponse.json({ status: "REFUSED", refuseReason: "Validação de saque ainda não configurada no Reserve Clinic." });
+    }
 
     console.log("[webhook-asaas] evento recebido:", body.event, "| externalReference:", body.payment?.externalReference ?? "(ausente)");
 

@@ -272,12 +272,14 @@ const integrations = [
   {
     title: "Asaas",
     icon: CircleDollarSign,
-    endpoint: "`POST /customers`, `POST /payments`, `GET /payments/{id}/pixQrCode`, `POST /accounts`, `POST /webhooks`",
-    env: ["ASAAS_API_KEY", "ASAAS_BASE_URL", "ASAAS_WEBHOOK_TOKEN"],
+    endpoint: "`POST /customers`, `POST /payments`, `GET /payments/{id}/pixQrCode`, `POST /accounts`, `POST /webhooks`, `POST /transfers`, `GET /transfers`, `GET /finance/balance`",
+    env: ["ASAAS_API_KEY", "ASAAS_BASE_URL", "ASAAS_WEBHOOK_TOKEN", "ASAAS_TRANSFER_PIX_KEY", "ASAAS_TRANSFER_PIX_KEY_TYPE"],
     notes: [
       "O código usa `ASAAS_BASE_URL ?? https://api.asaas.com/v3`; em desenvolvimento, defina sandbox explicitamente.",
       "O QR Code pode demorar; a rota tenta buscar 6 vezes com intervalo de 3 segundos.",
       "A rota de pagamento atual usa a chave global `ASAAS_API_KEY`, mesmo existindo subconta salva no perfil.",
+      "Saques usam `POST /api/sacar`, com destino Pix exclusivamente configurado no servidor; o browser nunca recebe a chave Asaas.",
+      "O mecanismo de validação de saque via webhook ainda deve ser ativado e testado separadamente na conta Asaas; transferências do tipo `TRANSFER` são recusadas pelo webhook enquanto não houver registro local da operação.",
     ],
   },
   {
@@ -322,6 +324,8 @@ const envVars: EnvVar[] = [
   { name: "ASAAS_API_KEY", scope: "server", required: "Pix", description: "Chave para criar clientes, cobranças e subcontas Asaas." },
   { name: "ASAAS_BASE_URL", scope: "server", required: "Opcional", description: "Base da API Asaas. Defina explicitamente sandbox/produção." },
   { name: "ASAAS_WEBHOOK_TOKEN", scope: "server", required: "Recomendado", description: "Token comparado com `asaas-access-token` no webhook." },
+  { name: "ASAAS_TRANSFER_PIX_KEY", scope: "server", required: "Saque", description: "Chave Pix de destino autorizada para os saques automatizados. Nunca mostrar no frontend." },
+  { name: "ASAAS_TRANSFER_PIX_KEY_TYPE", scope: "server", required: "Saque", description: "Tipo da chave Pix de destino: CPF, CNPJ, EMAIL, PHONE ou EVP." },
   { name: "ZAPI_INSTANCE_ID", scope: "server", required: "WhatsApp", description: "Identificador da instância Z-API." },
   { name: "ZAPI_TOKEN", scope: "server", required: "WhatsApp", description: "Token da instância Z-API." },
   { name: "ZAPI_CLIENT_TOKEN", scope: "server", required: "Opcional", description: "Header adicional `Client-Token` para algumas contas Z-API." },
@@ -337,10 +341,12 @@ const workingItems = [
   "Checkout Pix Asaas com QR Code, copia e cola, Realtime e polling.",
   "Webhook Asaas confirmando pagamento em `agendamentos`.",
   "WhatsApp via Z-API apos confirmacao e alertas Discord para falhas.",
+  "Consulta de saldo, historico e solicitacao de saque via API Asaas disponiveis no dashboard; nenhum saque real foi testado automaticamente.",
   "Onboarding, login, dashboard, consultas, pacientes, profissionais e configuracoes.",
 ];
 
 const pendingItems = [
+  "Validar o mecanismo de saque via webhook da Asaas e registrar cada transferencia antes de responder APPROVED; enquanto isso, o webhook recusa validacoes de transferencia por seguranca.",
   "RLS precisa de teste de ponta a ponta no banco aplicado, principalmente leitura pública de `profissionais` e `consultas`.",
   "Sincronizar `consultas.status` quando o Pix confirmar em `agendamentos`.",
   "Como `/docs` agora é público, revisar periodicamente o conteúdo para não publicar detalhes operacionais sensíveis.",
