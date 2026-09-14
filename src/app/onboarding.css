@@ -9,7 +9,7 @@
 .onboardingSteps>div{flex:1;height:5px;border-radius:99px;background:#e6e9f0}
 .onboardingSteps>div.active{background:#4c6fff}
 .onboardingSteps>div.done{background:#34d6c4}
-.onboardingCard h1{font:700 24px var(--font-space);margin:0 0 6px}
+.onboardingCard h1{font:700 24px var(--font-space);margin:0 0 6px;color:#182033}
 .onboardingCard>p{color:#858d9f;font-size:13px;margin:0 0 22px}
 .formGrid{display:grid;gap:14px}
 .formRow{display:grid;gap:6px}
