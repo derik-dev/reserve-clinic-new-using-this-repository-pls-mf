@@ -1,12 +1,5 @@
 import Image from "next/image";
 
-const appointments = [
-  ["09:00", "Maria Oliveira", "Dra. Ana", "#4c6fff"],
-  ["11:00", "João Pereira", "Dr. Bruno", "#34d6c4"],
-  ["14:00", "Fernanda Souza", "Dra. Carla", "#a78bfa"],
-  ["16:00", "Ricardo Lima", "Dr. Diego", "#7dd3fc"],
-];
-
 const features = [
   {
     eyebrow: "AGENDA CENTRALIZADA",
@@ -64,26 +57,6 @@ function Logo() {
   return <div className="logo"><Image src="/logo.svg" alt="Reserve Clinic" width={156} height={28} className="logoImage" /></div>;
 }
 
-function Dashboard() {
-  return (
-    <div className="browser">
-      <div className="browserBar"><div className="browserDots"><i /><i /><i /></div><span>app.reserveclinic.com.br/dashboard</span><div className="browserMenu">•••</div></div>
-      <div className="dashboard">
-        <aside><Logo /><b>◧ Dashboard</b><span>▣ Agenda</span><span>♙ Pacientes</span><span>↗ Link de agendamento</span><span>▤ Financeiro</span><span>⚙ Configurações</span></aside>
-        <main>
-          <h3>Dashboard</h3><small>Sexta-feira, 3 de julho</small>
-          <div className="metrics">
-            {[["CONSULTAS HOJE","18"],["OCUPAÇÃO","86%"],["FATURAMENTO","R$ 4.860"],["PENDENTES","3"]].map(([a,b]) => <div key={a}><small>{a}</small><strong>{b}</strong></div>)}
-          </div>
-          <div className="appointments"><b>Próximos atendimentos</b>
-            {appointments.map(([time, patient, prof, color]) => <div className="appointment" style={{borderLeftColor: color}} key={time}><strong>{time}</strong><span>{patient}</span><small>{prof}</small></div>)}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
-}
-
 function FeatureVisual({ type }: { type: string }) {
   if (type === "phone") return <div className="phone"><div className="notch" /><Logo /><small>Sua clínica</small><p>Valor do sinal</p><strong>R$ 60,00</strong><div className="qr">{Array.from({length:81},(_,i)=><i className={(i*37)%9>3?"dark":""} key={i}/>)}</div><em>Aguardando pagamento</em></div>;
   if (type === "chat") return <div className="chat"><div><small>Reserve Clinic · ontem 18:00</small>Olá Maria! Lembrando da sua consulta amanhã às 14h com a Dra. Ana Silva.</div><div className="reply"><small>Maria Oliveira</small>Confirmado, obrigada! 👍</div><div><small>Reserve Clinic · hoje 08:00</small>Sua consulta é hoje às 14h. Toque para confirmar presença.</div></div>;
@@ -103,7 +76,7 @@ export default function Home() {
         <small className="ctaAssurance">Sem cartão de crédito · Cancele quando quiser</small>
         <div className="trust">Em uso hoje por uma clínica de audiologia no Rio de Janeiro</div>
       </header>
-      <section className="heroVisual" id="produto"><div className="floatCard pix"><small>PIX RECEBIDO</small><strong>R$ 60,00</strong><span>Maria Oliveira</span></div><Dashboard/><div className="floatCard whatsapp"><small>● WhatsApp · agora</small><span>Sua consulta amanhã às 14h foi confirmada ✅</span></div></section>
+      <section className="heroVisual" id="produto"><div className="floatCard pix"><small>PIX RECEBIDO</small><strong>R$ 60,00</strong><span>Maria Oliveira</span></div><img src="/dashboard.svg" className="browser" alt="Dashboard Reserve Clinic" style={{display:"block",height:"auto"}} /><div className="floatCard whatsapp"><small>● WhatsApp · agora</small><span>Sua consulta amanhã às 14h foi confirmada ✅</span></div></section>
       <section className="comparison"><div className="sectionTitle"><small>ROTINA DA CLÍNICA</small><h2>O que muda quando o sinal é cobrado antes</h2></div><div className="comparisonGrid"><div className="comparisonCol"><span className="comparisonTag before">Sem o Reserve Clinic</span>{comparison.map(c=><p key={c.before}>{c.before}</p>)}</div><div className="comparisonCol after"><span className="comparisonTag afterTag">Com o Reserve Clinic</span>{comparison.map(c=><p key={c.after}>{c.after}</p>)}</div></div></section>
       <div id="recursos">{features.map((f,i)=><section className={`feature ${i%2?"reverse":""}`} key={f.title}><div className="featureCopy"><small style={{color:f.color}}>{f.eyebrow}</small><h2>{f.title}</h2><p>{f.text}</p>{f.bullets.map(b=><div className="check" key={b}><i style={{color:f.color,background:`${f.color}20`}}>✓</i>{b}</div>)}</div><FeatureVisual type={f.visual}/></section>)}</div>
       <section className="pricing" id="precos"><div className="sectionTitle"><small>PREÇOS</small><h2>Um único plano, tudo incluso</h2><p className="launchNote">Condição de lançamento — preço atual válido para os primeiros clientes.</p></div><div className="plans singlePlan"><div className="plan popular"><small>RESERVE CLINIC</small><div><strong>R$ 127</strong><span>/mês</span></div><p>Um plano só, sem pegadinha de upgrade. Toda a clínica com agenda centralizada, cobrança de sinal via Pix e lembretes automáticos.</p><a className="button primary" href="/registro">Começar teste grátis →</a>{planFeatures.map(f=><span className="planFeature" key={f}>✓ {f}</span>)}</div></div></section>
