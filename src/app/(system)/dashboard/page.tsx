@@ -372,6 +372,7 @@ export default function DashboardPage() {
           <div className="dashChartTotal">
             <span>Total do mês</span>
             <strong>{formatCurrency(faturamentoMes)}</strong>
+            <AsaasTransfersPanel compact />
           </div>
         </header>
         <div className="dashChartBody">
@@ -390,8 +391,6 @@ export default function DashboardPage() {
         <ProgressRing value={ocupacaoAgenda.pct} label="ocupado" sub={`${ocupacaoAgenda.ocup}/${ocupacaoAgenda.slots}`} />
       </section>
     </div>
-
-    <AsaasTransfersPanel />
 
     <div className="dashSecondaryGrid">
       <section className="dashRingCard">

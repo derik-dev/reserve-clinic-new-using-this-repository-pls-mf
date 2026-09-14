@@ -9,7 +9,7 @@ type Transfer = { id: string; value: number; status: string; date: string | null
 const statusLabel: Record<string, string> = { PENDING: "Pendente", DONE: "Concluído", FAILED: "Falhou", CANCELLED: "Cancelado", BLOCKED: "Bloqueado", IN_BANK_PROCESSING: "Em processamento" };
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export default function AsaasTransfersPanel() {
+export default function AsaasTransfersPanel({ compact = false }: { compact?: boolean }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,12 +60,13 @@ export default function AsaasTransfersPanel() {
     finally { setSubmitting(false); }
   }
 
-  return <section className="financePanel" aria-labelledby="finance-title">
+  return <section className={`financePanel ${compact ? "financePanelInline" : ""}`} aria-labelledby="finance-title">
     <header className="financePanelHeader">
       <div><span className="financeEyebrow">Financeiro</span><strong id="finance-title">Saldo disponível</strong><small>Valor disponível para transferência via Pix</small></div>
       <button className="primaryButton" onClick={() => { setError(""); setModal(true); }}><ArrowDownToLine size={15} /> Sacar</button>
     </header>
-    <div className="financeBalanceRow"><strong>{loading ? "..." : balance === null ? "—" : money(balance)}</strong><button className="iconButton" onClick={() => void load()} aria-label="Atualizar saldo"><RefreshCw size={15} /></button></div>
+    <div className="financeBalanceRow"><div><span>Disponível para saque</span><strong>{loading ? "..." : balance === null ? "—" : money(balance)}</strong></div><button className="iconButton" onClick={() => void load()} aria-label="Atualizar saldo"><RefreshCw size={15} /></button></div>
+    {compact && <button className="primaryButton financeInlineButton" onClick={() => { setError(""); setModal(true); }}><ArrowDownToLine size={14} /> Sacar</button>}
     {success && <p className="financeSuccess"><Check size={14} /> {success}</p>}
     {error && !modal && <p className="financeError">{error}</p>}
     <div className="financeHistoryHead"><strong>Últimas transferências</strong><span>{transfers.length} registros</span></div>
