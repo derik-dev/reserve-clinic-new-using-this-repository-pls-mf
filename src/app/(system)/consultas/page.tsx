@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays, CalendarX, ChevronDown, Download, Filter, Plus, Search, X } from "lucide-react";
+import { CalendarDays, CalendarX, ChevronDown, Download, Filter, Plus, Search, X, Clock, User, Stethoscope, BanknoteIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, formatDate, formatTime, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
@@ -58,6 +58,7 @@ export default function ConsultasPage() {
   const [showPeriodo, setShowPeriodo] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
   const periodoRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
 
@@ -333,7 +334,7 @@ export default function ConsultasPage() {
             ) : filtered.map(c => {
               const when = formatWhen(c.data_hora, today);
               return (
-                <tr key={c.id} className="rowClickable" onClick={() => openEdit(c)}>
+                <tr key={c.id} className="rowClickable" onClick={() => setSelectedConsulta(c)}>
                   <td><strong className={when.isToday ? "isTodayLabel" : ""}>{when.label}</strong><small>{c.duracao_min} min</small></td>
                   <td><div className="patientCell"><div className="tableAvatar">{initials(c.paciente_nome)}</div><div><strong>{c.paciente_nome}</strong>{c.servico && <small>{c.servico}</small>}</div></div></td>
                   <td>{c.profissional ?? "—"}</td>
@@ -351,6 +352,15 @@ export default function ConsultasPage() {
         </table>
       </div>
     </section>
+
+    {selectedConsulta && (
+      <ConsultaDetalhePopup
+        consulta={selectedConsulta}
+        onClose={() => setSelectedConsulta(null)}
+        onEdit={() => { openEdit(selectedConsulta); setSelectedConsulta(null); }}
+        onStatusChange={(s) => { updateStatus(selectedConsulta, s); setSelectedConsulta(null); }}
+      />
+    )}
 
     {modalOpen && (
       <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
@@ -416,4 +426,69 @@ export default function ConsultasPage() {
       </div>
     )}
   </>;
+}
+
+function ConsultaDetalhePopup({ consulta: c, onClose, onEdit, onStatusChange }: {
+  consulta: Consulta;
+  onClose: () => void;
+  onEdit: () => void;
+  onStatusChange: (s: ConsultaStatus) => void;
+}) {
+  const dt = new Date(c.data_hora);
+  const data = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return (
+    <div className="modalBackdrop" onClick={onClose}>
+      <div className="modalCard" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+        <header className="modalHeader">
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div className="tableAvatar" style={{ width: 42, height: 42, fontSize: 13, borderRadius: 12 }}>{initials(c.paciente_nome)}</div>
+            <div>
+              <h2 style={{ margin: 0 }}>{c.paciente_nome}</h2>
+              <div style={{ marginTop: 6 }}>
+                <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
+              </div>
+            </div>
+          </div>
+          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
+        </header>
+        <div className="modalBody">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <ConsultaRow icon={<CalendarDays size={14} />} label="Data" value={data[0].toUpperCase() + data.slice(1)} />
+            <ConsultaRow icon={<Clock size={14} />} label="Horário" value={`${hora} · ${c.duracao_min} min`} />
+            {c.profissional && <ConsultaRow icon={<User size={14} />} label="Profissional" value={c.profissional} />}
+            {c.servico && <ConsultaRow icon={<Stethoscope size={14} />} label="Serviço" value={c.servico} />}
+            {c.valor != null && <ConsultaRow icon={<BanknoteIcon size={14} />} label="Valor" value={formatCurrency(c.valor)} />}
+            {c.observacoes && (
+              <div style={{ padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
+                <div style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 6 }}>Observações</div>
+                <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>{c.observacoes}</p>
+              </div>
+            )}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 4 }}>
+              {(Object.keys(STATUS_LABEL) as ConsultaStatus[]).filter(s => s !== c.status).map(s => (
+                <button key={s} onClick={() => onStatusChange(s)} className={`statusBadge ${STATUS_CLASS[s]}`} style={{ border: "1px solid rgba(255,255,255,.1)", cursor: "pointer", padding: "5px 12px" }}>
+                  Marcar como {STATUS_LABEL[s].toLowerCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <footer className="modalFooter">
+          <button className="secondaryButton" onClick={onClose}>Fechar</button>
+          <button className="primaryButton" onClick={onEdit}>Editar consulta</button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function ConsultaRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
+      <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", width: 72, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500, flex: 1 }}>{value}</span>
+    </div>
+  );
 }
