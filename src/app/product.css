@@ -132,14 +132,14 @@ button,input,select,textarea{font:inherit}
 .dashLinkLabel{font-size:10px;font-weight:600;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
 .dashLinkRow{display:flex;align-items:center;gap:10px}
 .dashLinkRow code{flex:1;font-size:12px;color:var(--text);background:rgba(0,0,0,.3);border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-family:ui-monospace,SFMono-Regular,monospace;letter-spacing:-.01em}
-.dashOverviewGrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;margin-bottom:16px}
+.dashOverviewGrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;margin-bottom:16px;align-items:start}
 .dashOverviewGrid>.dashChartCard{margin-bottom:0}
 .dashRingCard{background:var(--surface-glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--border-soft);border-radius:var(--radius);padding:18px 20px 16px;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:12px}
 .dashRingCard::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 100% 0,rgba(59,130,246,.06),transparent 55%);pointer-events:none}
 .dashRingCard>header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;position:relative;z-index:1}
 .dashRingCard>header strong{display:block;font:600 14px var(--font-space);color:var(--text);letter-spacing:-.01em}
 .dashRingCard>header small{display:block;font-size:11px;color:var(--text-muted);margin-top:4px;letter-spacing:-.005em}
-.dashRing{position:relative;z-index:1;margin:auto auto 4px;display:grid;place-items:center}
+.dashRing{position:relative;z-index:1;margin:0 auto 4px;display:grid;place-items:center}
 .dashRingCenter{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
 .dashRingCenter strong{font:300 30px/1 var(--font-space);color:var(--text);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .dashRingCenter span{font-size:9px;font-weight:600;letter-spacing:.14em;color:var(--text-muted);text-transform:uppercase}
