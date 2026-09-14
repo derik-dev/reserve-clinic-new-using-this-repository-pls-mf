@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Pencil, Plus, Search, Stethoscope, Trash2, X } from "lucide-react";
+import { Camera, Check, Copy, Link2, Pencil, Plus, Search, Stethoscope, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -43,6 +43,8 @@ export default function ProfissionaisPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedProf, setSelectedProf] = useState<Profissional | null>(null);
+  const [perfilSlug, setPerfilSlug] = useState<string | null>(null);
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -54,6 +56,9 @@ export default function ProfissionaisPage() {
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
       ]);
       setProfissionais((data as Profissional[] | null) ?? []);
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) supabase.from("perfis").select("slug").eq("id", user.id).maybeSingle().then(({ data: perf }) => setPerfilSlug((perf as { slug: string } | null)?.slug ?? null));
+      });
     } catch {
       setLoadError(true);
       setProfissionais([]);
@@ -224,6 +229,20 @@ export default function ProfissionaisPage() {
                 </td>
                 <td>
                   <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                    {perfilSlug && (
+                      <button
+                        className="iconButton"
+                        title="Copiar link de agendamento"
+                        aria-label="Copiar link de agendamento"
+                        style={{ color: copiedLinkId === p.id ? "#15967e" : undefined }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(`${window.location.origin}/agendamento/${perfilSlug}?p=${p.id}`);
+                          setCopiedLinkId(p.id);
+                          setTimeout(() => setCopiedLinkId(null), 1600);
+                        }}
+                      >{copiedLinkId === p.id ? <Check size={15} /> : <Link2 size={15} />}</button>
+                    )}
                     <button className="iconButton" onClick={(e) => { e.stopPropagation(); openEdit(p); }} aria-label="Editar"><Pencil size={15} /></button>
                     <button className="iconButton" onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} disabled={deleting === p.id} aria-label="Excluir" style={{ color: "#e5484d" }}><Trash2 size={15} /></button>
                   </div>
@@ -241,6 +260,7 @@ export default function ProfissionaisPage() {
     {selectedProf && (
       <ProfissionalPopup
         prof={selectedProf}
+        perfilSlug={perfilSlug}
         onClose={() => setSelectedProf(null)}
         onEdit={() => { openEdit(selectedProf); setSelectedProf(null); }}
       />
@@ -290,7 +310,10 @@ export default function ProfissionaisPage() {
   </>;
 }
 
-function ProfissionalPopup({ prof: p, onClose, onEdit }: { prof: Profissional; onClose: () => void; onEdit: () => void }) {
+function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Profissional; perfilSlug: string | null; onClose: () => void; onEdit: () => void }) {
+  const [copiedLink, setCopiedLink] = useState(false);
+  const bookingPath = perfilSlug ? `/agendamento/${perfilSlug}?p=${p.id}` : null;
+
   return (
     <div className="modalBackdrop" onClick={onClose}>
       <div className="modalCard" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
@@ -316,6 +339,21 @@ function ProfissionalPopup({ prof: p, onClose, onEdit }: { prof: Profissional; o
             {p.anos_experiencia != null && <ProfField label="Experiência" value={`${p.anos_experiencia} anos`} />}
             {p.especialidade && <ProfField label="Especialidade" value={p.especialidade} />}
           </div>
+          {bookingPath && (
+            <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
+              <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Link de agendamento</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <code style={{ fontSize: 11, color: "var(--text-muted)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bookingPath}</code>
+                <button
+                  className="iconButton"
+                  aria-label="Copiar link"
+                  title="Copiar link"
+                  style={{ flexShrink: 0, color: copiedLink ? "#15967e" : undefined }}
+                  onClick={() => { navigator.clipboard.writeText(window.location.origin + bookingPath); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 1600); }}
+                >{copiedLink ? <Check size={14} /> : <Copy size={14} />}</button>
+              </div>
+            </div>
+          )}
         </div>
         <footer className="modalFooter">
           <button className="secondaryButton" onClick={onClose}>Fechar</button>

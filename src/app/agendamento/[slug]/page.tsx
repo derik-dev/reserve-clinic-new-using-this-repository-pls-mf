@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Check } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { PixCheckout } from "@/components/PixCheckout";
 import { reportarErroCliente } from "@/lib/reportarErroCliente";
@@ -118,6 +119,8 @@ function isFeriado(config: AgendaConfig, profId: string | null, isoDate: string)
 
 export default function AgendamentoPublicoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const searchParams = useSearchParams();
+  const profParam = searchParams.get("p");
   const [perfil, setPerfil] = useState<PerfilPublic | null>(null);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
   const [profissionais, setProfissionais] = useState<ProfissionalPublic[]>([]);
@@ -151,7 +154,12 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             setConfig(mergeConfig(conf.data?.agenda_config));
             const lista = (profs.data as ProfissionalPublic[] | null) ?? [];
             setProfissionais(lista);
-            if (lista.length > 0) setForm(f => ({ ...f, profissional_id: lista[0].id, profissional_nome: lista[0].nome }));
+            if (profParam) {
+              const fp = lista.find(p => p.id === profParam);
+              if (fp) setForm(f => ({ ...f, profissional_id: fp.id, profissional_nome: fp.nome }));
+            } else if (lista.length > 0) {
+              setForm(f => ({ ...f, profissional_id: lista[0].id, profissional_nome: lista[0].nome }));
+            }
           }
         })(),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
@@ -347,6 +355,24 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           )}
         </div>
       </section>
+      {profParam && selectedProf && (
+        <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: "rgba(255,255,255,.55)", border: "1px solid rgba(0,0,0,.07)", borderRadius: 14, backdropFilter: "blur(4px)" }}>
+          {selectedProf.foto_url ? (
+            <img src={selectedProf.foto_url} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: `2px solid ${primary}` }} />
+          ) : (
+            <span style={{ width: 48, height: 48, borderRadius: "50%", background: primary, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{selectedProf.nome.slice(0, 2).toUpperCase()}</span>
+          )}
+          <div>
+            <strong style={{ display: "block", fontSize: 15, color: "#1b2335" }}>{selectedProf.nome}</strong>
+            {selectedProf.especialidade && <small style={{ fontSize: 12, color: "#7d8597" }}>{selectedProf.especialidade}</small>}
+          </div>
+        </div>
+      )}
+      {profParam && !loading && !selectedProf && (
+        <div style={{ padding: "14px 18px", background: "#fff8f0", border: "1px solid #fde8c8", borderRadius: 14, color: "#92400e", fontSize: 13 }}>
+          Profissional não disponível para agendamento.
+        </div>
+      )}
 
       {pendingBooking && !done ? (
         /* Tela de aguardando confirmação — aparece ao voltar ao link */
@@ -445,11 +471,11 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             <i />
             <div><span>3</span><strong>Confirmação</strong></div>
           </div>
-          <p className="bookingStepHint">Escolha um profissional e um horário. Leva menos de 2 minutos.</p>
+          <p className="bookingStepHint">{profParam ? "Escolha uma data e horário disponível. Leva menos de 2 minutos." : "Escolha um profissional e um horário. Leva menos de 2 minutos."}</p>
           <section className="panel bookingFormPanel" style={{ padding: 22 }}>
             {step === 0 && (
               <div className="formGrid">
-                {profissionais.length > 0 && (
+                {profissionais.length > 0 && !profParam && (
                   <div className="formRow bookingProfessionalPicker">
                     <label>Profissional</label>
                     <div className="bookingProfessionalOptions">
