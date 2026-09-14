@@ -48,6 +48,7 @@ export function PixCheckout({
   const [copied, setCopied] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
   const [tentativa, setTentativa] = useState(0);
+  const [simulando, setSimulando] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const successRef   = useRef<HTMLDivElement>(null);
@@ -134,6 +135,20 @@ export function PixCheckout({
     }, successRef);
     return () => ctx.revert();
   }, [confirmado]);
+
+  async function simularPagamento() {
+    setSimulando(true);
+    try {
+      await fetch("/api/simular-pagamento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agendamentoId }),
+      });
+      setConfirmado(true);
+    } finally {
+      setSimulando(false);
+    }
+  }
 
   async function copiar() {
     if (!pix) return;
@@ -375,6 +390,29 @@ export function PixCheckout({
                     <span style={{ fontSize: 11 }}>Esta página atualiza automaticamente.</span>
                   </p>
                 </div>
+
+                {/* Botão de simulação para testes */}
+                <button
+                  onClick={simularPagamento}
+                  disabled={simulando}
+                  style={{
+                    marginTop: 12,
+                    width: "100%",
+                    padding: "10px 16px",
+                    borderRadius: 10,
+                    border: `1px dashed rgba(255,255,255,0.12)`,
+                    background: "transparent",
+                    color: "rgba(255,255,255,0.28)",
+                    fontSize: 12,
+                    cursor: "pointer",
+                    letterSpacing: "0.02em",
+                    transition: "color 0.2s, border-color 0.2s",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.25)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.28)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
+                >
+                  {simulando ? "Simulando…" : "🧪 Simular pagamento confirmado"}
+                </button>
               </>
             ) : null}
           </div>
