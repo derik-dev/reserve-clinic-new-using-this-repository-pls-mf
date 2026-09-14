@@ -22,14 +22,14 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Sessão expirada. Entre novamente para sacar." }, { status: 401 });
 
     const apiKey = process.env.ASAAS_API_KEY;
-    const pixAddressKey = process.env.ASAAS_TRANSFER_PIX_KEY;
-    const pixAddressKeyType = process.env.ASAAS_TRANSFER_PIX_KEY_TYPE;
+    const defaultPixAddressKey = process.env.ASAAS_TRANSFER_PIX_KEY;
+    const defaultPixAddressKeyType = process.env.ASAAS_TRANSFER_PIX_KEY_TYPE;
     if (!apiKey) return NextResponse.json({ error: "A integração financeira ainda não está configurada no servidor." }, { status: 503 });
-    if (!pixAddressKey || !pixAddressKeyType) {
-      return NextResponse.json({ error: "Configure a chave Pix de destino do saque no servidor antes de continuar." }, { status: 503 });
-    }
-
-    const body = await req.json().catch(() => null) as { value?: unknown } | null;
+    const body = await req.json().catch(() => null) as { value?: unknown; pixAddressKey?: unknown; pixAddressKeyType?: unknown } | null;
+    const pixAddressKey = typeof body?.pixAddressKey === "string" && body.pixAddressKey.trim() ? body.pixAddressKey.trim() : defaultPixAddressKey;
+    const pixAddressKeyType = typeof body?.pixAddressKeyType === "string" && body.pixAddressKeyType.trim() ? body.pixAddressKeyType.trim().toUpperCase() : defaultPixAddressKeyType?.toUpperCase();
+    if (!pixAddressKey || !pixAddressKeyType) return NextResponse.json({ error: "Informe a chave Pix e o tipo da chave de destino." }, { status: 400 });
+    if (!( ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"] as string[]).includes(pixAddressKeyType)) return NextResponse.json({ error: "Tipo de chave Pix inválido." }, { status: 400 });
     const value = typeof body?.value === "number" ? body.value : Number(body?.value);
     if (!Number.isFinite(value) || value <= 0) {
       return NextResponse.json({ error: "Informe um valor de saque maior que zero." }, { status: 400 });

@@ -16,6 +16,8 @@ export default function AsaasTransfersPanel({ compact = false }: { compact?: boo
   const [error, setError] = useState("");
   const [modal, setModal] = useState(false);
   const [value, setValue] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [pixKeyType, setPixKeyType] = useState("CPF");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState("");
 
@@ -51,10 +53,10 @@ export default function AsaasTransfersPanel({ compact = false }: { compact?: boo
     try {
       const headers = await authHeaders();
       if (!headers) throw new Error("Sessão expirada. Entre novamente.");
-      const response = await fetch("/api/sacar", { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ value: numericValue }) });
+      const response = await fetch("/api/sacar", { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify({ value: numericValue, pixAddressKey: pixKey.trim(), pixAddressKeyType: pixKeyType }) });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "Não foi possível solicitar o saque.");
-      setModal(false); setValue(""); setSuccess("Saque solicitado. Atualizando o histórico...");
+      setModal(false); setValue(""); setPixKey(""); setSuccess("Saque solicitado. Atualizando o histórico...");
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível solicitar o saque."); }
     finally { setSubmitting(false); }
@@ -71,6 +73,6 @@ export default function AsaasTransfersPanel({ compact = false }: { compact?: boo
     {error && !modal && <p className="financeError">{error}</p>}
     <div className="financeHistoryHead"><strong>Últimas transferências</strong><span>{transfers.length} registros</span></div>
     {transfers.length === 0 && !loading ? <p className="financeEmpty">Nenhuma transferência encontrada.</p> : <ul className="financeTransferList">{transfers.map((transfer) => <li key={transfer.id}><span className={`financeStatus financeStatus-${transfer.status.toLowerCase()}`}>{transfer.status === "DONE" ? <Check size={13} /> : transfer.status === "PENDING" ? <Clock3 size={13} /> : <X size={13} />}{statusLabel[transfer.status] ?? transfer.status}</span><strong>{money(transfer.value)}</strong><small>{transfer.date ? new Date(transfer.date).toLocaleDateString("pt-BR") : "Data não informada"}</small></li>)}</ul>}
-    {modal && <div className="modalBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModal(false); }}><div className="modalCard financeModal" role="dialog" aria-modal="true" aria-labelledby="withdraw-title"><header className="modalHeader"><h2 id="withdraw-title">Solicitar saque</h2><button className="iconButton" onClick={() => setModal(false)} aria-label="Fechar"><X size={16} /></button></header><div className="modalBody"><p className="financeModalIntro">O valor será enviado para a chave Pix de destino configurada no servidor.</p><label className="formRow"><span>Valor do saque (R$)</span><input autoFocus inputMode="decimal" placeholder="0,00" value={value} onChange={(event) => setValue(event.target.value)} /></label>{error && <p className="financeError">{error}</p>}</div><footer className="modalFooter"><button className="secondaryButton" onClick={() => setModal(false)}>Cancelar</button><button className="primaryButton" onClick={() => void withdraw()} disabled={submitting}>{submitting ? "Solicitando..." : "Confirmar saque"}</button></footer></div></div>}
+    {modal && <div className="modalBackdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModal(false); }}><div className="modalCard financeModal" role="dialog" aria-modal="true" aria-labelledby="withdraw-title"><header className="modalHeader"><h2 id="withdraw-title">Solicitar saque</h2><button className="iconButton" onClick={() => setModal(false)} aria-label="Fechar"><X size={16} /></button></header><div className="modalBody"><p className="financeModalIntro">Informe a chave Pix da sua conta de destino. Ela será usada somente nesta transferência.</p><label className="formRow"><span>Valor do saque (R$)</span><input autoFocus inputMode="decimal" placeholder="0,00" value={value} onChange={(event) => setValue(event.target.value)} /></label><div className="formRow split financePixFields"><label><span>Tipo da chave</span><select value={pixKeyType} onChange={(event) => setPixKeyType(event.target.value)}><option value="CPF">CPF</option><option value="CNPJ">CNPJ</option><option value="EMAIL">E-mail</option><option value="PHONE">Telefone</option><option value="EVP">Aleatória (EVP)</option></select></label><label><span>Chave Pix</span><input inputMode={pixKeyType === "EMAIL" ? "email" : "text"} placeholder={pixKeyType === "CPF" ? "00000000000" : "Chave Pix"} value={pixKey} onChange={(event) => setPixKey(event.target.value)} /></label></div>{error && <p className="financeError">{error}</p>}</div><footer className="modalFooter"><button className="secondaryButton" onClick={() => setModal(false)}>Cancelar</button><button className="primaryButton" onClick={() => void withdraw()} disabled={submitting}>{submitting ? "Solicitando..." : "Confirmar saque"}</button></footer></div></div>}
   </section>;
 }
