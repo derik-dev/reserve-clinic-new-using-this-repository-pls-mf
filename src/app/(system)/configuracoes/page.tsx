@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Check, Copy } from "lucide-react";
+import { Camera, Check, Copy, Plus, Trash2 } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -50,6 +50,45 @@ const emptyForm: Form = {
   pix_chave: "", valor_consulta: "",
 };
 
+type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
+type DayConfig = { aberto: boolean; inicio: string; fim: string };
+type ProfDisponibilidade = { dias: Record<DayKey, DayConfig>; feriados: string[] };
+type AgendaConfig = {
+  dias: Record<DayKey, DayConfig>;
+  feriados: string[];
+  duracao_min: number;
+  disponibilidade: Record<string, ProfDisponibilidade>;
+};
+type ProfissionalItem = { id: string; nome: string; valor_consulta: number | null };
+
+const DAY_ORDER: DayKey[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
+const DAY_LABEL_FULL: Record<DayKey, string> = { seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo" };
+
+const DEFAULT_AGENDA: AgendaConfig = {
+  dias: {
+    seg: { aberto: true, inicio: "08:00", fim: "18:00" },
+    ter: { aberto: true, inicio: "08:00", fim: "18:00" },
+    qua: { aberto: true, inicio: "08:00", fim: "18:00" },
+    qui: { aberto: true, inicio: "08:00", fim: "18:00" },
+    sex: { aberto: true, inicio: "08:00", fim: "18:00" },
+    sab: { aberto: false, inicio: "08:00", fim: "13:00" },
+    dom: { aberto: false, inicio: "08:00", fim: "13:00" },
+  },
+  feriados: [],
+  duracao_min: 60,
+  disponibilidade: {},
+};
+
+function mergeAgendaConfig(raw: unknown): AgendaConfig {
+  const r = (raw ?? {}) as Partial<AgendaConfig>;
+  return {
+    dias: { ...DEFAULT_AGENDA.dias, ...(r.dias ?? {}) },
+    feriados: Array.isArray(r.feriados) ? r.feriados : [],
+    duracao_min: typeof r.duracao_min === "number" && r.duracao_min > 0 ? r.duracao_min : DEFAULT_AGENDA.duracao_min,
+    disponibilidade: (r.disponibilidade && typeof r.disponibilidade === "object") ? r.disponibilidade as Record<string, ProfDisponibilidade> : {},
+  };
+}
+
 export default function ConfiguracoesPage() {
   const [form, setForm] = useState<Form>(emptyForm);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -61,6 +100,15 @@ export default function ConfiguracoesPage() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [copiedPix, setCopiedPix] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [profissionais, setProfissionais] = useState<ProfissionalItem[]>([]);
+  const [agendaConfig, setAgendaConfig] = useState<AgendaConfig>(DEFAULT_AGENDA);
+  const [profSelecionado, setProfSelecionado] = useState<string | null>(null);
+  const [novoFeriadoProf, setNovoFeriadoProf] = useState("");
+  const [valorConsultaProf, setValorConsultaProf] = useState<Record<string, string>>({});
+  const [agendaSaving, setAgendaSaving] = useState(false);
+  const [agendaSaved, setAgendaSaved] = useState(false);
+  const [agendaError, setAgendaError] = useState<string | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -75,11 +123,16 @@ export default function ConfiguracoesPage() {
         ]);
         if (!session.user) { setLoading(false); return; }
         setUserId(session.user.id);
-        const { data, error: fetchErr } = await supabase.from("perfis")
-          .select("nome, slug, telefone, email_contato, site, instagram, tiktok, cpf_cnpj, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
-          .eq("id", session.user.id).maybeSingle();
 
-        const raw = data ?? (fetchErr
+        const [perfilResult, profsResult, configResult] = await Promise.all([
+          supabase.from("perfis")
+            .select("nome, slug, telefone, email_contato, site, instagram, tiktok, cpf_cnpj, endereco_cep, endereco_rua, endereco_numero, endereco_bairro, endereco_cidade, endereco_uf, pix_chave, valor_consulta, logo_url")
+            .eq("id", session.user.id).maybeSingle(),
+          supabase.from("profissionais").select("id, nome, valor_consulta").eq("perfil_id", session.user.id).order("nome"),
+          supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
+        ]);
+
+        const raw = perfilResult.data ?? (perfilResult.error
           ? (await supabase.from("perfis")
               .select("nome, slug, telefone, email_contato, endereco_cep, endereco_rua, endereco_numero, endereco_cidade, endereco_uf, pix_chave, logo_url")
               .eq("id", session.user.id).maybeSingle()).data
@@ -98,6 +151,17 @@ export default function ConfiguracoesPage() {
           });
           setLogoPreview(d.logo_url);
         }
+
+        const profsList = (profsResult.data as ProfissionalItem[] | null) ?? [];
+        setProfissionais(profsList);
+        if (profsList.length > 0) setProfSelecionado(profsList[0].id);
+        const valMap: Record<string, string> = {};
+        profsList.forEach(p => { valMap[p.id] = p.valor_consulta != null ? String(p.valor_consulta) : ""; });
+        setValorConsultaProf(valMap);
+
+        if (configResult.data?.agenda_config) {
+          setAgendaConfig(mergeAgendaConfig(configResult.data.agenda_config));
+        }
       } catch {
         setError("Não foi possível carregar as configurações. Recarregue a página.");
       } finally {
@@ -105,6 +169,37 @@ export default function ConfiguracoesPage() {
       }
     })();
   }, []);
+
+  function updateProfDia(profId: string, key: DayKey, patch: Partial<DayConfig>) {
+    setAgendaConfig(c => {
+      const prev = c.disponibilidade[profId] ?? { dias: { ...c.dias }, feriados: [] };
+      return { ...c, disponibilidade: { ...c.disponibilidade, [profId]: { ...prev, dias: { ...prev.dias, [key]: { ...prev.dias[key], ...patch } } } } };
+    });
+  }
+
+  function addFeriadoProf(profId: string) {
+    if (!novoFeriadoProf) return;
+    setAgendaConfig(c => {
+      const prev = c.disponibilidade[profId] ?? { dias: { ...c.dias }, feriados: [] };
+      if (prev.feriados.includes(novoFeriadoProf)) return c;
+      return { ...c, disponibilidade: { ...c.disponibilidade, [profId]: { ...prev, feriados: [...prev.feriados, novoFeriadoProf].sort() } } };
+    });
+    setNovoFeriadoProf("");
+  }
+
+  function removeFeriadoProf(profId: string, f: string) {
+    setAgendaConfig(c => {
+      const prev = c.disponibilidade[profId] ?? { dias: { ...c.dias }, feriados: [] };
+      return { ...c, disponibilidade: { ...c.disponibilidade, [profId]: { ...prev, feriados: prev.feriados.filter(x => x !== f) } } };
+    });
+  }
+
+  function resetProfDisp(profId: string) {
+    setAgendaConfig(c => {
+      const { [profId]: _, ...rest } = c.disponibilidade;
+      return { ...c, disponibilidade: rest };
+    });
+  }
 
   async function handleCepChange(raw: string) {
     const masked = formatCep(raw);
@@ -159,6 +254,28 @@ export default function ConfiguracoesPage() {
     setSaved(true); setTimeout(() => setSaved(false), 2000);
   }
 
+  async function handleSaveAgenda() {
+    if (!userId) return;
+    setAgendaError(null);
+    setAgendaSaving(true);
+
+    const { error: err1 } = await supabase.from("configuracoes").upsert(
+      { perfil_id: userId, agenda_config: agendaConfig },
+      { onConflict: "perfil_id" }
+    );
+    if (err1) { setAgendaError(err1.message); setAgendaSaving(false); return; }
+
+    for (const prof of profissionais) {
+      const val = valorConsultaProf[prof.id];
+      const numVal = val ? Number(val.replace(",", ".")) : null;
+      await supabase.from("profissionais").update({ valor_consulta: numVal }).eq("id", prof.id);
+    }
+
+    setAgendaSaving(false);
+    setAgendaSaved(true);
+    setTimeout(() => setAgendaSaved(false), 2000);
+  }
+
   const pixPayload = form.pix_chave.trim() && form.nome ? gerarPix(form.pix_chave.trim(), form.nome, form.endereco_cidade) : null;
 
   if (loading) return <><PageHeader title="Configurações" description="Gerencie os dados da sua conta." /><section className="panel" style={{ padding: 72, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</section></>;
@@ -192,9 +309,9 @@ export default function ConfiguracoesPage() {
               <small style={{ color: "#858d9f" }}>Necessário para receber pagamentos via Asaas.</small>
             </div>
             <div className="formRow" style={{ maxWidth: 240 }}>
-              <label>Valor da consulta (R$)</label>
+              <label>Valor padrão da consulta (R$)</label>
               <input value={form.valor_consulta} onChange={e => up("valor_consulta", e.target.value)} placeholder="150,00" inputMode="decimal" />
-              <small style={{ color: "#858d9f" }}>Exibido no link de agendamento.</small>
+              <small style={{ color: "#858d9f" }}>Usado quando o profissional não tem valor próprio.</small>
             </div>
           </div>
           <div className="formRow">
@@ -293,9 +410,113 @@ export default function ConfiguracoesPage() {
         </div>
       </section>
 
+      {/* Profissionais e disponibilidade */}
+      <section className="panel settingsSection">
+        <div className="settingsSectionHead">
+          <strong>Profissionais e disponibilidade</strong>
+          <small>Configure os horários de atendimento e o valor da consulta de cada profissional.</small>
+        </div>
+
+        {profissionais.length === 0 ? (
+          <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
+            Nenhum profissional cadastrado ainda. Acesse <strong>Profissionais</strong> no menu para cadastrar.
+          </p>
+        ) : (
+          <>
+            <div className="ajustesProfSelect">
+              {profissionais.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`ajustesProfTab${profSelecionado === p.id ? " active" : ""}${agendaConfig.disponibilidade[p.id] ? " hasCustom" : ""}`}
+                  onClick={() => setProfSelecionado(p.id)}
+                >
+                  {p.nome}
+                </button>
+              ))}
+            </div>
+
+            {profSelecionado && (() => {
+              const profAtual = agendaConfig.disponibilidade[profSelecionado] ?? { dias: { ...agendaConfig.dias }, feriados: [] };
+              const temCustom = !!agendaConfig.disponibilidade[profSelecionado];
+              return (
+                <div className="ajustesProfBody">
+                  <div className="formRow" style={{ maxWidth: 220, marginBottom: 20 }}>
+                    <label>Valor da consulta (R$)</label>
+                    <input
+                      value={valorConsultaProf[profSelecionado] ?? ""}
+                      onChange={e => setValorConsultaProf(v => ({ ...v, [profSelecionado]: e.target.value }))}
+                      placeholder="150,00"
+                      inputMode="decimal"
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <small style={{ color: "var(--text-muted)" }}>
+                      {temCustom ? "Horário personalizado ativo" : "Usando horários padrão da clínica"}
+                    </small>
+                    {temCustom && (
+                      <button className="secondaryButton" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => resetProfDisp(profSelecionado)}>
+                        Restaurar padrão
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="ajustesDias">
+                    {DAY_ORDER.map(k => {
+                      const d = profAtual.dias[k];
+                      return (
+                        <div className={`ajustesDia ${d.aberto ? "isOpen" : ""}`} key={k}>
+                          <label className="ajustesSwitch">
+                            <input type="checkbox" checked={d.aberto} onChange={e => updateProfDia(profSelecionado, k, { aberto: e.target.checked })} />
+                            <span>{DAY_LABEL_FULL[k]}</span>
+                          </label>
+                          <div className="ajustesHoras">
+                            <input type="time" value={d.inicio} disabled={!d.aberto} onChange={e => updateProfDia(profSelecionado, k, { inicio: e.target.value })} />
+                            <em>até</em>
+                            <input type="time" value={d.fim} disabled={!d.aberto} onChange={e => updateProfDia(profSelecionado, k, { fim: e.target.value })} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <p className="ajustesHint" style={{ marginTop: 16 }}>Folgas exclusivas deste profissional (somam-se aos feriados gerais).</p>
+                  <div className="ajustesAddRow">
+                    <input type="date" value={novoFeriadoProf} onChange={e => setNovoFeriadoProf(e.target.value)} />
+                    <button className="secondaryButton" onClick={() => addFeriadoProf(profSelecionado)} disabled={!novoFeriadoProf}>
+                      <Plus size={15} /> Adicionar folga
+                    </button>
+                  </div>
+                  {profAtual.feriados.length === 0 ? (
+                    <p className="ajustesEmpty">Nenhuma folga individual.</p>
+                  ) : (
+                    <ul className="ajustesLista">
+                      {profAtual.feriados.map(f => (
+                        <li key={f}>
+                          <span>{new Date(f + "T00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</span>
+                          <button className="iconButton" onClick={() => removeFeriadoProf(profSelecionado, f)} aria-label="Remover"><Trash2 size={15} /></button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })()}
+
+            {agendaError && <div className="onboardingError" style={{ marginTop: 16 }}>{agendaError}</div>}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+              <button className="primaryButton" disabled={agendaSaving} onClick={handleSaveAgenda} style={{ minWidth: 200 }}>
+                {agendaSaved ? <><Check size={15} /> Configurações salvas</> : agendaSaving ? "Salvando…" : "Salvar disponibilidade"}
+              </button>
+            </div>
+          </>
+        )}
+      </section>
+
     </div>
 
-    <div style={{ maxWidth: 780, margin: "0 auto" }}>
+    <div style={{ maxWidth: 820, margin: "0 auto" }}>
       {error && <div className="onboardingError">{error}</div>}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
         <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
