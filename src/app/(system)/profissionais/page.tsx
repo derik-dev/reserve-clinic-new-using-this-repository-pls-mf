@@ -42,6 +42,7 @@ export default function ProfissionaisPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProf, setSelectedProf] = useState<Profissional | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -204,7 +205,7 @@ export default function ProfissionaisPage() {
                 </div>
               </td></tr>
             ) : filtered.map(p => (
-              <tr key={p.id}>
+              <tr key={p.id} className="rowClickable" onClick={() => setSelectedProf(p)}>
                 <td>
                   <div className="patientCell">
                     <div className="tableAvatar" style={{ overflow: "hidden" }}>
@@ -217,14 +218,14 @@ export default function ProfissionaisPage() {
                 <td>{p.whatsapp ?? "—"}</td>
                 <td>{p.anos_experiencia != null ? `${p.anos_experiencia} anos` : "—"}</td>
                 <td>
-                  <button onClick={() => toggleAtivo(p)} className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`} style={{ border: 0, cursor: "pointer" }}>
+                  <button onClick={(e) => { e.stopPropagation(); toggleAtivo(p); }} className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`} style={{ border: 0, cursor: "pointer" }}>
                     {p.ativo ? "Ativo" : "Inativo"}
                   </button>
                 </td>
                 <td>
                   <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                    <button className="iconButton" onClick={() => openEdit(p)} aria-label="Editar"><Pencil size={15} /></button>
-                    <button className="iconButton" onClick={() => handleDelete(p.id)} disabled={deleting === p.id} aria-label="Excluir" style={{ color: "#e5484d" }}><Trash2 size={15} /></button>
+                    <button className="iconButton" onClick={(e) => { e.stopPropagation(); openEdit(p); }} aria-label="Editar"><Pencil size={15} /></button>
+                    <button className="iconButton" onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} disabled={deleting === p.id} aria-label="Excluir" style={{ color: "#e5484d" }}><Trash2 size={15} /></button>
                   </div>
                 </td>
               </tr>
@@ -236,6 +237,14 @@ export default function ProfissionaisPage() {
         <span>Mostrando {filtered.length} de {profissionais.length} profissionais</span>
       </div>
     </section>
+
+    {selectedProf && (
+      <ProfissionalPopup
+        prof={selectedProf}
+        onClose={() => setSelectedProf(null)}
+        onEdit={() => { openEdit(selectedProf); setSelectedProf(null); }}
+      />
+    )}
 
     {modalOpen && (
       <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
@@ -279,4 +288,49 @@ export default function ProfissionaisPage() {
       </div>
     )}
   </>;
+}
+
+function ProfissionalPopup({ prof: p, onClose, onEdit }: { prof: Profissional; onClose: () => void; onEdit: () => void }) {
+  return (
+    <div className="modalBackdrop" onClick={onClose}>
+      <div className="modalCard" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <header className="modalHeader">
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div className="tableAvatar" style={{ width: 48, height: 48, borderRadius: 14, fontSize: 14, overflow: "hidden" }}>
+              {p.foto_url ? <img src={p.foto_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials(p.nome)}
+            </div>
+            <div>
+              <h2 style={{ margin: 0 }}>{p.nome}</h2>
+              {p.especialidade && <small style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 3, display: "block" }}>{p.especialidade}</small>}
+              <div style={{ marginTop: 6 }}>
+                <span className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`}>{p.ativo ? "Ativo" : "Inativo"}</span>
+              </div>
+            </div>
+          </div>
+          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
+        </header>
+        <div className="modalBody">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {p.whatsapp && <ProfField label="WhatsApp" value={p.whatsapp} />}
+            {p.cpf && <ProfField label="CPF" value={p.cpf} />}
+            {p.anos_experiencia != null && <ProfField label="Experiência" value={`${p.anos_experiencia} anos`} />}
+            {p.especialidade && <ProfField label="Especialidade" value={p.especialidade} />}
+          </div>
+        </div>
+        <footer className="modalFooter">
+          <button className="secondaryButton" onClick={onClose}>Fechar</button>
+          <button className="primaryButton" onClick={onEdit}>Editar profissional</button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function ProfField({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
+      <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase" }}>{label}</span>
+      <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500 }}>{value}</span>
+    </div>
+  );
 }
