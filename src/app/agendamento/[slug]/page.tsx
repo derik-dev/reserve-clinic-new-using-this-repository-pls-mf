@@ -468,7 +468,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                             {p.foto_url ? (
                               <img src={p.foto_url} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                             ) : (
-                              <span style={{ width: 26, height: 26, borderRadius: "50%", background: active ? "rgba(255,255,255,0.25)" : "#eef0f6", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, color: active ? "#fff" : "#858d9f" }}>
+                              <span className="professionalAvatar" style={{ width: 26, height: 26, borderRadius: "50%", background: active ? "rgba(255,255,255,0.25)" : "#eef0f6", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, color: active ? "#fff" : "#858d9f" }}>
                                 {p.nome.slice(0, 2).toUpperCase()}
                               </span>
                             )}
