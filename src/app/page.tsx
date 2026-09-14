@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const appointments = [
   ["09:00", "Maria Oliveira", "Dra. Ana", "#4c6fff"],
   ["11:00", "João Pereira", "Dr. Bruno", "#34d6c4"],
@@ -59,7 +61,7 @@ const planFeatures = [
 ];
 
 function Logo() {
-  return <div className="logo"><span className="logoMark" />Reserve Clinic</div>;
+  return <div className="logo"><Image src="/logo.svg" alt="Reserve Clinic" width={156} height={28} className="logoImage" /></div>;
 }
 
 function Dashboard() {

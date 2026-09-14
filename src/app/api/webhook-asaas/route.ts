@@ -32,29 +32,46 @@ export async function POST(req: NextRequest) {
       payment?: { id: string; externalReference?: string };
     };
 
+    console.log("[webhook-asaas] evento recebido:", body.event, "| externalReference:", body.payment?.externalReference ?? "(ausente)");
+
     if (EVENTOS_CONFIRMACAO.has(body.event) && body.payment?.externalReference) {
       const agendamentoId = body.payment.externalReference;
       const admin = adminSupabase();
 
       // Busca dados do agendamento e status atual (idempotência + dados para WhatsApp)
-      const { data: agendamento } = throwIfSupabaseError(
-        await admin
-          .from("agendamentos")
-          .select("status, cliente_nome, cliente_telefone, data, hora")
-          .eq("id", agendamentoId)
-          .maybeSingle(),
-        "webhook-asaas.select agendamento"
-      );
+      const selectResult = await admin
+        .from("agendamentos")
+        .select("status, perfil_id, cliente_nome, cliente_telefone, data, hora")
+        .eq("id", agendamentoId)
+        .maybeSingle();
+
+      console.log("[webhook-asaas] SELECT agendamento id=" + agendamentoId + " →", selectResult.data ? `encontrado (status=${selectResult.data.status})` : "NÃO ENCONTRADO", selectResult.error ? "ERRO:" + selectResult.error.message : "");
+
+      const { data: agendamento } = throwIfSupabaseError(selectResult, "webhook-asaas.select agendamento");
 
       const jaConfirmado = agendamento?.status === "confirmado";
 
-      throwIfSupabaseError(
-        await admin
-          .from("agendamentos")
-          .update({ status: "confirmado" })
-          .eq("id", agendamentoId),
-        "webhook-asaas.update status"
-      );
+      const updateResult = await admin
+        .from("agendamentos")
+        .update({ status: "confirmado" })
+        .eq("id", agendamentoId)
+        .select();
+
+      console.log("[webhook-asaas] UPDATE agendamento →", updateResult.data?.length ? `${updateResult.data.length} linha(s) afetada(s)` : "0 linhas afetadas", updateResult.error ? "ERRO:" + updateResult.error.message : "");
+
+      throwIfSupabaseError(updateResult, "webhook-asaas.update status");
+
+      // Atualiza consulta correspondente para "confirmada"
+      if (agendamento?.perfil_id && agendamento?.data && agendamento?.hora) {
+        const horaStr = (agendamento.hora as string).slice(0, 5);
+        const dataHoraIso = new Date(`${agendamento.data}T${horaStr}:00`).toISOString();
+        const consultaUpdate = await admin
+          .from("consultas")
+          .update({ status: "confirmada" })
+          .eq("perfil_id", agendamento.perfil_id)
+          .eq("data_hora", dataHoraIso);
+        console.log("[webhook-asaas] UPDATE consulta →", consultaUpdate.error ? "ERRO:" + consultaUpdate.error.message : "ok");
+      }
 
       // Envia WhatsApp apenas se era a primeira confirmação (evita reenvio)
       if (!jaConfirmado && agendamento?.cliente_telefone) {

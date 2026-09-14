@@ -294,3 +294,6 @@ button,input,select,textarea{font:inherit}
 @keyframes modalInMobile{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 @media(max-width:380px){.appContent{padding:16px 12px 28px}.dashHero{padding:20px 16px}.dashHero h1{font-size:22px}.metricCard strong,.dashMetric strong,.dashMetricValue strong{font-size:28px}.pageHeader h1{font-size:19px}}
 @media(hover:none){.metricCard:hover,.dashMetric:hover,.summaryPills>div:hover,.primaryButton:hover,.quickActions a:hover{transform:none}}
+.appTopbar::before{display:none}
+@media(max-width:800px){.appTopbar::before{content:"";display:block;width:128px;height:25px;flex:0 0 auto;background:url("/logo.svg") left center/contain no-repeat}}
+@media(max-width:380px){.appTopbar::before{width:116px}}

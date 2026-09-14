@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Stethoscope, Check, UsersRound } from "lucide-react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Check, UsersRound } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
@@ -321,7 +322,9 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
 
   return <main className="bookingPage" style={{ ["--brand-primary" as string]: primary }}>
     <header className="bookingHeader">
-      <Link href="/" className="bookingBrand"><span style={{ background: primary }}><Stethoscope size={18} /></span>Reserve Clinic</Link>
+      <Link href="/" className="bookingBrand" aria-label="Reserve Clinic">
+        <Image src="/logo.svg" alt="Reserve Clinic" width={156} height={28} priority className="bookingBrandLogo" />
+      </Link>
       <small>Agendamento seguro</small>
     </header>
     <div className="bookingContainer">

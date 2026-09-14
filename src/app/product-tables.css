@@ -187,7 +187,9 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .miniCalWeekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .miniCalWeekdays>span{text-align:center;font-size:9px;color:var(--text-subtle);font-weight:600;letter-spacing:.05em;padding:4px 0}
 .miniCalGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.miniCalCell{background:transparent;border:0;padding:0;height:30px;display:grid;place-items:center;font-size:11px;font-weight:500;color:var(--text);cursor:pointer;border-radius:8px;font-variant-numeric:tabular-nums;transition:background .15s var(--ease),color .15s var(--ease)}
+.miniCalCell{background:transparent;border:0;padding:0;height:30px;position:relative;display:grid;place-items:center;font-size:11px;font-weight:500;color:var(--text);cursor:pointer;border-radius:8px;font-variant-numeric:tabular-nums;transition:background .15s var(--ease),color .15s var(--ease)}
+.miniCalBadge{position:absolute;top:1px;right:2px;min-width:14px;height:14px;padding:0 3px;background:var(--accent);color:#fff;border-radius:7px;font-size:8px;font-weight:700;display:grid;place-items:center;line-height:1;letter-spacing:0}
+.miniCalCell.selected .miniCalBadge{background:rgba(255,255,255,.35);color:#fff}
 .miniCalCell.outside{color:var(--text-subtle);opacity:.45}
 .miniCalCell.inWeek{background:rgba(59,130,246,.08)}
 .miniCalCell.today{color:var(--accent);font-weight:600}
@@ -204,6 +206,26 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .agendaListaGroup strong{display:block;font-size:13px;font-weight:500;color:var(--text);letter-spacing:-.005em}
 .agendaListaGroup small{display:block;font-size:11px;color:var(--text-muted);margin-top:2px}
 @media(max-width:1200px){.agendaStats{grid-template-columns:repeat(2,1fr)}.agendaLayout{grid-template-columns:1fr}.agendaSidebar{position:static;flex-direction:row;flex-wrap:wrap}.agendaSidebar>*{flex:1;min-width:280px}}
-@media(max-width:640px){.agendaStats{grid-template-columns:1fr}.agendaSidebar{flex-direction:column}.agendaSidebar>*{min-width:0}}
+.mobileAgendaCal{display:none}
+@media(max-width:640px){
+  .agendaStats{grid-template-columns:repeat(2,1fr)}
+  .agendaSidebar{display:none}
+  .mobileAgendaCal{display:block;margin-bottom:20px}
+  .mobileAgendaCal .miniCalPanel{border-radius:var(--radius);padding:18px}
+  .mobileAgendaCal .miniCalGrid button{height:42px;font-size:15px;font-weight:500}
+  .mobileAgendaCal .miniCalHeader b{font-size:15px}
+  .agendaGridPanel{overflow:visible;background:transparent;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:0}
+  .agendaGridScroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--surface-glass)}
+  .agendaGridHeader,.agendaGridBody{min-width:unset}
+  .agendaGridHeader>div,.agendaGridBody>div:not(.agendaHourCol){min-width:110px}
+}
 @media(max-width:800px){.tableToolbar{padding:16px 18px;gap:10px;flex-direction:column;align-items:stretch}.tableToolbar>label{width:100%}.tableToolbar>div{flex-wrap:wrap}.tableToolbar>div .secondaryButton,.tableToolbar>div .dateButton{flex:1;min-width:0}th{padding:12px 18px;font-size:9px}td{padding:14px 18px;font-size:12px}.summaryPills{gap:10px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}.summaryPills>div{flex:none;min-width:140px;padding:14px 18px}.summaryPills strong{font-size:24px}.agendaToolbar{gap:8px;margin-bottom:16px}.agendaToolbar strong{margin-left:2px;font-size:14px;order:-1;width:100%}.agendaFilter{height:36px;padding:0 10px 0 12px}.agendaFilter label{font-size:10px}.agendaFilter select{font-size:11px}.tablePagination{padding:14px 18px;flex-direction:column;gap:10px}.modalLg{width:100%}.tabsRow{padding:0 16px;overflow-x:auto}.tabsRow button{padding:12px 12px;font-size:11px;white-space:nowrap;flex:none}.ajustesDuracao{flex-direction:column;align-items:stretch;gap:12px;padding:16px}}
-@media(max-width:560px){.tableToolbar{padding:14px}.tableToolbar>label{height:40px}.tableToolbar input{font-size:16px}th{padding:10px 14px;font-size:9px;letter-spacing:.08em}td{padding:12px 14px;font-size:11px}td>strong{font-size:11px}td>small{font-size:10px}.tablePagination{padding:12px 14px;font-size:10px}.tablePagination button{width:30px;height:30px}.summaryPills{gap:8px;margin-bottom:16px}.summaryPills>div{min-width:120px;padding:12px 16px;gap:4px}.summaryPills span{font-size:9px}.summaryPills strong{font-size:22px}.agendaEmpty{padding:44px 18px;font-size:12px}.ajustesDia{flex-direction:column;align-items:stretch;gap:12px;padding:14px}.ajustesHoras{justify-content:space-between;flex-wrap:wrap}.ajustesHoras input{flex:1;min-width:0}.ajustesAddRow{flex-direction:column;gap:8px}.ajustesAddRow input{font-size:16px}.ajustesProf{gap:8px}.ajustesProfDias{width:100%}.ajustesProfDias button{flex:1;min-width:auto}.ajustesDuracaoInput input{font-size:16px}.agendaGridBody,.agendaGridHeader{min-width:520px}.agendaDayHead{padding:12px 8px}.agendaDayHead>strong{font-size:14px}.agendaEvent{padding:7px 9px;gap:6px}.agendaEvent strong{font-size:10px}.agendaEvent span{font-size:9px}}
+@media(max-width:560px){.tableToolbar{padding:14px}.tableToolbar>label{height:40px}.tableToolbar input{font-size:16px}th{padding:10px 14px;font-size:9px;letter-spacing:.08em}td{padding:12px 14px;font-size:11px}td>strong{font-size:11px}td>small{font-size:10px}.tablePagination{padding:12px 14px;font-size:10px}.tablePagination button{width:30px;height:30px}.summaryPills{gap:8px;margin-bottom:16px}.summaryPills>div{min-width:120px;padding:12px 16px;gap:4px}.summaryPills span{font-size:9px}.summaryPills strong{font-size:22px}.agendaEmpty{padding:44px 18px;font-size:12px}.ajustesDia{flex-direction:column;align-items:stretch;gap:12px;padding:14px}.ajustesHoras{justify-content:space-between;flex-wrap:wrap}.ajustesHoras input{flex:1;min-width:0}.ajustesAddRow{flex-direction:column;gap:8px}.ajustesAddRow input{font-size:16px}.ajustesProf{gap:8px}.ajustesProfDias{width:100%}.ajustesProfDias button{flex:1;min-width:auto}.ajustesDuracaoInput input{font-size:16px}.agendaGridBody,.agendaGridHeader{min-width:520px}.agendaDayHead{padding:12px 8px}.agendaDayHead>strong{font-size:14px}.agendaEvent{padding:7px 9px;gap:6px}.agendaEvent strong{font-size:10px}.agendaEvent span{font-size:9px}
+  .summaryPills{display:grid;grid-template-columns:1fr 1fr;overflow-x:unset;padding-bottom:0}
+  .summaryPills>div{min-width:unset;padding:14px 16px}
+  .summaryPills strong{font-size:22px}
+  table th:nth-child(3),table td:nth-child(3),
+  table th:nth-child(4),table td:nth-child(4),
+  table th:nth-child(6),table td:nth-child(6){display:none}
+  .tableScroll table{min-width:unset;width:100%}
+}

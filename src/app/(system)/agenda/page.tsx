@@ -231,6 +231,15 @@ export default function AgendaPage() {
   const diaLivres = diaCapacidadeMin > 0 && config.duracao_min > 0 ? Math.max(0, Math.floor((diaCapacidadeMin - diaUsadoMin) / config.duracao_min)) : 0;
   const diaCancelamentos = consultasDoDia.filter(c => c.status === "cancelada").length;
 
+  const consultasPorDia = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of consultasFiltradas) {
+      const iso = toIsoDate(new Date(c.data_hora));
+      m.set(iso, (m.get(iso) ?? 0) + 1);
+    }
+    return m;
+  }, [consultasFiltradas]);
+
   const calCells = useMemo(() => {
     const first = new Date(calMonth);
     const startPad = (first.getDay() + 6) % 7;
@@ -331,6 +340,53 @@ export default function AgendaPage() {
         ))}
       </div>
     )}
+
+    {/* Calendário mobile — aparece antes dos stats só em telas pequenas */}
+    <div className="mobileAgendaCal">
+      <MiniCalendar
+        month={calMonth}
+        cells={calCells}
+        today={today}
+        selectedDay={selectedDay}
+        isSameWeek={isSameWeek}
+        consultasPorDia={consultasPorDia}
+        onPrev={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() - 1); setCalMonth(d); }}
+        onNext={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() + 1); setCalMonth(d); }}
+        onPick={(d) => { setSelectedDay(d); setWeekStart(startOfWeek(d)); }}
+      />
+      <section className="sidePanel" style={{ marginTop: 12 }}>
+        <header className="sidePanelHeader">
+          <div>
+            <b>Agenda do dia</b>
+            <small>{selectedDay.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</small>
+          </div>
+          <span className="sidePanelBadge">{consultasDoDia.length}</span>
+        </header>
+        {consultasDoDia.length === 0 ? (
+          <div className="sidePanelEmpty">Nenhuma consulta neste dia.</div>
+        ) : (
+          <ul className="agendaDoDiaList">
+            {consultasDoDia.map(c => {
+              const dt = new Date(c.data_hora);
+              const cor = STATUS_TO_COLOR[c.status] ?? "blue";
+              return (
+                <li key={c.id} className={`agendaDoDiaItem cor-${cor}`} onClick={() => router.push(`/consultas?editar=${c.id}`)}>
+                  <span className="agendaDoDiaHora">{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <div className="agendaDoDiaBody">
+                    <strong>{c.paciente_nome}</strong>
+                    <small>{c.servico ?? "Consulta"}{c.profissional ? ` · ${c.profissional}` : ""}</small>
+                  </div>
+                  <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <button className="sidePanelAction" onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`)}>
+          <Plus size={15} /> Nova consulta no dia
+        </button>
+      </section>
+    </div>
 
     <section className="agendaStats">
       <StatCard icon={<CalendarDays size={18} />} label="Consultas da semana" value={String(consultas.length)} delta={consultasDelta} deltaLabel="vs. semana anterior" />
@@ -445,6 +501,7 @@ export default function AgendaPage() {
           today={today}
           selectedDay={selectedDay}
           isSameWeek={isSameWeek}
+          consultasPorDia={consultasPorDia}
           onPrev={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() - 1); setCalMonth(d); }}
           onNext={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() + 1); setCalMonth(d); }}
           onPick={(d) => { setSelectedDay(d); setWeekStart(startOfWeek(d)); if (viewMode === "semana") setViewMode("dia"); }}
@@ -536,9 +593,10 @@ function ResumoCell({ icon, value, label }: { icon: ReactNode; value: string; la
   );
 }
 
-function MiniCalendar({ month, cells, today, selectedDay, isSameWeek, onPrev, onNext, onPick }: {
+function MiniCalendar({ month, cells, today, selectedDay, isSameWeek, consultasPorDia, onPrev, onNext, onPick }: {
   month: Date; cells: Date[]; today: Date; selectedDay: Date;
   isSameWeek: (d: Date) => boolean;
+  consultasPorDia: Map<string, number>;
   onPrev: () => void; onNext: () => void; onPick: (d: Date) => void;
 }) {
   const monthLabel = month.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
@@ -552,16 +610,21 @@ function MiniCalendar({ month, cells, today, selectedDay, isSameWeek, onPrev, on
       <div className="miniCalWeekdays">{["S", "T", "Q", "Q", "S", "S", "D"].map((w, i) => <span key={i}>{w}</span>)}</div>
       <div className="miniCalGrid">
         {cells.map((d) => {
+          const iso = toIsoDate(d);
           const outside = d.getMonth() !== month.getMonth();
           const ehHoje = isSameDay(d, today);
           const selecionado = isSameDay(d, selectedDay);
           const naSemana = isSameWeek(d);
+          const count = consultasPorDia.get(iso) ?? 0;
           return (
             <button
               key={d.toISOString()}
               className={`miniCalCell ${outside ? "outside" : ""} ${ehHoje ? "today" : ""} ${selecionado ? "selected" : ""} ${naSemana ? "inWeek" : ""}`}
               onClick={() => onPick(d)}
-            >{d.getDate()}</button>
+            >
+              {d.getDate()}
+              {count > 0 && !outside && <span className="miniCalBadge">{count}</span>}
+            </button>
           );
         })}
       </div>

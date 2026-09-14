@@ -65,6 +65,12 @@ export default function ConsultasPage() {
     setLoading(true);
     setLoadError(false);
     try {
+      // Remove consultas cujo horário já passou (qualquer status)
+      await supabase
+        .from("consultas")
+        .delete()
+        .lt("data_hora", new Date().toISOString());
+
       const [cs, ps, pr] = await Promise.race([
         Promise.all([
           supabase.from("consultas").select("*").order("data_hora", { ascending: true }),

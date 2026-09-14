@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
     const agendamentoId = crypto.randomUUID();
     const dataHoraIso = new Date(`${data}T${hora}:00`).toISOString();
 
+    const { data: perfil } = await admin.from("perfis").select("valor_consulta").eq("id", perfilId).maybeSingle();
+
     const [agendamentoResult, consultaResult] = await Promise.all([
       admin.from("agendamentos").insert({
         id: agendamentoId,
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
         profissional: profissional || null,
         profissional_id: profissionalId || null,
         status: "aguardando",
+        valor: perfil?.valor_consulta ?? null,
         observacoes: observacoes || null,
       }),
     ]);
