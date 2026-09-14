@@ -93,6 +93,7 @@ export default function AgendaPage() {
   const [profFiltro, setProfFiltro] = useState<string>("todos");
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
+  const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
   const [now, setNow] = useState<Date>(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("semana");
   const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());
@@ -471,7 +472,7 @@ export default function AgendaPage() {
                         className={`agendaEvent ${cor}`}
                         style={{ top, height, left: `calc(${leftPct}% + 4px)`, width: `calc(${widthPct}% - 8px)` }}
                         title={`${c.paciente_nome}${c.profissional ? " · " + c.profissional : ""}${c.servico ? " · " + c.servico : ""}`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); setSelectedConsulta(c); }}
                       >
                         <div className="agendaEventAvatar">{initials(c.paciente_nome)}</div>
                         <div>
@@ -557,6 +558,13 @@ export default function AgendaPage() {
     </div>
 
     {configOpen && <AjustesModal config={config} sqlProfissionais={sqlProfissionais} onClose={() => setConfigOpen(false)} onSaved={(c) => { setConfig(c); setConfigOpen(false); }} />}
+    {selectedConsulta && (
+      <ConsultaPopup
+        consulta={selectedConsulta}
+        onClose={() => setSelectedConsulta(null)}
+        onEdit={() => router.push(`/consultas?editar=${selectedConsulta.id}`)}
+      />
+    )}
   </>;
 }
 
@@ -665,6 +673,54 @@ function ListaView({ consultas, onOpen }: { consultas: Consulta[]; onOpen: (c: C
         );
       })}
     </section>
+  );
+}
+
+function ConsultaPopup({ consulta, onClose, onEdit }: { consulta: Consulta; onClose: () => void; onEdit: () => void }) {
+  const dt = new Date(consulta.data_hora);
+  const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const data = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  return (
+    <div className="modalBackdrop" onClick={onClose}>
+      <div className="modalCard" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <header className="modalHeader">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="dashUpcomingAvatar" style={{ width: 38, height: 38, fontSize: 12 }}>{initials(consulta.paciente_nome)}</div>
+            <div>
+              <h2 style={{ margin: 0 }}>{consulta.paciente_nome}</h2>
+              <div style={{ marginTop: 6 }}>
+                <span className={`statusBadge ${STATUS_CLASS[consulta.status]}`}>{STATUS_LABEL[consulta.status]}</span>
+              </div>
+            </div>
+          </div>
+          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
+        </header>
+        <div className="modalBody">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <PopupField label="Data" value={data[0].toUpperCase() + data.slice(1)} />
+            <PopupField label="Horário" value={`${hora} · ${consulta.duracao_min} min`} />
+            {consulta.profissional && <PopupField label="Profissional" value={consulta.profissional} />}
+            {consulta.servico && <PopupField label="Serviço" value={consulta.servico} />}
+            {consulta.valor != null && (
+              <PopupField label="Valor" value={`R$ ${Number(consulta.valor).toFixed(2).replace(".", ",")}`} />
+            )}
+          </div>
+        </div>
+        <footer className="modalFooter">
+          <button className="secondaryButton" onClick={onClose}>Fechar</button>
+          <button className="primaryButton" onClick={onEdit}>Editar consulta →</button>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function PopupField({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase" }}>{label}</span>
+      <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500, letterSpacing: "-.005em" }}>{value}</span>
+    </div>
   );
 }
 
