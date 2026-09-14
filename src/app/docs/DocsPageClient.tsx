@@ -318,6 +318,8 @@ const integrations = [
 ];
 
 const envVars: EnvVar[] = [
+  { name: "OPENAI_API_KEY", scope: "server", required: "Navi", description: "Chave usada exclusivamente pela rota server-side do assistente Navi. Nunca expor no frontend." },
+  { name: "OPENAI_MODEL", scope: "server", required: "Opcional", description: "Modelo usado pelo Navi; quando ausente, a rota utiliza `gpt-4o-mini`." },
   { name: "NEXT_PUBLIC_SUPABASE_URL", scope: "client", required: "Sim", description: "URL do projeto Supabase usada no browser e nas rotas server." },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", scope: "client", required: "Sim", description: "Chave anônima do Supabase para Auth e queries públicas permitidas por RLS." },
   { name: "SUPABASE_SERVICE_ROLE_KEY", scope: "server", required: "Sim", description: "Chave administrativa usada por APIs internas. Nunca deve ir para o client." },
