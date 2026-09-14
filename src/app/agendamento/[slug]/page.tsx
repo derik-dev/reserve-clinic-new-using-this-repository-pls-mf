@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Check, UsersRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Check } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useEffect, useMemo, useState, use } from "react";
 import { supabase } from "@/lib/supabase";
@@ -149,7 +149,9 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
               supabase.from("profissionais").select("id, nome, especialidade, foto_url").eq("perfil_id", perfilId).eq("ativo", true).order("nome"),
             ]);
             setConfig(mergeConfig(conf.data?.agenda_config));
-            setProfissionais((profs.data as ProfissionalPublic[] | null) ?? []);
+            const lista = (profs.data as ProfissionalPublic[] | null) ?? [];
+            setProfissionais(lista);
+            if (lista.length > 0) setForm(f => ({ ...f, profissional_id: lista[0].id, profissional_nome: lista[0].nome }));
           }
         })(),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
@@ -445,16 +447,6 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                   <div className="formRow bookingProfessionalPicker">
                     <label>Profissional</label>
                     <div className="bookingProfessionalOptions">
-                      <button
-                        type="button"
-                        className={`bookingProfessionalOption${!form.profissional_id ? " isSelected" : ""}`}
-                        onClick={() => setForm({ ...form, profissional_id: "", profissional_nome: "", data: "", hora: "" })}
-                        style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${!form.profissional_id ? primary : "#dfe3eb"}`, background: !form.profissional_id ? primary : "#fff", color: !form.profissional_id ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer" }}
-                      >
-                        <UsersRound size={19} />
-                        <span><strong>Qualquer um</strong><small>Todos os profissionais</small></span>
-                        <i aria-hidden />
-                      </button>
                       {profissionais.map(p => {
                         const active = form.profissional_id === p.id;
                         return (
