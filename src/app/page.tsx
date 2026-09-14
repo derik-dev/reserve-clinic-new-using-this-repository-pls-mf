@@ -60,7 +60,7 @@ function Logo() {
 function FeatureVisual({ type }: { type: string }) {
   if (type === "phone") return <div className="phone"><div className="notch" /><Logo /><small>Sua clínica</small><p>Valor do sinal</p><strong>R$ 60,00</strong><div className="qr">{Array.from({length:81},(_,i)=><i className={(i*37)%9>3?"dark":""} key={i}/>)}</div><em>Aguardando pagamento</em></div>;
   if (type === "chat") return <div className="chat"><div><small>Reserve Clinic · ontem 18:00</small>Olá Maria! Lembrando da sua consulta amanhã às 14h com a Dra. Ana Silva.</div><div className="reply"><small>Maria Oliveira</small>Confirmado, obrigada! 👍</div><div><small>Reserve Clinic · hoje 08:00</small>Sua consulta é hoje às 14h. Toque para confirmar presença.</div></div>;
-  return <div className="miniCalendar"><div className="week"><span /><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span></div>{["08h","09h","10h","11h","13h"].map((time,r)=><div className="week" key={time}><small>{time}</small>{[0,1,2,3].map(c=><i className={(r+c)%3===0?"empty":""} style={{borderLeftColor:["#4c6fff","#34d6c4","#a78bfa","#7dd3fc"][c]}} key={c}/>)}</div>)}</div>;
+  return <img src="/agenda.svg" alt="Agenda" style={{display:"block",width:"100%",height:"auto",borderRadius:18,boxShadow:"0 40px 90px rgba(0,0,0,.4)"}} />;
 }
 
 export default function Home() {
