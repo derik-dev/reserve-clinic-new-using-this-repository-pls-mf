@@ -58,7 +58,7 @@ function Logo() {
 }
 
 function FeatureVisual({ type }: { type: string }) {
-  if (type === "phone") return <div className="phone"><div className="notch" /><Logo /><small>Sua clínica</small><p>Valor do sinal</p><strong>R$ 60,00</strong><div className="qr">{Array.from({length:81},(_,i)=><i className={(i*37)%9>3?"dark":""} key={i}/>)}</div><em>Aguardando pagamento</em></div>;
+  if (type === "phone") return <div style={{flex:1,minWidth:0}}><img src="/checkout.svg" alt="Checkout" style={{display:"block",width:"100%",height:"auto",borderRadius:18,boxShadow:"0 40px 90px rgba(0,0,0,.4)"}} /></div>;
   if (type === "chat") return <div className="chat"><div><small>Reserve Clinic · ontem 18:00</small>Olá Maria! Lembrando da sua consulta amanhã às 14h com a Dra. Ana Silva.</div><div className="reply"><small>Maria Oliveira</small>Confirmado, obrigada! 👍</div><div><small>Reserve Clinic · hoje 08:00</small>Sua consulta é hoje às 14h. Toque para confirmar presença.</div></div>;
   return <div style={{flex:1,minWidth:0}}><img src="/agenda.svg" alt="Agenda" style={{display:"block",width:"100%",height:"auto",borderRadius:18,boxShadow:"0 40px 90px rgba(0,0,0,.4)"}} /></div>;
 }
