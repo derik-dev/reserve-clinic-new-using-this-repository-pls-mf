@@ -245,28 +245,29 @@ export default function ProfissionaisPage() {
             <button className="iconButton" onClick={closeModal} aria-label="Fechar"><X size={17} /></button>
           </header>
           <div className="modalBody">
-            <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 0 8px" }}>
-              <div style={{ width: 64, height: 64, borderRadius: 14, background: "#eef0f6", overflow: "hidden", display: "grid", placeItems: "center", fontSize: 18, fontWeight: 700, color: "#858d9f", flexShrink: 0 }}>
-                {fotoPreview ? <img src={fotoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome ? initials(form.nome) : <Camera size={22} />)}
+            <div className="formGroup">
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 64, height: 64, borderRadius: 14, background: "#eef0f6", overflow: "hidden", display: "grid", placeItems: "center", fontSize: 18, fontWeight: 700, color: "#858d9f", flexShrink: 0 }}>
+                  {fotoPreview ? <img src={fotoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome ? initials(form.nome) : <Camera size={22} />)}
+                </div>
+                <div>
+                  <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
+                  <button className="secondaryButton" type="button" onClick={() => fileRef.current?.click()} style={{ height: 34, fontSize: 12 }}>
+                    <Camera size={14} /> {fotoFile ? "Trocar foto" : "Adicionar foto"}
+                  </button>
+                  <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>JPG, PNG ou WebP. Recomendado 400×400.</small>
+                </div>
               </div>
-              <div>
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
-                <button className="secondaryButton" type="button" onClick={() => fileRef.current?.click()} style={{ height: 34, fontSize: 12 }}>
-                  <Camera size={14} /> {fotoFile ? "Trocar foto" : "Adicionar foto"}
-                </button>
-                <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>JPG, PNG ou WebP. Recomendado 400×400.</small>
+              <div className="formRow"><label>Nome completo</label><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Dr. Carlos Souza" /></div>
+              <div className="formRow"><label>Especialidade</label><input value={form.especialidade} onChange={(e) => setForm({ ...form, especialidade: e.target.value })} placeholder="Ex.: Fisioterapeuta, Psicólogo…" /></div>
+              <div className="formRow split">
+                <div className="formRow"><label>WhatsApp</label><input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
+                <div className="formRow"><label>CPF</label><input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" /></div>
               </div>
-            </div>
-
-            <div className="formRow"><label>Nome completo</label><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Dr. Carlos Souza" /></div>
-            <div className="formRow"><label>Especialidade</label><input value={form.especialidade} onChange={(e) => setForm({ ...form, especialidade: e.target.value })} placeholder="Ex.: Fisioterapeuta, Psicólogo…" /></div>
-            <div className="formRow split">
-              <div className="formRow"><label>WhatsApp</label><input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
-              <div className="formRow"><label>CPF</label><input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" /></div>
-            </div>
-            <div className="formRow" style={{ maxWidth: 180 }}>
-              <label>Anos de experiência</label>
-              <input type="number" min={0} max={60} value={form.anos_experiencia} onChange={(e) => setForm({ ...form, anos_experiencia: e.target.value })} placeholder="Ex.: 5" />
+              <div className="formRow" style={{ maxWidth: 180 }}>
+                <label>Anos de experiência</label>
+                <input type="number" min={0} max={60} value={form.anos_experiencia} onChange={(e) => setForm({ ...form, anos_experiencia: e.target.value })} placeholder="Ex.: 5" />
+              </div>
             </div>
             {error && <div className="onboardingError">{error}</div>}
           </div>
