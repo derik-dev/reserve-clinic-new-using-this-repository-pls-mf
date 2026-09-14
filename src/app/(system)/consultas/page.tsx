@@ -65,10 +65,11 @@ export default function ConsultasPage() {
     setLoading(true);
     setLoadError(false);
     try {
-      // Remove consultas cujo horário já passou (qualquer status)
+      // Remove apenas reservas não pagas expiradas — confirmada/concluida são histórico
       await supabase
         .from("consultas")
         .delete()
+        .eq("status", "aguardando")
         .lt("data_hora", new Date().toISOString());
 
       const [cs, ps, pr] = await Promise.race([

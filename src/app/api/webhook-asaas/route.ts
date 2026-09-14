@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
       event: string;
-      payment?: { id: string; externalReference?: string };
+      payment?: { id: string; externalReference?: string; value?: number };
     };
 
     console.log("[webhook-asaas] evento recebido:", body.event, "| externalReference:", body.payment?.externalReference ?? "(ausente)");
@@ -61,16 +61,17 @@ export async function POST(req: NextRequest) {
 
       throwIfSupabaseError(updateResult, "webhook-asaas.update status");
 
-      // Atualiza consulta correspondente para "confirmada"
+      // Atualiza consulta correspondente para "confirmada" e salva o valor pago
       if (agendamento?.perfil_id && agendamento?.data && agendamento?.hora) {
         const horaStr = (agendamento.hora as string).slice(0, 5);
         const dataHoraIso = new Date(`${agendamento.data}T${horaStr}:00`).toISOString();
+        const valorPago = body.payment?.value ?? null;
         const consultaUpdate = await admin
           .from("consultas")
-          .update({ status: "confirmada" })
+          .update({ status: "confirmada", ...(valorPago != null ? { valor: valorPago } : {}) })
           .eq("perfil_id", agendamento.perfil_id)
           .eq("data_hora", dataHoraIso);
-        console.log("[webhook-asaas] UPDATE consulta →", consultaUpdate.error ? "ERRO:" + consultaUpdate.error.message : "ok");
+        console.log("[webhook-asaas] UPDATE consulta →", consultaUpdate.error ? "ERRO:" + consultaUpdate.error.message : `ok (valor=${valorPago})`);
       }
 
       // Envia WhatsApp apenas se era a primeira confirmação (evita reenvio)
