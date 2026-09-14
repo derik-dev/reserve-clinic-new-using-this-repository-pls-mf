@@ -69,7 +69,7 @@ type Form = {
 
 const emptyForm: Form = { nome: "", cpf: "", telefone: "", email: "", data: "", hora: "", servico: "", observacoes: "", profissional_id: "", profissional_nome: "" };
 
-type ProfissionalPublic = { id: string; nome: string; especialidade: string | null; foto_url: string | null };
+type ProfissionalPublic = { id: string; nome: string; especialidade: string | null; foto_url: string | null; valor_consulta: number | null };
 
 type PendingBooking = { nome: string; data: string; hora: string; servico: string; profissional: string; clinicNome: string };
 
@@ -146,7 +146,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
             const perfilId = (data as PerfilPublic).id;
             const [conf, profs] = await Promise.all([
               supabase.from("configuracoes").select("agenda_config").eq("perfil_id", perfilId).maybeSingle(),
-              supabase.from("profissionais").select("id, nome, especialidade, foto_url").eq("perfil_id", perfilId).eq("ativo", true).order("nome"),
+              supabase.from("profissionais").select("id, nome, especialidade, foto_url, valor_consulta").eq("perfil_id", perfilId).eq("ativo", true).order("nome"),
             ]);
             setConfig(mergeConfig(conf.data?.agenda_config));
             const lista = (profs.data as ProfissionalPublic[] | null) ?? [];
@@ -201,6 +201,11 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     [profissionais, form.profissional_id]
   );
 
+  const valorEfetivo = useMemo(
+    () => selectedProf?.valor_consulta ?? perfil?.valor_consulta ?? null,
+    [selectedProf, perfil]
+  );
+
   const profId = form.profissional_id || null;
   const profDisp = useMemo(() => getProfDisp(config, profId), [config, profId]);
 
@@ -237,7 +242,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   async function handleConfirm() {
     if (!perfil) return;
     if (!form.nome.trim() || !form.data || !form.hora) { setError("Preencha nome, data e horário."); return; }
-    if (perfil.valor_consulta) {
+    if (valorEfetivo) {
       if (!form.email.trim()) { setError("Informe seu e-mail para realizar o pagamento PIX."); return; }
       if (!form.cpf.trim()) { setError("Informe seu CPF para realizar o pagamento PIX."); return; }
     }
@@ -308,14 +313,14 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   }
 
   // Fluxo PIX Asaas: substitui a página inteira pelo checkout
-  if (done && agendamentoId && perfil.valor_consulta) {
+  if (done && agendamentoId && valorEfetivo) {
     return (
       <PixCheckout
         agendamentoId={agendamentoId}
         clienteNome={form.nome}
         clienteCpf={form.cpf || undefined}
         clienteEmail={form.email || undefined}
-        valor={perfil.valor_consulta}
+        valor={valorEfetivo}
       />
     );
   }
@@ -335,9 +340,9 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         <div>
           <h1>{perfil.nome}</h1>
           {endereco && <p><MapPin size={15} /> {endereco}</p>}
-          {perfil.valor_consulta != null && (
+          {valorEfetivo != null && (
             <p style={{ margin: "6px 0 0", display: "inline-flex", alignItems: "center", gap: 6, background: "#f0f4ff", color: primary, borderRadius: 20, padding: "4px 12px", fontSize: 13, fontWeight: 600 }}>
-              Consulta: {perfil.valor_consulta.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+              Consulta: {valorEfetivo.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </p>
           )}
         </div>
@@ -536,11 +541,11 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                 <div className="formRow split">
                   <div className="formRow"><label>Telefone</label><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 99999-9999" /></div>
                   <div className="formRow">
-                    <label>E-mail {perfil.valor_consulta && <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span>}</label>
-                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" required={!!perfil.valor_consulta} />
+                    <label>E-mail {valorEfetivo && <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span>}</label>
+                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" required={!!valorEfetivo} />
                   </div>
                 </div>
-                {perfil.valor_consulta && (
+                {valorEfetivo && (
                   <div className="formRow" style={{ maxWidth: 240 }}>
                     <label>CPF <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span> <span style={{ color: "#858d9f", fontWeight: 400 }}>(obrigatório para PIX)</span></label>
                     <input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" inputMode="numeric" required />
