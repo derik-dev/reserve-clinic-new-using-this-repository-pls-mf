@@ -149,6 +149,7 @@ function AreaChart({ data }: { data: { day: number; value: number }[] }) {
 export default function DashboardPage() {
   const [perfilNome, setPerfilNome] = useState("");
   const [perfilSlug, setPerfilSlug] = useState<string | null>(null);
+  const [perfilCreatedAt, setPerfilCreatedAt] = useState<string | null>(null);
   const [perfilTipo, setPerfilTipo] = useState<"autonomo" | "clinica">("clinica");
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
   const [consultas, setConsultas] = useState<Consulta[]>([]);
@@ -165,14 +166,15 @@ export default function DashboardPage() {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
       const [{ data: p, error: pErr }, { data: conf }, { data: ps }] = await Promise.all([
-        supabase.from("perfis").select("nome, slug, tipo").eq("id", session.user.id).maybeSingle(),
+        supabase.from("perfis").select("nome, slug, tipo, created_at").eq("id", session.user.id).maybeSingle(),
         supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
         supabase.from("pacientes").select("*"),
       ]);
       if (p) {
-        const pp = p as { nome: string; slug: string; tipo: string };
+        const pp = p as { nome: string; slug: string; tipo: string; created_at: string | null };
         setPerfilNome(pp.nome ?? "");
         setPerfilSlug(pp.slug ?? null);
+        setPerfilCreatedAt(pp.created_at ?? null);
         setPerfilTipo(pp.tipo === "autonomo" ? "autonomo" : "clinica");
       } else if (pErr) {
         // coluna `tipo` pode não existir ainda — busca sem ela para não perder slug e nome
@@ -363,7 +365,7 @@ export default function DashboardPage() {
       )}
     </section>
 
-    <SetupChecklist />
+    <SetupChecklist accountCreatedAt={perfilCreatedAt} />
 
     <div className="dashOverviewGrid">
       <section className="dashChartCard">

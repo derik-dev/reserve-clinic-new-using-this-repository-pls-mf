@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays, ChevronDown, ClipboardList, LayoutDashboard,
-  LogOut, Menu, Search, Settings, Stethoscope, UserRoundCheck, Users, X,
+  LogOut, Menu, Search, Settings, UserRoundCheck, Users, X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
@@ -60,7 +60,7 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
     
     <div className="appShell" style={{ ["--brand-primary" as string]: primary, ["--brand-secondary" as string]: secondary }}>
       <aside className={`appSidebar ${menuOpen ? "isOpen" : ""}`}>
-        <div className="appBrand"><span className="appBrandMark" style={{ background: primary }}><Stethoscope size={18} /></span><span>Reserve Clinic</span><button className="mobileClose" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={20} /></button></div>
+        <div className="appBrand"><img className="appBrandLogo" src="/logo.svg" alt="Reserve Clinic" /><button className="mobileClose" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={20} /></button></div>
         <div className="clinicSwitcher"><span className="clinicAvatar" style={{ background: primary, color: "#fff", overflow: "hidden" }}>{perfil.logo_url ? <img src={perfil.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : clinicInitials}</span><div><strong>{perfil.nome}</strong><small>Unidade principal</small></div><ChevronDown size={15} /></div>
         <nav className="appNavigation" aria-label="Navegação principal">
           <span className="navGroupLabel">GESTÃO</span>
