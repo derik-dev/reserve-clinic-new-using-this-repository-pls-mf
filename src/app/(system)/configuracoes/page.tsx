@@ -1,7 +1,6 @@
 "use client";
 
-import { Camera, Check, Copy, Plus, Trash2 } from "lucide-react";
-import QRCode from "react-qr-code";
+import { Camera, Check, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -27,10 +26,6 @@ function formatCpfCnpj(raw: string) {
           .replace(/(\d{2})(\d{3})(\d{1,3})$/, "$1.$2.$3")
           .replace(/(\d{2})(\d{1,3})$/, "$1.$2");
 }
-
-function pixField(id: string, v: string) { return `${id}${String(v.length).padStart(2, "0")}${v}`; }
-function crc16(s: string) { let c = 0xffff; for (let i = 0; i < s.length; i++) { c ^= s.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) c = (c & 0x8000) ? (c << 1) ^ 0x1021 : c << 1; } return ((c & 0xffff).toString(16).toUpperCase().padStart(4, "0")); }
-function gerarPix(chave: string, nome: string, cidade: string) { const mai = pixField("00", "BR.GOV.BCB.PIX") + pixField("01", chave); const body = [pixField("00", "01"), pixField("26", mai), pixField("52", "0000"), pixField("53", "986"), pixField("58", "BR"), pixField("59", nome.slice(0, 25)), pixField("60", (cidade || "Brasil").slice(0, 15)), pixField("62", pixField("05", "***")), "6304"].join(""); return body + crc16(body); }
 
 type Form = {
   nome: string; slug: string; telefone: string; email_contato: string;
@@ -98,7 +93,6 @@ export default function ConfiguracoesPage() {
   const [saved, setSaved] = useState(false);
   const [cepLoading, setCepLoading] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
-  const [copiedPix, setCopiedPix] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [profissionais, setProfissionais] = useState<ProfissionalItem[]>([]);
@@ -276,8 +270,6 @@ export default function ConfiguracoesPage() {
     setTimeout(() => setAgendaSaved(false), 2000);
   }
 
-  const pixPayload = form.pix_chave.trim() && form.nome ? gerarPix(form.pix_chave.trim(), form.nome, form.endereco_cidade) : null;
-
   if (loading) return <><PageHeader title="Configurações" description="Gerencie os dados da sua conta." /><section className="panel" style={{ padding: 72, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</section></>;
 
   return <>
@@ -382,31 +374,6 @@ export default function ConfiguracoesPage() {
             <div className="formRow"><label>Bairro</label><input value={form.endereco_bairro} onChange={e => up("endereco_bairro", e.target.value)} placeholder="Centro" /></div>
             <div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={e => up("endereco_uf", e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} /></div>
           </div>
-        </div>
-      </section>
-
-      {/* Pagamento */}
-      <section className="panel settingsSection">
-        <div className="settingsSectionHead"><strong>Pagamento via PIX</strong><small>QR Code exibido ao paciente após confirmar o agendamento.</small></div>
-        <div className="formGrid">
-          <div className="formRow">
-            <label>Chave PIX</label>
-            <input value={form.pix_chave} onChange={e => up("pix_chave", e.target.value)} placeholder="CPF, e-mail, telefone ou chave aleatória" />
-          </div>
-          {pixPayload && (
-            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-              <div style={{ background: "#f9fafb", border: "1px solid #e5e8ef", borderRadius: 12, padding: 12, flexShrink: 0 }}>
-                <QRCode value={pixPayload} size={120} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: "0 0 5px", fontSize: 11, color: "#7d8597" }}>Prévia do QR Code:</p>
-                <code style={{ display: "block", fontSize: 11, background: "#f5f7fb", border: "1px solid #e0e4eb", borderRadius: 8, padding: "7px 10px", wordBreak: "break-all", color: "#2a3244" }}>{form.pix_chave.trim()}</code>
-                <button className="secondaryButton" style={{ marginTop: 8, height: 30, fontSize: 11 }} onClick={async () => { await navigator.clipboard.writeText(form.pix_chave.trim()); setCopiedPix(true); setTimeout(() => setCopiedPix(false), 1600); }}>
-                  {copiedPix ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar chave</>}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
