@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { ProductTour } from "@/components/ProductTour";
 
 export type Perfil = {
   id: string;
@@ -17,6 +18,7 @@ export type Perfil = {
   cor_primaria: string | null;
   cor_secundaria: string | null;
   email: string | null;
+  created_at: string | null;
 };
 
 const navigation = [
@@ -85,6 +87,7 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
           <span>Config</span>
         </Link>
       </nav>
+      <ProductTour slug={perfil.slug} userId={perfil.id} accountCreatedAt={perfil.created_at} />
     </div>
   );
 }

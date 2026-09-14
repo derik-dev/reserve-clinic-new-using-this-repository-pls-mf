@@ -17,12 +17,12 @@ export default function SystemLayout({ children }: Readonly<{ children: ReactNod
         router.replace("/login");
         return;
       }
-      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, onboarding_concluido").eq("id", session.user.id).maybeSingle();
+      const { data } = await supabase.from("perfis").select("id, nome, slug, logo_url, cor_primaria, cor_secundaria, onboarding_concluido, created_at").eq("id", session.user.id).maybeSingle();
       if (!data || !data.onboarding_concluido) {
         router.replace("/onboarding");
         return;
       }
-      setPerfil({ id: data.id, nome: data.nome, slug: data.slug, logo_url: data.logo_url, cor_primaria: data.cor_primaria, cor_secundaria: data.cor_secundaria, email: session.user.email ?? null });
+      setPerfil({ id: data.id, nome: data.nome, slug: data.slug, logo_url: data.logo_url, cor_primaria: data.cor_primaria, cor_secundaria: data.cor_secundaria, email: session.user.email ?? null, created_at: data.created_at ?? null });
       setReady(true);
     })();
   }, [router]);

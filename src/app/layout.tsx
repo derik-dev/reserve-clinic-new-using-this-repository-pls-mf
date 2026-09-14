@@ -6,6 +6,7 @@ import "./product-tables.css";
 import "./login.css";
 import "./booking.css";
 import "./onboarding.css";
+import "./tour.css";
 
 const plex = IBM_Plex_Sans({
   subsets: ["latin"],
