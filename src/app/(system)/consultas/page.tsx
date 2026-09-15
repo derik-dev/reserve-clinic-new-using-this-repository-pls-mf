@@ -404,6 +404,13 @@ export default function ConsultasPage() {
   </>;
 }
 
+const STATUS_COLOR: Record<ConsultaStatus, string> = {
+  aguardando: "var(--warning)",
+  confirmada: "var(--success)",
+  concluida: "var(--accent)",
+  cancelada: "var(--danger)",
+};
+
 function ConsultaDetalhePopup({ consulta: c, onClose, onEdit, onStatusChange, onDelete }: {
   consulta: Consulta;
   onClose: () => void;
@@ -415,73 +422,95 @@ function ConsultaDetalhePopup({ consulta: c, onClose, onEdit, onStatusChange, on
   const dt = new Date(c.data_hora);
   const data = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const accentColor = STATUS_COLOR[c.status];
+  const outrosStatus = (Object.keys(STATUS_LABEL) as ConsultaStatus[]).filter(s => s !== c.status);
+
   return (
     <div className="modalBackdrop" onClick={onClose}>
-      <div className="modalCard" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
-        <header className="modalHeader">
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div className="tableAvatar" style={{ width: 42, height: 42, fontSize: 13, borderRadius: 12 }}>{initials(c.paciente_nome)}</div>
-            <div>
-              <h2 style={{ margin: 0 }}>{c.paciente_nome}</h2>
-              <div style={{ marginTop: 6 }}>
-                <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
-              </div>
-            </div>
+      <div className="cpopup" onClick={(e) => e.stopPropagation()}>
+        {/* Stripe colorida por status */}
+        <div className="cpopupAccent" style={{ background: accentColor }} />
+
+        {/* Close */}
+        <button className="iconButton cpopupClose" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
+
+        {/* Header centralizado */}
+        <div className="cpopupHead">
+          <div className="cpopupAvatar" style={{ boxShadow: `0 0 0 3px ${accentColor}33, 0 8px 24px -8px ${accentColor}66` }}>
+            {initials(c.paciente_nome)}
           </div>
-          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
-        </header>
-        <div className="modalBody">
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <ConsultaRow icon={<CalendarDays size={14} />} label="Data" value={data[0].toUpperCase() + data.slice(1)} />
-            <ConsultaRow icon={<Clock size={14} />} label="Horário" value={`${hora} · ${c.duracao_min} min`} />
-            {c.profissional && <ConsultaRow icon={<User size={14} />} label="Profissional" value={c.profissional} />}
-            {c.servico && <ConsultaRow icon={<Stethoscope size={14} />} label="Serviço" value={c.servico} />}
-            {c.valor != null && <ConsultaRow icon={<BanknoteIcon size={14} />} label="Valor" value={formatCurrency(c.valor)} />}
-            {c.observacoes && (
-              <div style={{ padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-                <div style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 6 }}>Observações</div>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>{c.observacoes}</p>
-              </div>
-            )}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingTop: 4 }}>
-              {(Object.keys(STATUS_LABEL) as ConsultaStatus[]).filter(s => s !== c.status).map(s => (
-                <button key={s} onClick={() => onStatusChange(s)} className={`statusBadge ${STATUS_CLASS[s]}`} style={{ border: "1px solid rgba(255,255,255,.1)", cursor: "pointer", padding: "5px 12px" }}>
-                  Marcar como {STATUS_LABEL[s].toLowerCase()}
+          <h2 className="cpopupName">{c.paciente_nome}</h2>
+          <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
+        </div>
+
+        {/* Info */}
+        <div className="cpopupInfo">
+          <div className="cpopupInfoRow">
+            <CalendarDays size={14} />
+            <span>{data[0].toUpperCase() + data.slice(1)}</span>
+          </div>
+          <div className="cpopupInfoRow">
+            <Clock size={14} />
+            <span>{hora} · {c.duracao_min} min</span>
+          </div>
+          {c.profissional && (
+            <div className="cpopupInfoRow">
+              <User size={14} />
+              <span>{c.profissional}</span>
+            </div>
+          )}
+          {c.servico && (
+            <div className="cpopupInfoRow">
+              <Stethoscope size={14} />
+              <span>{c.servico}</span>
+            </div>
+          )}
+          {c.valor != null && (
+            <div className="cpopupInfoRow">
+              <BanknoteIcon size={14} />
+              <span style={{ color: "var(--success)", fontWeight: 600 }}>{formatCurrency(c.valor)}</span>
+            </div>
+          )}
+          {c.observacoes && (
+            <div className="cpopupObs">{c.observacoes}</div>
+          )}
+        </div>
+
+        {/* Alterar status */}
+        {outrosStatus.length > 0 && (
+          <div className="cpopupStatusBar">
+            <span className="cpopupStatusLabel">Alterar para</span>
+            <div className="cpopupStatusBtns">
+              {outrosStatus.map(s => (
+                <button key={s} className={`cpopupStatusBtn ${STATUS_CLASS[s]}`} onClick={() => onStatusChange(s)}>
+                  {STATUS_LABEL[s]}
                 </button>
               ))}
             </div>
           </div>
-        </div>
-        <footer className="modalFooter" style={{ justifyContent: "space-between" }}>
+        )}
+
+        {/* Footer */}
+        <div className="cpopupFooter">
           {confirmDelete ? (
             <>
               <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Confirmar exclusão?</span>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                 <button className="secondaryButton" onClick={() => setConfirmDelete(false)}>Não</button>
                 <button className="dangerButton" onClick={onDelete}>Excluir</button>
               </div>
             </>
           ) : (
             <>
-              <button className="iconButton" style={{ color: "var(--text-muted)" }} onClick={() => setConfirmDelete(true)} title="Excluir consulta"><Trash2 size={16} /></button>
-              <div style={{ display: "flex", gap: 8 }}>
+              <button className="iconButton" style={{ color: "var(--text-muted)" }} onClick={() => setConfirmDelete(true)} title="Excluir"><Trash2 size={15} /></button>
+              <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                 <button className="secondaryButton" onClick={onClose}>Fechar</button>
-                <button className="primaryButton" onClick={onEdit}>Editar consulta</button>
+                <button className="primaryButton" onClick={onEdit}>Editar</button>
               </div>
             </>
           )}
-        </footer>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function ConsultaRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-      <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{icon}</span>
-      <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", width: 72, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500, flex: 1 }}>{value}</span>
     </div>
   );
 }
