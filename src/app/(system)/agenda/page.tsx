@@ -183,10 +183,17 @@ export default function AgendaPage() {
     return consultas.filter(c => c.profissional_id === profFiltro);
   }, [consultas, profFiltro]);
 
-  const consultasDoDia = useMemo(() =>
-    consultasFiltradas.filter(c => isSameDay(new Date(c.data_hora), selectedDay)),
-    [consultasFiltradas, selectedDay]
-  );
+  const consultasDoDia = useMemo(() => {
+    const isToday_ = isSameDay(selectedDay, today);
+    return consultasFiltradas.filter(c => {
+      if (!isSameDay(new Date(c.data_hora), selectedDay)) return false;
+      if (isToday_) {
+        const fim = new Date(c.data_hora).getTime() + (c.duracao_min ?? 30) * 60000;
+        if (fim <= Date.now()) return false;
+      }
+      return true;
+    });
+  }, [consultasFiltradas, selectedDay, today]);
 
   const consultasPorDia = useMemo(() => {
     const m = new Map<string, number>();
