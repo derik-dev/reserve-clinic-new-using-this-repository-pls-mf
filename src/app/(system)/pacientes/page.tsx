@@ -218,55 +218,57 @@ export default function PacientesPage() {
 function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; onClose: () => void; onEdit: () => void }) {
   const idade = calcIdade(p.data_nascimento);
   const nascimento = p.data_nascimento ? new Date(p.data_nascimento + "T00:00").toLocaleDateString("pt-BR") : null;
+  const isAtivo = p.status === "ativo";
+
   return (
     <div className="modalBackdrop" onClick={onClose}>
-      <div className="modalCard" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
-        <header className="modalHeader">
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div className="tableAvatar" style={{ width: 42, height: 42, fontSize: 13, borderRadius: 12 }}>{initials(p.nome)}</div>
-            <div>
-              <h2 style={{ margin: 0 }}>{p.nome}</h2>
-              <div style={{ marginTop: 6 }}>
-                <span className={`statusBadge ${p.status === "ativo" ? "statusAtivo" : "statusConcluida"}`}>{p.status === "ativo" ? "Ativo" : "Inativo"}</span>
-              </div>
-            </div>
-          </div>
-          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
-        </header>
-        <div className="modalBody">
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="ppopup" onClick={(e) => e.stopPropagation()}>
+        <button className="iconButton ppopupClose" onClick={onClose} aria-label="Fechar"><X size={15} /></button>
+
+        {/* Perfil centralizado */}
+        <div className="ppopupProfile">
+          <div className="ppopupAvatar">{initials(p.nome)}</div>
+          <h2 className="ppopupName">{p.nome}</h2>
+          <span className={`statusBadge ${isAtivo ? "statusAtivo" : "statusConcluida"}`}>{isAtivo ? "Ativo" : "Inativo"}</span>
+          {idade != null && <span className="ppopupAge">{idade} anos</span>}
+        </div>
+
+        {/* Contatos clicáveis */}
+        {(p.telefone || p.email) && (
+          <div className="ppopupContacts">
             {p.telefone && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-                <Phone size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: "var(--text)" }}>{p.telefone}</span>
-              </div>
+              <a className="ppopupContact" href={`tel:${p.telefone}`} onClick={(e) => e.stopPropagation()}>
+                <Phone size={15} />
+                <span>{p.telefone}</span>
+              </a>
             )}
             {p.email && (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-                <Mail size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: "var(--text)" }}>{p.email}</span>
-              </div>
-            )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {p.cpf && <PacienteField label="CPF" value={p.cpf} />}
-              {nascimento && <PacienteField label="Nascimento" value={`${nascimento}${idade != null ? ` · ${idade} anos` : ""}`} />}
-              <PacienteField label="Cadastrado em" value={formatDate(p.created_at)} />
-            </div>
-            {p.observacoes && (
-              <div style={{ padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                  <FileText size={13} style={{ color: "var(--text-muted)" }} />
-                  <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--text-subtle)" }}>Observações</span>
-                </div>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>{p.observacoes}</p>
-              </div>
+              <a className="ppopupContact" href={`mailto:${p.email}`} onClick={(e) => e.stopPropagation()}>
+                <Mail size={15} />
+                <span>{p.email}</span>
+              </a>
             )}
           </div>
+        )}
+
+        {/* Dados pessoais */}
+        <div className="ppopupMeta">
+          {nascimento && <div className="ppopupMetaItem"><span>Nascimento</span><strong>{nascimento}</strong></div>}
+          {p.cpf && <div className="ppopupMetaItem"><span>CPF</span><strong>{p.cpf}</strong></div>}
+          <div className="ppopupMetaItem"><span>Cadastrado</span><strong>{formatDate(p.created_at)}</strong></div>
         </div>
-        <footer className="modalFooter">
+
+        {p.observacoes && (
+          <div className="ppopupObs">
+            <FileText size={12} />
+            <p>{p.observacoes}</p>
+          </div>
+        )}
+
+        <div className="ppopupFooter">
           <button className="secondaryButton" onClick={onClose}>Fechar</button>
           <button className="primaryButton" onClick={onEdit}>Editar paciente</button>
-        </footer>
+        </div>
       </div>
     </div>
   );
