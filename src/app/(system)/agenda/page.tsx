@@ -162,10 +162,13 @@ export default function AgendaPage() {
     supabase.from("consultas").select("*")
       .gte("data_hora", from.toISOString())
       .lte("data_hora", to.toISOString())
+      .neq("status", "aguardando")
       .order("data_hora")
       .then(({ data }) => {
         if (cancelled) return;
-        setConsultas((data as Consulta[] | null) ?? []);
+        const raw = (data as Consulta[] | null) ?? [];
+        const seen = new Set<string>();
+        setConsultas(raw.filter(c => { if (seen.has(c.id)) return false; seen.add(c.id); return true; }));
         setLoading(false);
       });
     return () => { cancelled = true; };
