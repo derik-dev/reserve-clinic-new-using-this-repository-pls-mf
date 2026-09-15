@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus, Settings, Users, X, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, BanknoteIcon, Plus, Settings, Stethoscope, User, Users, X, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -453,50 +453,44 @@ function MiniCalendar({ month, cells, today, selectedDay, consultasPorDia, onPre
   );
 }
 
+const STATUS_COLOR: Record<ConsultaStatus, string> = {
+  aguardando: "var(--warning)",
+  confirmada: "var(--success)",
+  concluida: "var(--accent)",
+  cancelada: "var(--danger)",
+};
+
 function ConsultaPopup({ consulta, onClose, onEdit }: { consulta: Consulta; onClose: () => void; onEdit: () => void }) {
   const dt = new Date(consulta.data_hora);
   const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   const data = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const accentColor = STATUS_COLOR[consulta.status];
   return (
     <div className="modalBackdrop" onClick={onClose}>
-      <div className="modalCard" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-        <header className="modalHeader">
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div className="dashUpcomingAvatar" style={{ width: 38, height: 38, fontSize: 12 }}>{initials(consulta.paciente_nome)}</div>
-            <div>
-              <h2 style={{ margin: 0 }}>{consulta.paciente_nome}</h2>
-              <div style={{ marginTop: 6 }}>
-                <span className={`statusBadge ${STATUS_CLASS[consulta.status]}`}>{STATUS_LABEL[consulta.status]}</span>
-              </div>
-            </div>
+      <div className="cpopup" onClick={(e) => e.stopPropagation()}>
+        <div className="cpopupAccent" style={{ background: accentColor }} />
+        <button className="iconButton cpopupClose" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
+        <div className="cpopupHead">
+          <div className="cpopupAvatar" style={{ boxShadow: `0 0 0 3px ${accentColor}33, 0 8px 24px -8px ${accentColor}66` }}>
+            {initials(consulta.paciente_nome)}
           </div>
-          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
-        </header>
-        <div className="modalBody">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <PopupField label="Data" value={data[0].toUpperCase() + data.slice(1)} />
-            <PopupField label="Horário" value={`${hora} · ${consulta.duracao_min} min`} />
-            {consulta.profissional && <PopupField label="Profissional" value={consulta.profissional} />}
-            {consulta.servico && <PopupField label="Serviço" value={consulta.servico} />}
-            {consulta.valor != null && (
-              <PopupField label="Valor" value={`R$ ${Number(consulta.valor).toFixed(2).replace(".", ",")}`} />
-            )}
-          </div>
+          <h2 className="cpopupName">{consulta.paciente_nome}</h2>
+          <span className={`statusBadge ${STATUS_CLASS[consulta.status]}`}>{STATUS_LABEL[consulta.status]}</span>
         </div>
-        <footer className="modalFooter">
+        <div className="cpopupInfo">
+          <div className="cpopupInfoRow"><CalendarDays size={14} /><span>{data[0].toUpperCase() + data.slice(1)}</span></div>
+          <div className="cpopupInfoRow"><Clock size={14} /><span>{hora} · {consulta.duracao_min} min</span></div>
+          {consulta.profissional && <div className="cpopupInfoRow"><User size={14} /><span>{consulta.profissional}</span></div>}
+          {consulta.servico && <div className="cpopupInfoRow"><Stethoscope size={14} /><span>{consulta.servico}</span></div>}
+          {consulta.valor != null && (
+            <div className="cpopupInfoRow"><BanknoteIcon size={14} /><span style={{ color: "var(--success)", fontWeight: 600 }}>{`R$ ${Number(consulta.valor).toFixed(2).replace(".", ",")}`}</span></div>
+          )}
+        </div>
+        <div className="cpopupFooter">
           <button className="secondaryButton" onClick={onClose}>Fechar</button>
-          <button className="primaryButton" onClick={onEdit}>Editar consulta →</button>
-        </footer>
+          <button className="primaryButton" style={{ marginLeft: "auto" }} onClick={onEdit}>Editar consulta</button>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function PopupField({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase" }}>{label}</span>
-      <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500, letterSpacing: "-.005em" }}>{value}</span>
     </div>
   );
 }
