@@ -463,32 +463,52 @@ const STATUS_COLOR: Record<ConsultaStatus, string> = {
 function ConsultaPopup({ consulta, onClose, onEdit }: { consulta: Consulta; onClose: () => void; onEdit: () => void }) {
   const dt = new Date(consulta.data_hora);
   const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  const data = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const fim = new Date(dt.getTime() + (consulta.duracao_min ?? 30) * 60000);
+  const horaFim = fim.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const diaSemana = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
+  const diaMes = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
   const accentColor = STATUS_COLOR[consulta.status];
+
   return (
     <div className="modalBackdrop" onClick={onClose}>
-      <div className="cpopup" onClick={(e) => e.stopPropagation()}>
-        <div className="cpopupAccent" style={{ background: accentColor }} />
-        <button className="iconButton cpopupClose" onClick={onClose} aria-label="Fechar"><X size={16} /></button>
-        <div className="cpopupHead">
-          <div className="cpopupAvatar" style={{ boxShadow: `0 0 0 3px ${accentColor}33, 0 8px 24px -8px ${accentColor}66` }}>
-            {initials(consulta.paciente_nome)}
+      <div className="agpopup" onClick={(e) => e.stopPropagation()}>
+        {/* Header tipo ticket com horário grande */}
+        <div className="agpopupHeader" style={{ background: `linear-gradient(135deg, ${accentColor}22, ${accentColor}08)`, borderBottom: `1px solid ${accentColor}30` }}>
+          <button className="iconButton agpopupClose" onClick={onClose} aria-label="Fechar"><X size={15} /></button>
+          <div className="agpopupTime">
+            <strong>{hora}</strong>
+            <span>→ {horaFim}</span>
           </div>
-          <h2 className="cpopupName">{consulta.paciente_nome}</h2>
-          <span className={`statusBadge ${STATUS_CLASS[consulta.status]}`}>{STATUS_LABEL[consulta.status]}</span>
+          <div className="agpopupDate">
+            <span className="agpopupWeekday" style={{ color: accentColor }}>{diaSemana}</span>
+            <span className="agpopupDay">{diaMes}</span>
+            <span className={`statusBadge ${STATUS_CLASS[consulta.status]}`} style={{ marginLeft: "auto" }}>{STATUS_LABEL[consulta.status]}</span>
+          </div>
         </div>
-        <div className="cpopupInfo">
-          <div className="cpopupInfoRow"><CalendarDays size={14} /><span>{data[0].toUpperCase() + data.slice(1)}</span></div>
-          <div className="cpopupInfoRow"><Clock size={14} /><span>{hora} · {consulta.duracao_min} min</span></div>
-          {consulta.profissional && <div className="cpopupInfoRow"><User size={14} /><span>{consulta.profissional}</span></div>}
-          {consulta.servico && <div className="cpopupInfoRow"><Stethoscope size={14} /><span>{consulta.servico}</span></div>}
+
+        {/* Paciente */}
+        <div className="agpopupPatient">
+          <div className="agpopupAvatar">{initials(consulta.paciente_nome)}</div>
+          <div>
+            <strong>{consulta.paciente_nome}</strong>
+            {consulta.servico && <small>{consulta.servico}</small>}
+          </div>
+        </div>
+
+        {/* Detalhes */}
+        <div className="agpopupDetails">
+          {consulta.profissional && (
+            <div className="agpopupDetail"><User size={13} /><span>{consulta.profissional}</span></div>
+          )}
+          <div className="agpopupDetail"><Clock size={13} /><span>{consulta.duracao_min} min</span></div>
           {consulta.valor != null && (
-            <div className="cpopupInfoRow"><BanknoteIcon size={14} /><span style={{ color: "var(--success)", fontWeight: 600 }}>{`R$ ${Number(consulta.valor).toFixed(2).replace(".", ",")}`}</span></div>
+            <div className="agpopupDetail"><BanknoteIcon size={13} /><span style={{ color: "var(--success)", fontWeight: 600 }}>{`R$ ${Number(consulta.valor).toFixed(2).replace(".", ",")}`}</span></div>
           )}
         </div>
-        <div className="cpopupFooter">
+
+        <div className="agpopupFooter">
           <button className="secondaryButton" onClick={onClose}>Fechar</button>
-          <button className="primaryButton" style={{ marginLeft: "auto" }} onClick={onEdit}>Editar consulta</button>
+          <button className="primaryButton" onClick={onEdit}>Editar consulta</button>
         </div>
       </div>
     </div>

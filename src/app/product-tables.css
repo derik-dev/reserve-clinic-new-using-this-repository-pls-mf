@@ -343,3 +343,21 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .cpopupStatusBtn{height:28px;padding:0 12px;border-radius:20px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font-size:11px;font-weight:500;cursor:pointer;transition:background .15s var(--ease),border-color .15s var(--ease)}
 .cpopupStatusBtn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.15)}
 .cpopupFooter{display:flex;align-items:center;padding:14px 20px;gap:8px}
+.agpopup{position:relative;width:min(380px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;box-shadow:0 32px 80px -20px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.04) inset}
+.agpopupHeader{padding:20px 20px 16px;position:relative}
+.agpopupClose{position:absolute;top:10px;right:10px}
+.agpopupTime{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.agpopupTime>strong{font:700 36px/1 var(--font-space);color:var(--text);letter-spacing:-.03em}
+.agpopupTime>span{font-size:14px;color:var(--text-muted);font-weight:500;letter-spacing:-.01em}
+.agpopupDate{display:flex;align-items:center;gap:8px}
+.agpopupWeekday{font-size:11px;font-weight:700;letter-spacing:.1em}
+.agpopupDay{font-size:12px;color:var(--text-muted);font-weight:500;text-transform:capitalize}
+.agpopupPatient{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border-soft)}
+.agpopupAvatar{width:40px;height:40px;border-radius:12px;background:var(--accent-dim);color:#93c5fd;display:grid;place-items:center;font:600 13px var(--font-space);flex-shrink:0}
+.agpopupPatient>div>strong{display:block;font-size:14px;color:var(--text);font-weight:600;letter-spacing:-.01em}
+.agpopupPatient>div>small{display:block;font-size:11px;color:var(--text-muted);margin-top:3px}
+.agpopupDetails{padding:12px 20px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--border-soft)}
+.agpopupDetail{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-muted)}
+.agpopupDetail>svg{color:var(--text-subtle);flex-shrink:0}
+.agpopupDetail>span{color:var(--text);font-weight:500}
+.agpopupFooter{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px}
