@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, MoreHorizontal, Plus, Settings, Users, X, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Settings, Users, X, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus } from "@/lib/db";
@@ -22,6 +22,7 @@ type AgendaConfig = {
 
 const DAY_ORDER: DayKey[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 const DAY_LABEL_FULL: Record<DayKey, string> = { seg: "Segunda", ter: "Terça", qua: "Quarta", qui: "Quinta", sex: "Sexta", sab: "Sábado", dom: "Domingo" };
+const WEEKDAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const DEFAULT_CONFIG: AgendaConfig = {
   dias: {
@@ -45,6 +46,8 @@ const STATUS_TO_COLOR: Record<ConsultaStatus, string> = {
   concluida: "mint",
   cancelada: "gray",
 };
+
+const HOUR_PX = 64;
 
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
@@ -73,18 +76,42 @@ function isFeriado(config: AgendaConfig, profId: string | null, isoDate: string)
   return config.feriados.includes(isoDate) || (profId ? (config.disponibilidade[profId]?.feriados ?? []).includes(isoDate) : false);
 }
 
-function slotsLivresDia(config: AgendaConfig, profDisp: { dias: Record<DayKey, DayConfig> }, diaKey: DayKey, consultasDoDia: Consulta[]): string[] {
-  const dc = profDisp.dias[diaKey];
-  if (!dc.aberto) return [];
-  const dur = config.duracao_min;
-  const inicio = timeToMin(dc.inicio);
-  const fim = timeToMin(dc.fim);
-  const ocupados = new Set(consultasDoDia.map(c => { const dt = new Date(c.data_hora); return dt.getHours() * 60 + dt.getMinutes(); }));
-  const livres: string[] = [];
-  for (let m = inicio; m + dur <= fim; m += dur) {
-    if (!ocupados.has(m)) livres.push(minToLabel(m));
+function layoutOverlaps(eventos: Consulta[]) {
+  const items = eventos.map((c) => {
+    const dt = new Date(c.data_hora);
+    const start = dt.getHours() * 60 + dt.getMinutes();
+    return { c, start, end: start + c.duracao_min };
+  }).sort((a, b) => a.start - b.start || a.end - b.end);
+  const columns: { end: number }[] = [];
+  const placements = new Map<string, { col: number }>();
+  const groups: { members: string[] }[] = [];
+  let currentGroup: string[] = [];
+  let currentEnd = -1;
+  for (const it of items) {
+    let colIdx = columns.findIndex(col => col.end <= it.start);
+    if (colIdx === -1) { columns.push({ end: it.end }); colIdx = columns.length - 1; }
+    else columns[colIdx].end = it.end;
+    placements.set(it.c.id, { col: colIdx });
+    if (it.start >= currentEnd) {
+      if (currentGroup.length) groups.push({ members: currentGroup });
+      currentGroup = [it.c.id];
+      currentEnd = it.end;
+    } else {
+      currentGroup.push(it.c.id);
+      currentEnd = Math.max(currentEnd, it.end);
+    }
   }
-  return livres;
+  if (currentGroup.length) groups.push({ members: currentGroup });
+  const groupCols = new Map<string, number>();
+  for (const g of groups) {
+    const maxCol = Math.max(...g.members.map(id => placements.get(id)!.col)) + 1;
+    for (const id of g.members) groupCols.set(id, maxCol);
+  }
+  return items.map(({ c, start, end }) => ({
+    c, start, end,
+    col: placements.get(c.id)!.col,
+    cols: groupCols.get(c.id) ?? 1,
+  }));
 }
 
 export default function AgendaPage() {
@@ -100,6 +127,14 @@ export default function AgendaPage() {
   const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
   const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [fetchMonth, setFetchMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [now, setNow] = useState<Date>(() => new Date());
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const didScrollRef = useRef(false);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -146,9 +181,7 @@ export default function AgendaPage() {
   }, [consultas, profFiltro]);
 
   const consultasDoDia = useMemo(() =>
-    consultasFiltradas
-      .filter(c => isSameDay(new Date(c.data_hora), selectedDay))
-      .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime()),
+    consultasFiltradas.filter(c => isSameDay(new Date(c.data_hora), selectedDay)),
     [consultasFiltradas, selectedDay]
   );
 
@@ -164,16 +197,42 @@ export default function AgendaPage() {
   const diaKey = jsDayToKey(selectedDay);
   const isFeriadoDia = isFeriado(config, profAtivo, toIsoDate(selectedDay));
   const diaCfg = profDisp.dias[diaKey];
-  const diaFechado = !diaCfg.aberto || isFeriadoDia;
-  const livres = useMemo(() => diaFechado ? [] : slotsLivresDia(config, profDisp, diaKey, consultasDoDia), [diaFechado, config, profDisp, diaKey, consultasDoDia]);
+  const diaAberto = diaCfg.aberto && !isFeriadoDia;
+  const openMin = diaAberto ? timeToMin(diaCfg.inicio) : 8 * 60;
+  const closeMin = diaAberto ? timeToMin(diaCfg.fim) : 18 * 60;
+  const gridStart = Math.max(0, Math.floor(openMin / 60) - 1);
+  const gridEnd = Math.min(24, Math.ceil(closeMin / 60) + 1);
+  const numHours = gridEnd - gridStart;
+  const totalHeight = numHours * HOUR_PX;
+
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowTop = ((nowMin - gridStart * 60) / 60) * HOUR_PX;
   const isToday = isSameDay(selectedDay, today);
+  const nowInRange = isToday && nowMin >= gridStart * 60 && nowMin <= gridEnd * 60;
+
+  const placed = useMemo(() => layoutOverlaps(consultasDoDia), [consultasDoDia]);
+
+  // Scroll to current time on mount / day change
+  useEffect(() => {
+    didScrollRef.current = false;
+  }, [selectedDay]);
+
+  useEffect(() => {
+    if (didScrollRef.current || !scrollRef.current || loading) return;
+    const el = scrollRef.current;
+    const target = isToday
+      ? Math.max(0, nowTop - el.clientHeight / 2 + HOUR_PX)
+      : Math.max(0, ((openMin - gridStart * 60) / 60) * HOUR_PX - HOUR_PX / 2);
+    el.scrollTop = target;
+    didScrollRef.current = true;
+  }, [loading, isToday, nowTop, openMin, gridStart]);
 
   const calCells = useMemo(() => {
     const first = new Date(calMonth);
     const startPad = (first.getDay() + 6) % 7;
-    const gridStart = new Date(first);
-    gridStart.setDate(1 - startPad);
-    return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+    const gridStartDate = new Date(first);
+    gridStartDate.setDate(1 - startPad);
+    return Array.from({ length: 42 }, (_, i) => addDays(gridStartDate, i));
   }, [calMonth]);
 
   function goDay(n: number) {
@@ -183,13 +242,24 @@ export default function AgendaPage() {
     if (m.getTime() !== calMonth.getTime()) setCalMonth(m);
   }
 
-  const dateLabel = selectedDay.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-  const dateLabelCapital = dateLabel[0].toUpperCase() + dateLabel.slice(1);
+  const handleGridClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest(".gcalEvent")) return;
+    if (!diaAberto) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scrollTop = scrollRef.current?.scrollTop ?? 0;
+    const y = e.clientY - rect.top + scrollTop;
+    const rawMin = gridStart * 60 + (y / HOUR_PX) * 60;
+    const step = Math.max(5, config.duracao_min);
+    const snapped = Math.max(openMin, Math.min(closeMin - step, Math.round(rawMin / step) * step));
+    router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}&hora=${minToLabel(snapped)}`);
+  }, [diaAberto, gridStart, config.duracao_min, openMin, closeMin, selectedDay, router]);
+
+  const monthLabel = selectedDay.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
   return <>
     <PageHeader
       title="Agenda"
-      description={dateLabelCapital}
+      description={monthLabel[0].toUpperCase() + monthLabel.slice(1)}
       actions={<>
         <button className="secondaryButton" onClick={() => setConfigOpen(true)}><Settings size={16} /> Ajustes</button>
         <button className="primaryButton" onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`)}><Plus size={17} /> Nova consulta</button>
@@ -205,8 +275,8 @@ export default function AgendaPage() {
       </div>
     )}
 
-    <div className="agendaV2">
-      <aside className="agendaV2Side">
+    <div className="gcalWrap">
+      <aside className="gcalSide">
         <MiniCalendar
           month={calMonth}
           cells={calCells}
@@ -217,85 +287,104 @@ export default function AgendaPage() {
           onNext={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() + 1); setCalMonth(d); }}
           onPick={(d) => setSelectedDay(d)}
         />
-
-        {livres.length > 0 && (
-          <section className="agendaLivresPanel">
-            <header>
-              <strong>Horários livres</strong>
-              <span>{livres.length} disponíveis</span>
-            </header>
-            <div className="agendaLivresGrid">
-              {livres.map(h => (
-                <button key={h} className="agendaLivreSlot" onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}&hora=${h}`)}>
-                  {h}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
       </aside>
 
-      <div className="agendaV2Main">
-        <div className="agendaDayNav">
+      <div className="gcalMain">
+        {/* Day header */}
+        <div className="gcalDayHeader">
           <button className="iconButton" onClick={() => goDay(-1)} aria-label="Dia anterior"><ChevronLeft size={18} /></button>
-          <div className="agendaDayNavTitle">
-            <strong>{dateLabelCapital}</strong>
-            {isToday && <span className="agendaTodayBadge">Hoje</span>}
-            {isFeriadoDia && <span className="agendaFeriadoBadge">Feriado</span>}
+          <div className="gcalDayNum">
+            <span>{WEEKDAY_SHORT[selectedDay.getDay()].toUpperCase()}</span>
+            <strong className={isToday ? "isToday" : ""}>{selectedDay.getDate()}</strong>
           </div>
           <button className="iconButton" onClick={() => goDay(1)} aria-label="Próximo dia"><ChevronRight size={18} /></button>
           {!isToday && (
             <button className="todayButton" onClick={() => { setSelectedDay(today); setCalMonth(new Date(today.getFullYear(), today.getMonth(), 1)); }}>Hoje</button>
           )}
-          {consultasDoDia.length > 0 && (
-            <span className="agendaDayStat">{consultasDoDia.length} consulta{consultasDoDia.length !== 1 ? "s" : ""}</span>
-          )}
+          <div className="gcalHeaderMeta">
+            {isFeriadoDia && <span className="agendaFeriadoBadge">Feriado</span>}
+            {!diaAberto && !isFeriadoDia && <span className="agendaFeriadoBadge">Fechado</span>}
+            {diaAberto && consultasDoDia.length > 0 && (
+              <span className="gcalDayStat">{consultasDoDia.length} consulta{consultasDoDia.length !== 1 ? "s" : ""}</span>
+            )}
+            {diaAberto && consultasDoDia.length === 0 && !loading && (
+              <span className="gcalDayStat">Dia livre</span>
+            )}
+          </div>
         </div>
 
-        {loading ? (
-          <div className="agendaDayLoading"><span /></div>
-        ) : diaFechado && consultasDoDia.length === 0 ? (
-          <div className="agendaDayEmpty">
-            <strong>{isFeriadoDia ? "Feriado" : "Sem atendimento"}</strong>
-            <small>{isFeriadoDia ? "Este dia está bloqueado na agenda." : "Este dia não está configurado como dia de atendimento."}</small>
-            <button className="linkButton" onClick={() => setConfigOpen(true)}>Ajustar horários</button>
-          </div>
-        ) : consultasDoDia.length === 0 ? (
-          <div className="agendaDayEmpty">
-            <strong>Nenhuma consulta agendada</strong>
-            <small>O dia está vazio. Adicione a primeira consulta ou aguarde novos agendamentos pelo link público.</small>
-            <button className="primaryButton" style={{ marginTop: 4 }} onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`)}><Plus size={15} /> Nova consulta</button>
-          </div>
-        ) : (
-          <ul className="agendaDayList">
-            {consultasDoDia.map(c => {
-              const dt = new Date(c.data_hora);
-              const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-              const cor = STATUS_TO_COLOR[c.status] ?? "blue";
+        {/* Scrollable time grid */}
+        <div className="gcalScroll" ref={scrollRef}>
+          <div
+            className="gcalGrid"
+            style={{ height: totalHeight }}
+            onClick={handleGridClick}
+          >
+            {/* Hour + half-hour lines */}
+            {Array.from({ length: numHours }, (_, i) => {
+              const h = gridStart + i;
               return (
-                <li key={c.id} className={`agendaDayCard cor-${cor}`} onClick={() => setSelectedConsulta(c)}>
-                  <div className="agendaDayCardTime">
-                    <strong>{hora}</strong>
-                    <small>{c.duracao_min} min</small>
+                <div key={h}>
+                  <div className="gcalHourRow" style={{ top: i * HOUR_PX }}>
+                    <span className="gcalHourLabel">{String(h).padStart(2, "0")}:00</span>
+                    <div className="gcalHourLine" />
                   </div>
-                  <div className="agendaDayCardAvatar">{initials(c.paciente_nome)}</div>
-                  <div className="agendaDayCardBody">
-                    <strong>{c.paciente_nome}</strong>
-                    <small>{c.servico ?? "Consulta"}{c.profissional ? ` · ${c.profissional}` : ""}</small>
+                  <div className="gcalHalfRow" style={{ top: i * HOUR_PX + HOUR_PX / 2 }}>
+                    <span />
+                    <div className="gcalHalfLine" />
                   </div>
-                  <span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span>
-                  <ChevronRight size={16} className="agendaDayCardArrow" />
-                </li>
+                </div>
               );
             })}
-          </ul>
-        )}
 
-        {consultasDoDia.length > 0 && !loading && (
-          <button className="agendaDayAddBtn" onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`)}>
-            <Plus size={15} /> Nova consulta neste dia
-          </button>
-        )}
+            {/* Closed zones (before open and after close) */}
+            {diaAberto && openMin > gridStart * 60 && (
+              <div className="gcalClosedZone" style={{ top: 0, height: ((openMin - gridStart * 60) / 60) * HOUR_PX }} />
+            )}
+            {diaAberto && closeMin < gridEnd * 60 && (
+              <div className="gcalClosedZone" style={{ top: ((closeMin - gridStart * 60) / 60) * HOUR_PX, height: ((gridEnd * 60 - closeMin) / 60) * HOUR_PX }} />
+            )}
+            {!diaAberto && (
+              <div className="gcalClosedZone gcalClosedFull" style={{ top: 0, height: totalHeight }}>
+                <span>{isFeriadoDia ? "Feriado — sem atendimento" : "Sem atendimento neste dia"}</span>
+              </div>
+            )}
+
+            {/* Current time indicator */}
+            {nowInRange && (
+              <div className="gcalNow" style={{ top: nowTop }}>
+                <span className="gcalNowDot" />
+                <div className="gcalNowBar" />
+              </div>
+            )}
+
+            {/* Events */}
+            {placed.map(({ c, start, col, cols }) => {
+              const top = ((start - gridStart * 60) / 60) * HOUR_PX;
+              const height = Math.max(28, (c.duracao_min / 60) * HOUR_PX - 4);
+              const cor = STATUS_TO_COLOR[c.status] ?? "blue";
+              const hora = new Date(c.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+              return (
+                <div
+                  key={c.id}
+                  className={`gcalEvent ${cor}`}
+                  style={{
+                    top,
+                    height,
+                    left: `calc(68px + ${col / cols} * (100% - 76px))`,
+                    width: `calc((100% - 76px) / ${cols} - 6px)`,
+                  }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedConsulta(c); }}
+                >
+                  <strong>{c.paciente_nome}</strong>
+                  {height > 36 && <span>{hora} · {c.duracao_min}min{c.servico ? ` · ${c.servico}` : ""}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {loading && <div className="gcalLoading"><span /></div>}
       </div>
     </div>
 
