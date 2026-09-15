@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Plus, UserPlus, Users, Check } from "lucide-react";
+import { ArrowUpRight, Copy, ExternalLink, Plus, Check } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
@@ -334,6 +334,13 @@ export default function DashboardPage() {
   }, [consultasPorDia, viewMonth]);
   const chartEmpty = chartData.every(d => d.value === 0);
 
+  const consultasHoje = useMemo(() => consultas.filter(c => isSameDay(new Date(c.data_hora), hoje)), [consultas, hoje]);
+  const consultasHojeRestantes = useMemo(() => {
+    const agora = new Date();
+    return consultasHoje.filter(c => new Date(c.data_hora) >= agora && c.status !== "cancelada").length;
+  }, [consultasHoje]);
+  const pacientesAtivos = useMemo(() => pacientes.filter(p => p.status === "ativo").length, [pacientes]);
+
   async function handleCopy() {
     if (!linkPublico) return;
     await navigator.clipboard.writeText(linkPublico);
@@ -364,7 +371,81 @@ export default function DashboardPage() {
       )}
     </section>
 
-    <div className="dashOverviewGrid">
+    <div className="dashKpiRow">
+      <div className="dashKpi">
+        <span>Consultas hoje</span>
+        <strong>{consultasHoje.length}</strong>
+        <small>{consultasHojeRestantes > 0 ? `${consultasHojeRestantes} ainda por vir` : consultasHoje.length > 0 ? "Todas realizadas" : "Nenhuma marcada"}</small>
+      </div>
+      <div className="dashKpi">
+        <span>Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</span>
+        <strong>{formatCurrency(faturamentoMes)}</strong>
+        <small>{statusCounts.confirmada + statusCounts.concluida} consultas contabilizadas</small>
+      </div>
+      <div className={`dashKpi${statusCounts.aguardando > 0 ? " isAlert" : ""}`}>
+        <span>Aguardando confirmação</span>
+        <strong>{statusCounts.aguardando}</strong>
+        <small>{statusCounts.aguardando > 0 ? "Precisam de atenção" : "Nenhuma pendência"}</small>
+      </div>
+      <div className="dashKpi">
+        <span>Pacientes</span>
+        <strong>{pacientes.length}</strong>
+        <small>{pacientesAtivos} ativos</small>
+      </div>
+    </div>
+
+    <div className="dashMainGrid">
+      <section className="panel dashDay">
+        <header>
+          <div>
+            <strong>Hoje — {hoje.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</strong>
+            {!slotsDoDia.fechado && <small>{slotsDoDia.slots.filter(s => !s.consulta).length} livres · {slotsDoDia.slots.filter(s => s.consulta).length} ocupados</small>}
+          </div>
+          <Link href="/consultas" className="secondaryButton"><Plus size={14} /> Nova</Link>
+        </header>
+        {slotsDoDia.fechado ? (
+          <div className="dashDayEmpty">
+            <p>{slotsDoDia.motivo}</p>
+            {slotsDoDia.ocupadas.length > 0 && (
+              <>
+                <small>Há {slotsDoDia.ocupadas.length} consulta(s) marcada(s) neste dia:</small>
+                <ul className="dashSlotList">
+                  {slotsDoDia.ocupadas.map(c => (
+                    <li key={c.id} className="dashSlot isBooked">
+                      <strong>{new Date(c.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</strong>
+                      <span>{c.paciente_nome}{c.servico ? ` · ${c.servico}` : ""}</span>
+                      <em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        ) : (
+          <ul className="dashSlotList">
+            {slotsDoDia.slots.length === 0 ? (
+              <li className="dashSlotEmpty">Sem horários dentro do intervalo configurado.</li>
+            ) : slotsDoDia.slots.map(s => (
+              <li key={s.hora} className={`dashSlot ${s.consulta ? "isBooked" : "isFree"}`}>
+                <strong>{s.hora}</strong>
+                {s.consulta ? (
+                  <>
+                    <span>{s.consulta.paciente_nome}{s.consulta.servico ? ` · ${s.consulta.servico}` : ""}</span>
+                    <em className={`statusBadge ${STATUS_CLASS[s.consulta.status]}`}>{STATUS_LABEL[s.consulta.status]}</em>
+                  </>
+                ) : (
+                  <>
+                    <span>Livre</span>
+                    <Link href="/consultas" className="dashSlotAction">Marcar</Link>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        {loading && <p className="dashLoading">Atualizando…</p>}
+      </section>
+
       <section className="dashChartCard">
         <header>
           <div>
@@ -382,232 +463,59 @@ export default function DashboardPage() {
         </div>
         <AsaasTransfersPanel compact />
       </section>
+    </div>
+
+    <div className="dashSecondaryGrid">
+      <section className="dashUpcomingCard">
+        <div className="dashUpcomingHead">
+          <strong>Próximos atendimentos</strong>
+          <Link href="/agenda" className="dashUpcomingLink">Ver agenda <ArrowUpRight size={12} /></Link>
+        </div>
+        {upcomings.length === 0 ? (
+          <div className="dashUpcomingEmpty">Nenhum atendimento futuro agendado. Novas consultas aparecerão aqui automaticamente.</div>
+        ) : (
+          <table className="dashUpcomingTable">
+            <thead><tr><th>Paciente</th><th>Data</th><th>Horário</th><th>Status</th><th /></tr></thead>
+            <tbody>
+              {upcomings.map((c) => {
+                const dt = new Date(c.data_hora);
+                return (
+                  <tr key={c.id}>
+                    <td>
+                      <div className="dashUpcomingPatient">
+                        <div className="dashUpcomingAvatar">{initials(c.paciente_nome)}</div>
+                        <div><strong>{c.paciente_nome}</strong>{c.paciente_telefone ? <small>{c.paciente_telefone}</small> : null}</div>
+                      </div>
+                    </td>
+                    <td>{dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</td>
+                    <td className="dashUpcomingTime">{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</td>
+                    <td><em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em></td>
+                    <td className="dashUpcomingAction"><Link href="/consultas" aria-label="Abrir consulta"><ArrowUpRight size={14} /></Link></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </section>
 
       <section className="dashRingCard">
         <header>
           <div>
             <strong>Ocupação da semana</strong>
-            <small>Slots preenchidos nos próximos 7 dias</small>
-          </div>
-        </header>
-        <ProgressRing value={ocupacaoAgenda.pct} label="ocupado" sub={`${ocupacaoAgenda.ocup}/${ocupacaoAgenda.slots}`} />
-      </section>
-    </div>
-
-    <div className="dashSecondaryGrid">
-      <section className="dashRingCard">
-        <header>
-          <div>
-            <strong>Status dos agendamentos</strong>
-            <small>Distribuição de todas as consultas registradas</small>
-          </div>
-        </header>
-        <div className="dashStatusBody">
-          <div className="dashStatusRingWrap">
-            <StatusRing
-              total={statusTotal}
-              segments={[
-                { color: "#3b82f6", value: statusCounts.confirmada },
-                { color: "rgba(59,130,246,0.6)", value: statusCounts.aguardando },
-                { color: "rgba(59,130,246,0.32)", value: statusCounts.concluida },
-                { color: "rgba(255,255,255,0.14)", value: statusCounts.cancelada },
-              ]}
-            />
-            <div className="dashStatusRingCenter">
-              <strong>{statusTotal}</strong>
-              <span>total</span>
-            </div>
-          </div>
-          <ul className="dashStatusLegend">
-            <li><i style={{ background: "#3b82f6" }} /> Confirmadas <b>{statusCounts.confirmada}</b></li>
-            <li><i style={{ background: "rgba(59,130,246,0.6)" }} /> Aguardando <b>{statusCounts.aguardando}</b></li>
-            <li><i style={{ background: "rgba(59,130,246,0.32)" }} /> Concluídas <b>{statusCounts.concluida}</b></li>
-            <li><i style={{ background: "rgba(255,255,255,0.14)" }} /> Canceladas <b>{statusCounts.cancelada}</b></li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="dashRingCard">
-        <header>
-          <div>
-            <strong>Ocupação por dia</strong>
-            <small>Esta semana</small>
+            <small>{Math.round(ocupacaoAgenda.pct * 100)}% — {ocupacaoAgenda.ocup} de {ocupacaoAgenda.slots} slots</small>
           </div>
         </header>
         <ul className="dashWeekBars">
           {semanaOcup.map((d) => (
             <li key={d.label} className={`${d.isToday ? "isToday" : ""} ${d.closed ? "isClosed" : ""}`}>
               <span className="dashWeekLabel">{d.label}</span>
-              <div className="dashWeekTrack">
-                <div className="dashWeekFill" style={{ width: `${Math.round(d.pct * 100)}%` }} />
-              </div>
+              <div className="dashWeekTrack"><div className="dashWeekFill" style={{ width: `${Math.round(d.pct * 100)}%` }} /></div>
               <span className="dashWeekPct">{d.closed ? "—" : `${Math.round(d.pct * 100)}%`}</span>
             </li>
           ))}
         </ul>
       </section>
     </div>
-
-    <div className="dashSectionLabel dashSectionLabelSpaced"><span /> Agenda de hoje</div>
-    <div className="dashTabs">
-      <button className={tab === "calendario" ? "active" : ""} onClick={() => setTab("calendario")}><CalendarDays size={15} /> Calendário</button>
-      <button className={tab === "pacientes" ? "active" : ""} onClick={() => setTab("pacientes")}><Users size={15} /> Pacientes</button>
-    </div>
-
-    {tab === "calendario" ? (
-      <div className="dashCalendarGrid">
-        <section className="panel dashMonth">
-          <div className="dashMonthHead">
-            <div>
-              <strong>{viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</strong>
-              <small>{viewMonth.getFullYear()}</small>
-            </div>
-            <div className="dashMonthNav">
-              <button className="iconButton" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} aria-label="Mês anterior"><ChevronLeft size={16} /></button>
-              <button className="todayButton" onClick={() => { const h = new Date(); setViewMonth(startOfMonth(h)); setSelectedDay(new Date(h.getFullYear(), h.getMonth(), h.getDate())); }}>Hoje</button>
-              <button className="iconButton" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} aria-label="Próximo mês"><ChevronRight size={16} /></button>
-            </div>
-          </div>
-          <div className="dashMonthWeek">{WEEKDAY_LABEL.map(l => <span key={l}>{l}</span>)}</div>
-          <div className="dashMonthGrid">
-            {dias.map((d) => {
-              const outroMes = d.getMonth() !== viewMonth.getMonth();
-              const ehHoje = isSameDay(d, hoje);
-              const selected = isSameDay(d, selectedDay);
-              const key = jsDayToKey(d);
-              const feriado = config.feriados.includes(toIsoDate(d));
-              const fechado = !config.dias[key].aberto || feriado;
-              const qtd = (consultasPorDia.get(toIsoDate(d)) ?? []).length;
-              const fimSemana = d.getDay() === 0 || d.getDay() === 6;
-              return (
-                <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} className={`dashMonthCell ${selected ? "isSelected" : ""} ${outroMes ? "isOtherMonth" : ""} ${ehHoje ? "isToday" : ""} ${fechado ? "isClosed" : ""} ${fimSemana ? "isWeekend" : ""}`}>
-                  <span className="dashMonthNum">{d.getDate()}</span>
-                  {qtd > 0 && <span className="dashMonthCount">{qtd}</span>}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="panel dashDay">
-          <header>
-            <div>
-              <strong>Dia {selectedDay.getDate()} de {selectedDay.toLocaleDateString("pt-BR", { month: "long" })}</strong>
-              <small>{selectedDay.toLocaleDateString("pt-BR", { weekday: "long" })}</small>
-            </div>
-            <Link href="/consultas" className="secondaryButton"><Plus size={14} /> Nova</Link>
-          </header>
-          {slotsDoDia.fechado ? (
-            <div className="dashDayEmpty">
-              <p>{slotsDoDia.motivo}</p>
-              {slotsDoDia.ocupadas.length > 0 && (
-                <>
-                  <small>Há {slotsDoDia.ocupadas.length} consulta(s) marcada(s) neste dia:</small>
-                  <ul className="dashSlotList">
-                    {slotsDoDia.ocupadas.map(c => (
-                      <li key={c.id} className="dashSlot isBooked">
-                        <strong>{new Date(c.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</strong>
-                        <span>{c.paciente_nome}{c.servico ? ` · ${c.servico}` : ""}</span>
-                        <em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em>
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="dashDayCount">{slotsDoDia.slots.filter(s => !s.consulta).length} horários livres · {slotsDoDia.slots.filter(s => s.consulta).length} ocupados</div>
-              <ul className="dashSlotList">
-                {slotsDoDia.slots.length === 0 ? (
-                  <li className="dashSlotEmpty">Sem horários dentro do intervalo configurado.</li>
-                ) : slotsDoDia.slots.map(s => (
-                  <li key={s.hora} className={`dashSlot ${s.consulta ? "isBooked" : "isFree"}`}>
-                    <strong>{s.hora}</strong>
-                    {s.consulta ? (
-                      <>
-                        <span>{s.consulta.paciente_nome}{s.consulta.servico ? ` · ${s.consulta.servico}` : ""}</span>
-                        <em className={`statusBadge ${STATUS_CLASS[s.consulta.status]}`}>{STATUS_LABEL[s.consulta.status]}</em>
-                      </>
-                    ) : (
-                      <>
-                        <span>Livre</span>
-                        <Link href="/consultas" className="dashSlotAction">Marcar</Link>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-          {loading && <p className="dashLoading">Atualizando…</p>}
-        </section>
-      </div>
-    ) : (
-      <section className="panel dashPacientes">
-        <header>
-          <div><strong>Pacientes</strong><small>{pacientes.length} cadastrados</small></div>
-          <Link href="/pacientes" className="secondaryButton"><UserPlus size={14} /> Gerenciar</Link>
-        </header>
-        {pacientes.length === 0 ? (
-          <p className="dashDayEmpty" style={{ padding: 24 }}>Nenhum paciente cadastrado ainda.</p>
-        ) : (
-          <ul className="dashPacientesList">
-            {pacientes.slice(0, 8).map(p => (
-              <li key={p.id}>
-                <div className="tableAvatar">{initials(p.nome)}</div>
-                <div><strong>{p.nome}</strong><small>{p.telefone ?? p.email ?? "—"}</small></div>
-                <em className={`statusBadge ${p.status === "ativo" ? "statusAtivo" : "statusConcluida"}`}>{p.status === "ativo" ? "Ativo" : "Inativo"}</em>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    )}
-
-    <div className="dashSectionLabel dashSectionLabelSpaced"><span /> Próximos atendimentos</div>
-    <section className="dashUpcomingCard">
-      {upcomings.length === 0 ? (
-        <div className="dashUpcomingEmpty">Nenhum atendimento futuro nos próximos dias. Novas consultas aparecerão aqui automaticamente.</div>
-      ) : (
-        <table className="dashUpcomingTable">
-          <thead>
-            <tr>
-              <th>Paciente</th>
-              <th>Data</th>
-              <th>Horário</th>
-              <th>Serviço</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {upcomings.map((c) => {
-              const dt = new Date(c.data_hora);
-              return (
-                <tr key={c.id}>
-                  <td>
-                    <div className="dashUpcomingPatient">
-                      <div className="dashUpcomingAvatar">{initials(c.paciente_nome)}</div>
-                      <div>
-                        <strong>{c.paciente_nome}</strong>
-                        {c.paciente_telefone ? <small>{c.paciente_telefone}</small> : null}
-                      </div>
-                    </div>
-                  </td>
-                  <td>{dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</td>
-                  <td className="dashUpcomingTime">{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</td>
-                  <td>{c.servico ?? "—"}</td>
-                  <td><em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em></td>
-                  <td className="dashUpcomingAction">
-                    <Link href="/consultas" aria-label="Abrir consulta"><ArrowUpRight size={14} /></Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      )}
-    </section>
   </>;
 }
