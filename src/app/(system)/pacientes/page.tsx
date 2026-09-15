@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Filter, Plus, Search, UsersRound, X, Phone, Mail, FileText } from "lucide-react";
+import { Download, Filter, MessageSquare, Plus, Search, Send, UsersRound, X, Phone, Mail, FileText } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -219,6 +219,23 @@ function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; o
   const idade = calcIdade(p.data_nascimento);
   const nascimento = p.data_nascimento ? new Date(p.data_nascimento + "T00:00").toLocaleDateString("pt-BR") : null;
   const isAtivo = p.status === "ativo";
+  const [followUp, setFollowUp] = useState(false);
+  const [msg, setMsg] = useState(`Olá, ${p.nome.split(" ")[0]}! Tudo bem? Passando para ver se você precisa agendar uma consulta. 😊`);
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<"ok" | "erro" | null>(null);
+
+  async function enviarMensagem() {
+    if (!p.telefone || !msg.trim()) return;
+    setSending(true);
+    setSendResult(null);
+    const res = await fetch("/api/zapi-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: p.telefone, message: msg }),
+    });
+    setSendResult(res.ok ? "ok" : "erro");
+    setSending(false);
+  }
 
   return (
     <div className="modalBackdrop" onClick={onClose}>
@@ -265,10 +282,38 @@ function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; o
           </div>
         )}
 
-        <div className="ppopupFooter">
-          <button className="secondaryButton" onClick={onClose}>Fechar</button>
-          <button className="primaryButton" onClick={onEdit}>Editar paciente</button>
-        </div>
+        {/* Follow-up WhatsApp */}
+        {followUp ? (
+          <div className="ppopupFollowUp">
+            <textarea
+              className="ppopupMsg"
+              rows={3}
+              value={msg}
+              onChange={(e) => { setMsg(e.target.value); setSendResult(null); }}
+              placeholder="Digite a mensagem..."
+            />
+            {sendResult === "ok" && <p className="ppopupSendOk">✓ Mensagem enviada!</p>}
+            {sendResult === "erro" && <p className="ppopupSendErr">Erro ao enviar. Verifique o Z-API.</p>}
+            <div className="ppopupFollowUpActions">
+              <button className="secondaryButton" onClick={() => { setFollowUp(false); setSendResult(null); }}>Cancelar</button>
+              <button className="primaryButton" disabled={sending || !msg.trim()} onClick={enviarMensagem}>
+                <Send size={14} /> {sending ? "Enviando…" : "Enviar"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="ppopupFooter">
+            {p.telefone && (
+              <button className="secondaryButton ppopupFollowUpBtn" onClick={() => setFollowUp(true)}>
+                <MessageSquare size={14} /> Follow-up
+              </button>
+            )}
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+              <button className="secondaryButton" onClick={onClose}>Fechar</button>
+              <button className="primaryButton" onClick={onEdit}>Editar paciente</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

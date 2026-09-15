@@ -381,3 +381,10 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .ppopupObs>svg{flex-shrink:0;margin-top:2px;color:var(--text-subtle)}
 .ppopupObs>p{margin:0;font-size:12px;line-height:1.6}
 .ppopupFooter{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px}
+.ppopupFollowUp{padding:14px 20px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:10px}
+.ppopupMsg{width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font:13px/1.5 inherit;resize:none;outline:0;transition:border-color .2s var(--ease)}
+.ppopupMsg:focus{border-color:rgba(59,130,246,.4)}
+.ppopupFollowUpActions{display:flex;justify-content:flex-end;gap:8px}
+.ppopupSendOk{margin:0;font-size:12px;color:var(--success);font-weight:500}
+.ppopupSendErr{margin:0;font-size:12px;color:var(--danger);font-weight:500}
+.ppopupFollowUpBtn{gap:7px}
