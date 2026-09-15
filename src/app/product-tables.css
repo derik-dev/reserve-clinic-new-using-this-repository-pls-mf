@@ -311,3 +311,17 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .gcalLoading>span{display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:agendaLoadingSlide 1.2s var(--ease) infinite}
 @media(max-width:900px){.gcalWrap{grid-template-columns:1fr}.gcalSide{border-right:0;border-bottom:1px solid var(--border-soft);flex-direction:row;flex-wrap:wrap}.gcalSide>*{flex:1;min-width:200px}.gcalScroll{max-height:calc(100vh - 340px)}}
 @media(max-width:560px){.gcalDayHeader{padding:10px 12px;gap:8px}.gcalDayNum>strong{font-size:18px;width:34px;height:34px}.gcalEvent strong{font-size:10px}.gcalScroll{max-height:calc(100vh - 320px)}}
+.consultasTabs{display:flex;align-items:center;gap:4px;padding:14px 20px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
+.consultasTab{height:32px;padding:0 14px;border-radius:20px;border:1px solid transparent;background:none;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s var(--ease),color .15s var(--ease),border-color .15s var(--ease)}
+.consultasTab:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.consultasTab.active{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1);color:var(--text)}
+.consultasTabCount{font-size:10px;font-weight:600;background:rgba(255,255,255,.08);border-radius:20px;padding:1px 6px;min-width:18px;text-align:center}
+.consultasTab.active .consultasTabCount{background:var(--accent-dim);color:#93c5fd}
+.consultasTabsSep{width:1px;height:20px;background:var(--border-soft);margin:0 8px;flex-shrink:0}
+.consultasSearch{display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:rgba(255,255,255,.03);color:var(--text-muted);min-width:200px;transition:border-color .2s var(--ease),background .2s var(--ease)}
+.consultasSearch:focus-within{border-color:rgba(59,130,246,.4);background:rgba(255,255,255,.05)}
+.consultasSearch input{border:0;outline:0;background:transparent;font-size:12px;color:var(--text);width:100%}
+.consultasConfirmBtn{height:28px;padding:0 12px;border-radius:var(--radius-sm);border:1px solid rgba(52,211,153,.3);background:rgba(52,211,153,.1);color:var(--success);font-size:11px;font-weight:500;cursor:pointer;transition:background .15s var(--ease),border-color .15s var(--ease)}
+.consultasConfirmBtn:hover{background:rgba(52,211,153,.18);border-color:rgba(52,211,153,.5)}
+.dangerButton{height:38px;padding:0 16px;border-radius:var(--radius-sm);border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.1);color:var(--danger);font-size:12px;font-weight:500;cursor:pointer;transition:background .15s var(--ease)}
+.dangerButton:hover{background:rgba(248,113,113,.18)}

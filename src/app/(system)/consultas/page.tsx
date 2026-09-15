@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CalendarX, ChevronDown, Download, Filter, Plus, Search, X, Clock, User, Stethoscope, BanknoteIcon } from "lucide-react";
+import { CalendarDays, CalendarX, ChevronDown, Download, Plus, Search, Trash2, X, Clock, User, Stethoscope, BanknoteIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -40,6 +40,14 @@ function formatWhen(iso: string, today: Date) {
 type Periodo = "todos" | "hoje" | "semana" | "mes";
 const PERIODO_LABEL: Record<Periodo, string> = { todos: "Todos", hoje: "Hoje", semana: "Esta semana", mes: "Este mês" };
 
+const STATUS_TABS: { value: ConsultaStatus | "todos"; label: string }[] = [
+  { value: "todos", label: "Todas" },
+  { value: "aguardando", label: "Aguardando" },
+  { value: "confirmada", label: "Confirmadas" },
+  { value: "concluida", label: "Concluídas" },
+  { value: "cancelada", label: "Canceladas" },
+];
+
 export default function ConsultasPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,24 +64,14 @@ export default function ConsultasPage() {
   const [periodo, setPeriodo] = useState<Periodo>("todos");
   const [statusFiltro, setStatusFiltro] = useState<ConsultaStatus | "todos">("todos");
   const [showPeriodo, setShowPeriodo] = useState(false);
-  const [showStatus, setShowStatus] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
   const periodoRef = useRef<HTMLDivElement>(null);
-  const statusRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
     setLoadError(false);
     try {
-      // Remove reservas não pagas com mais de 3 dias desde a criação
-      const limite3dias = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-      await supabase
-        .from("consultas")
-        .delete()
-        .eq("status", "aguardando")
-        .lt("created_at", limite3dias);
-
       const [cs, ps, pr] = await Promise.race([
         Promise.all([
           supabase.from("consultas").select("*").order("data_hora", { ascending: true }),
@@ -120,22 +118,18 @@ export default function ConsultasPage() {
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (periodoRef.current && !periodoRef.current.contains(e.target as Node)) setShowPeriodo(false);
-      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setShowStatus(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const today = useMemo(() => new Date(), []);
-  const totais = useMemo(() => {
-    const hoje = consultas.filter(c => isSameDay(new Date(c.data_hora), today));
-    return {
-      hoje: hoje.length,
-      confirmadas: hoje.filter(c => c.status === "confirmada").length,
-      aguardando: hoje.filter(c => c.status === "aguardando").length,
-      concluidas: hoje.filter(c => c.status === "concluida").length,
-    };
-  }, [consultas, today]);
+
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = { todos: consultas.length };
+    for (const c of consultas) counts[c.status] = (counts[c.status] ?? 0) + 1;
+    return counts;
+  }, [consultas]);
 
   const filtered = useMemo(() => {
     let r = consultas;
@@ -221,36 +215,25 @@ export default function ConsultasPage() {
 
   async function updateStatus(c: Consulta, status: ConsultaStatus) {
     let pacienteId = c.paciente_id;
-
     if (status === "confirmada" && !c.paciente_id) {
       const { data: session } = await supabase.auth.getUser();
       if (session.user) {
-        const { data: existente } = await supabase
-          .from("pacientes")
-          .select("id")
-          .eq("perfil_id", session.user.id)
-          .ilike("nome", c.paciente_nome)
-          .maybeSingle();
-
+        const { data: existente } = await supabase.from("pacientes").select("id").eq("perfil_id", session.user.id).ilike("nome", c.paciente_nome).maybeSingle();
         if (existente) {
           pacienteId = existente.id;
         } else {
-          const { data: novo } = await supabase
-            .from("pacientes")
-            .insert({
-              perfil_id: session.user.id,
-              nome: c.paciente_nome,
-              telefone: c.paciente_telefone ?? null,
-              email: c.paciente_email ?? null,
-            })
-            .select("id")
-            .single();
+          const { data: novo } = await supabase.from("pacientes").insert({ perfil_id: session.user.id, nome: c.paciente_nome, telefone: c.paciente_telefone ?? null, email: c.paciente_email ?? null }).select("id").single();
           if (novo) pacienteId = novo.id;
         }
       }
     }
-
     await supabase.from("consultas").update({ status, paciente_id: pacienteId }).eq("id", c.id);
+    load();
+  }
+
+  async function handleDelete(id: string) {
+    await supabase.from("consultas").delete().eq("id", id);
+    setSelectedConsulta(null);
     load();
   }
 
@@ -271,48 +254,42 @@ export default function ConsultasPage() {
 
   return <>
     <PageHeader title="Consultas" description="Acompanhe todos os atendimentos da clínica." actions={<button className="primaryButton" onClick={() => { setEditingId(null); setForm(emptyForm); setError(null); setModalOpen(true); }}><Plus size={17} /> Nova consulta</button>} />
-    <div className="summaryPills">
-      <div><span>Hoje</span><strong>{totais.hoje} consultas</strong></div>
-      <div><span>Confirmadas</span><strong className="mintText">{totais.confirmadas}</strong></div>
-      <div><span>Aguardando</span><strong className="amberText">{totais.aguardando}</strong></div>
-      <div><span>Concluídas</span><strong>{totais.concluidas}</strong></div>
-    </div>
+
     <section className="panel dataPanel">
-      <div className="tableToolbar">
-        <label><Search size={17} /><input placeholder="Buscar consulta ou paciente" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <div ref={periodoRef} style={{ position: "relative" }}>
-            <button className={`dateButton${periodo !== "todos" ? " active" : ""}`} onClick={() => { setShowPeriodo(v => !v); setShowStatus(false); }}>
-              <CalendarDays size={16} /> {PERIODO_LABEL[periodo]} <ChevronDown size={13} />
-            </button>
-            {showPeriodo && (
-              <div className="tableDropdown">
-                {(Object.keys(PERIODO_LABEL) as Periodo[]).map(p => (
-                  <button key={p} className={periodo === p ? "active" : ""} onClick={() => { setPeriodo(p); setShowPeriodo(false); }}>
-                    {PERIODO_LABEL[p]}
-                  </button>
-                ))}
-              </div>
+      {/* Status tabs */}
+      <div className="consultasTabs">
+        {STATUS_TABS.map(tab => (
+          <button
+            key={tab.value}
+            className={`consultasTab${statusFiltro === tab.value ? " active" : ""}`}
+            onClick={() => setStatusFiltro(tab.value)}
+          >
+            {tab.label}
+            {tabCounts[tab.value] > 0 && (
+              <span className="consultasTabCount">{tabCounts[tab.value]}</span>
             )}
-          </div>
-          <div ref={statusRef} style={{ position: "relative" }}>
-            <button className={`secondaryButton${statusFiltro !== "todos" ? " active" : ""}`} onClick={() => { setShowStatus(v => !v); setShowPeriodo(false); }}>
-              <Filter size={16} /> {statusFiltro === "todos" ? "Filtros" : STATUS_LABEL[statusFiltro]} <ChevronDown size={13} />
-            </button>
-            {showStatus && (
-              <div className="tableDropdown">
-                <button className={statusFiltro === "todos" ? "active" : ""} onClick={() => { setStatusFiltro("todos"); setShowStatus(false); }}>Todos os status</button>
-                {(Object.keys(STATUS_LABEL) as ConsultaStatus[]).map(s => (
-                  <button key={s} className={statusFiltro === s ? "active" : ""} onClick={() => { setStatusFiltro(s); setShowStatus(false); }}>
-                    <span className={`statusBadge ${STATUS_CLASS[s]}`} style={{ pointerEvents: "none" }}>{STATUS_LABEL[s]}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className="iconButton" aria-label="Exportar CSV" title="Exportar CSV" onClick={exportCSV}><Download size={17} /></button>
+          </button>
+        ))}
+        <div className="consultasTabsSep" />
+        {/* Toolbar inline com as tabs */}
+        <label className="consultasSearch"><Search size={15} /><input placeholder="Buscar paciente ou serviço" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+        <div ref={periodoRef} style={{ position: "relative", marginLeft: "auto" }}>
+          <button className={`dateButton${periodo !== "todos" ? " active" : ""}`} onClick={() => setShowPeriodo(v => !v)}>
+            <CalendarDays size={15} /> {PERIODO_LABEL[periodo]} <ChevronDown size={13} />
+          </button>
+          {showPeriodo && (
+            <div className="tableDropdown">
+              {(Object.keys(PERIODO_LABEL) as Periodo[]).map(p => (
+                <button key={p} className={periodo === p ? "active" : ""} onClick={() => { setPeriodo(p); setShowPeriodo(false); }}>
+                  {PERIODO_LABEL[p]}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+        <button className="iconButton" aria-label="Exportar CSV" title="Exportar CSV" onClick={exportCSV}><Download size={17} /></button>
       </div>
+
       <div className="tableScroll">
         <table>
           <thead><tr><th>QUANDO</th><th>PACIENTE / SERVIÇO</th><th>PROFISSIONAL</th><th>VALOR</th><th>STATUS</th><th /></tr></thead>
@@ -327,24 +304,25 @@ export default function ConsultasPage() {
                   <CalendarX size={38} strokeWidth={1.4} />
                   <div>
                     <strong>{consultas.length === 0 ? "Nenhuma consulta registrada ainda" : "Nenhuma consulta encontrada"}</strong>
-                    <small>{consultas.length === 0 ? "Consultas aparecerão aqui assim que forem agendadas pelos pacientes." : "Ajuste os filtros ou a busca para encontrar outras consultas."}</small>
+                    <small>{consultas.length === 0 ? "Consultas aparecerão aqui assim que forem agendadas." : "Ajuste os filtros ou a busca."}</small>
                   </div>
                 </div>
               </td></tr>
             ) : filtered.map(c => {
               const when = formatWhen(c.data_hora, today);
+              const isAguardando = c.status === "aguardando";
               return (
                 <tr key={c.id} className="rowClickable" onClick={() => setSelectedConsulta(c)}>
                   <td><strong className={when.isToday ? "isTodayLabel" : ""}>{when.label}</strong><small>{c.duracao_min} min</small></td>
                   <td><div className="patientCell"><div className="tableAvatar">{initials(c.paciente_nome)}</div><div><strong>{c.paciente_nome}</strong>{c.servico && <small>{c.servico}</small>}</div></div></td>
                   <td>{c.profissional ?? "—"}</td>
                   <td className="valorCell">{formatCurrency(c.valor)}</td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <select value={c.status} onChange={(e) => updateStatus(c, e.target.value as ConsultaStatus)} className={`statusBadge ${STATUS_CLASS[c.status]}`} style={{ border: 0, cursor: "pointer" }}>
-                      {(Object.keys(STATUS_LABEL) as ConsultaStatus[]).map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
-                    </select>
+                  <td><span className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</span></td>
+                  <td onClick={(e) => e.stopPropagation()} style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    {isAguardando && (
+                      <button className="consultasConfirmBtn" onClick={() => updateStatus(c, "confirmada")}>Confirmar</button>
+                    )}
                   </td>
-                  <td />
                 </tr>
               );
             })}
@@ -359,6 +337,7 @@ export default function ConsultasPage() {
         onClose={() => setSelectedConsulta(null)}
         onEdit={() => { openEdit(selectedConsulta); setSelectedConsulta(null); }}
         onStatusChange={(s) => { updateStatus(selectedConsulta, s); setSelectedConsulta(null); }}
+        onDelete={() => handleDelete(selectedConsulta.id)}
       />
     )}
 
@@ -397,12 +376,9 @@ export default function ConsultasPage() {
                     <select value={form.profissional_id} onChange={(e) => setForm({ ...form, profissional_id: e.target.value })}>
                       <option value="">— Selecionar —</option>
                       {profissionais.map(p => <option key={p.id} value={p.id}>{p.nome}{p.especialidade ? ` — ${p.especialidade}` : ""}</option>)}
-                      {!form.profissional_id && form.profissional && (
-                        <option value="" disabled>Atual: {form.profissional}</option>
-                      )}
                     </select>
                   ) : (
-                    <input value={form.profissional} onChange={(e) => setForm({ ...form, profissional: e.target.value })} placeholder="Cadastre profissionais em /profissionais" />
+                    <input value={form.profissional} onChange={(e) => setForm({ ...form, profissional: e.target.value })} placeholder="Nome do profissional" />
                   )}
                 </div>
               </div>
@@ -428,12 +404,14 @@ export default function ConsultasPage() {
   </>;
 }
 
-function ConsultaDetalhePopup({ consulta: c, onClose, onEdit, onStatusChange }: {
+function ConsultaDetalhePopup({ consulta: c, onClose, onEdit, onStatusChange, onDelete }: {
   consulta: Consulta;
   onClose: () => void;
   onEdit: () => void;
   onStatusChange: (s: ConsultaStatus) => void;
+  onDelete: () => void;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const dt = new Date(c.data_hora);
   const data = dt.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
   const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -474,9 +452,24 @@ function ConsultaDetalhePopup({ consulta: c, onClose, onEdit, onStatusChange }: 
             </div>
           </div>
         </div>
-        <footer className="modalFooter">
-          <button className="secondaryButton" onClick={onClose}>Fechar</button>
-          <button className="primaryButton" onClick={onEdit}>Editar consulta</button>
+        <footer className="modalFooter" style={{ justifyContent: "space-between" }}>
+          {confirmDelete ? (
+            <>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Confirmar exclusão?</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="secondaryButton" onClick={() => setConfirmDelete(false)}>Não</button>
+                <button className="dangerButton" onClick={onDelete}>Excluir</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button className="iconButton" style={{ color: "var(--text-muted)" }} onClick={() => setConfirmDelete(true)} title="Excluir consulta"><Trash2 size={16} /></button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="secondaryButton" onClick={onClose}>Fechar</button>
+                <button className="primaryButton" onClick={onEdit}>Editar consulta</button>
+              </div>
+            </>
+          )}
         </footer>
       </div>
     </div>
