@@ -1,8 +1,8 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, MoreHorizontal, PieChart, Plus, Settings, TrendingDown, TrendingUp, Users, X, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Plus, Settings, Users, X, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
 import { initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus } from "@/lib/db";
@@ -87,7 +87,6 @@ export default function AgendaPage() {
   const router = useRouter();
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [consultas, setConsultas] = useState<Consulta[]>([]);
-  const [prevWeekConsultas, setPrevWeekConsultas] = useState<Consulta[] | null>(null);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
   const [sqlProfissionais, setSqlProfissionais] = useState<ProfissionalSql[]>([]);
   const [profFiltro, setProfFiltro] = useState<string>("todos");
@@ -123,27 +122,14 @@ export default function AgendaPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    setPrevWeekConsultas(null);
     const from = new Date(weekStart);
     const to = addDays(weekStart, 7);
-    const prevFrom = addDays(weekStart, -7);
-    const withTimeout = (p: PromiseLike<{ data: unknown }>, ms: number): Promise<{ data: unknown }> =>
-      Promise.race([Promise.resolve(p), new Promise<{ data: unknown }>((r) => setTimeout(() => r({ data: null }), ms))]);
-    withTimeout(
-      supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lt("data_hora", to.toISOString()).order("data_hora"),
-      6000,
-    ).then((res) => {
-      if (cancelled) return;
-      setConsultas((res.data as Consulta[] | null) ?? []);
-      setLoading(false);
-    });
-    withTimeout(
-      supabase.from("consultas").select("*").gte("data_hora", prevFrom.toISOString()).lt("data_hora", from.toISOString()),
-      6000,
-    ).then((res) => {
-      if (cancelled) return;
-      setPrevWeekConsultas((res.data as Consulta[] | null) ?? []);
-    });
+    supabase.from("consultas").select("*").gte("data_hora", from.toISOString()).lt("data_hora", to.toISOString()).order("data_hora")
+      .then((res) => {
+        if (cancelled) return;
+        setConsultas((res.data as Consulta[] | null) ?? []);
+        setLoading(false);
+      });
     return () => { cancelled = true; };
   }, [weekStart]);
 
@@ -196,41 +182,10 @@ export default function AgendaPage() {
   }, [weekStart, config, profDisp, profAtivo]);
   const weekUsedMin = useMemo(() => consultas.reduce((acc, c) => acc + c.duracao_min, 0), [consultas]);
   const ocupacaoPct = weekCapacityMin > 0 ? Math.round((weekUsedMin / weekCapacityMin) * 100) : 0;
-  const slotsLivres = weekCapacityMin > 0 && config.duracao_min > 0 ? Math.max(0, Math.floor((weekCapacityMin - weekUsedMin) / config.duracao_min)) : 0;
-
-  const prevWeekReady = prevWeekConsultas !== null;
-  const consultasDelta = useMemo(() => {
-    if (!prevWeekReady) return null;
-    const prev = prevWeekConsultas!.length;
-    if (prev === 0) return null;
-    return Math.round(((consultas.length - prev) / prev) * 100);
-  }, [prevWeekReady, prevWeekConsultas, consultas.length]);
-  const ocupacaoDelta = useMemo(() => {
-    if (!prevWeekReady || weekCapacityMin === 0) return null;
-    const prevUsed = prevWeekConsultas!.reduce((a, c) => a + c.duracao_min, 0);
-    const prevPct = weekCapacityMin > 0 ? Math.round((prevUsed / weekCapacityMin) * 100) : 0;
-    if (prevPct === 0) return null;
-    return ocupacaoPct - prevPct;
-  }, [prevWeekReady, prevWeekConsultas, weekCapacityMin, ocupacaoPct]);
-  const livresDelta = useMemo(() => {
-    if (!prevWeekReady || weekCapacityMin === 0 || config.duracao_min <= 0) return null;
-    const prevUsed = prevWeekConsultas!.reduce((a, c) => a + c.duracao_min, 0);
-    const prevLivres = Math.max(0, Math.floor((weekCapacityMin - prevUsed) / config.duracao_min));
-    if (prevLivres === 0) return null;
-    return Math.round(((slotsLivres - prevLivres) / prevLivres) * 100);
-  }, [prevWeekReady, prevWeekConsultas, weekCapacityMin, config.duracao_min, slotsLivres]);
 
   const consultasDoDia = useMemo(() => consultas
     .filter(c => isSameDay(new Date(c.data_hora), selectedDay))
     .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime()), [consultas, selectedDay]);
-  const diaKey = jsDayToKey(selectedDay);
-  const diaCfg = profDisp.dias[diaKey];
-  const diaCapacidadeMin = diaCfg.aberto && !isFeriado(config, profAtivo, toIsoDate(selectedDay))
-    ? Math.max(0, timeToMin(diaCfg.fim) - timeToMin(diaCfg.inicio)) : 0;
-  const diaUsadoMin = consultasDoDia.reduce((a, c) => a + c.duracao_min, 0);
-  const diaOcupacaoPct = diaCapacidadeMin > 0 ? Math.round((diaUsadoMin / diaCapacidadeMin) * 100) : 0;
-  const diaLivres = diaCapacidadeMin > 0 && config.duracao_min > 0 ? Math.max(0, Math.floor((diaCapacidadeMin - diaUsadoMin) / config.duracao_min)) : 0;
-  const diaCancelamentos = consultasDoDia.filter(c => c.status === "cancelada").length;
 
   const consultasPorDia = useMemo(() => {
     const m = new Map<string, number>();
@@ -389,13 +344,6 @@ export default function AgendaPage() {
       </section>
     </div>
 
-    <section className="agendaStats">
-      <StatCard icon={<CalendarDays size={18} />} label="Consultas da semana" value={String(consultas.length)} delta={consultasDelta} deltaLabel="vs. semana anterior" />
-      <StatCard icon={<Users size={18} />} label="Profissionais cadastrados" value={String(sqlProfissionais.length)} />
-      <StatCard icon={<PieChart size={18} />} label="Taxa de ocupação" value={weekCapacityMin > 0 ? `${ocupacaoPct}%` : "—"} delta={ocupacaoDelta} deltaSuffix="pp" deltaLabel="vs. semana anterior" />
-      <StatCard icon={<Clock size={18} />} label="Horários livres" value={weekCapacityMin > 0 ? String(slotsLivres) : "—"} delta={livresDelta} deltaLabel="vs. semana anterior" />
-    </section>
-
     <div className="agendaLayout">
       <div className="agendaMainCol">
         <div className="agendaToolbar">
@@ -403,6 +351,7 @@ export default function AgendaPage() {
           <button className="iconButton" aria-label="Próxima semana" onClick={() => setWeekStart(addDays(weekStart, 7))}><ChevronRight size={17} /></button>
           <button className="todayButton" onClick={() => { setWeekStart(startOfWeek(new Date())); setSelectedDay(new Date()); }}>Hoje</button>
           <strong>{rotuloSemana}</strong>
+          {weekCapacityMin > 0 && <span className="agendaWeekStat">{consultas.length} consulta{consultas.length !== 1 ? "s" : ""} · {ocupacaoPct}% ocupação</span>}
           <div className="agendaViewTabs">
             {(["semana", "dia", "lista"] as ViewMode[]).map(v => (
               <button key={v} className={viewMode === v ? "active" : ""} onClick={() => setViewMode(v)}>{v === "semana" ? "Semana" : v === "dia" ? "Dia" : "Lista"}</button>
@@ -545,15 +494,6 @@ export default function AgendaPage() {
           </button>
         </section>
 
-        <section className="sidePanel">
-          <header className="sidePanelHeader"><b>Resumo do dia</b></header>
-          <div className="resumoGrid">
-            <ResumoCell icon={<CalendarDays size={15} />} value={String(consultasDoDia.length)} label="Consultas agendadas" />
-            <ResumoCell icon={<PieChart size={15} />} value={diaCapacidadeMin > 0 ? `${diaOcupacaoPct}%` : "—"} label="Taxa de ocupação" />
-            <ResumoCell icon={<Clock size={15} />} value={diaCapacidadeMin > 0 ? String(diaLivres) : "—"} label="Horários livres" />
-            <ResumoCell icon={<X size={15} />} value={String(diaCancelamentos)} label="Cancelamentos" />
-          </div>
-        </section>
       </aside>
     </div>
 
@@ -566,39 +506,6 @@ export default function AgendaPage() {
       />
     )}
   </>;
-}
-
-function StatCard({ icon, label, value, delta, deltaSuffix, deltaLabel }: { icon: ReactNode; label: string; value: string; delta?: number | null; deltaSuffix?: string; deltaLabel?: string }) {
-  const showDelta = delta !== null && delta !== undefined;
-  const isUp = showDelta && delta! >= 0;
-  return (
-    <article className="statCard">
-      <div className="statCardIcon">{icon}</div>
-      <div className="statCardBody">
-        <small>{label}</small>
-        <strong>{value}</strong>
-        {showDelta && (
-          <div className={`statCardDelta ${isUp ? "up" : "down"}`}>
-            {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            <span>{isUp ? "+" : ""}{delta}{deltaSuffix ?? "%"}</span>
-            {deltaLabel && <em>{deltaLabel}</em>}
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function ResumoCell({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
-  return (
-    <div className="resumoCell">
-      <span className="resumoIcon">{icon}</span>
-      <div>
-        <strong>{value}</strong>
-        <small>{label}</small>
-      </div>
-    </div>
-  );
 }
 
 function MiniCalendar({ month, cells, today, selectedDay, isSameWeek, consultasPorDia, onPrev, onNext, onPick }: {
