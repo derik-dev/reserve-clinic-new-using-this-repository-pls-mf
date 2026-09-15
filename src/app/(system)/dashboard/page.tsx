@@ -374,13 +374,13 @@ export default function DashboardPage() {
           <div className="dashChartTotal">
             <span>Total do mês</span>
             <strong>{formatCurrency(faturamentoMes)}</strong>
-            <AsaasTransfersPanel compact />
           </div>
         </header>
         <div className="dashChartBody">
           <AreaChart data={chartData} />
           {chartEmpty && <div className="dashChartEmpty">Sem faturamento registrado neste mês ainda. Os valores aparecerão aqui à medida que as consultas forem confirmadas.</div>}
         </div>
+        <AsaasTransfersPanel compact />
       </section>
 
       <section className="dashRingCard">
