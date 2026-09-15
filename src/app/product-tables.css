@@ -314,9 +314,9 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .consultasTabs{display:flex;align-items:center;gap:4px;padding:14px 20px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
 .consultasTab{height:32px;padding:0 14px;border-radius:20px;border:1px solid transparent;background:none;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s var(--ease),color .15s var(--ease),border-color .15s var(--ease)}
 .consultasTab:hover{background:rgba(255,255,255,.05);color:var(--text)}
-.consultasTab.active{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1);color:var(--text)}
+.consultasTab.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;box-shadow:0 4px 18px -4px var(--accent-glow)}
 .consultasTabCount{font-size:10px;font-weight:600;background:rgba(255,255,255,.08);border-radius:20px;padding:1px 6px;min-width:18px;text-align:center}
-.consultasTab.active .consultasTabCount{background:var(--accent-dim);color:#93c5fd}
+.consultasTab.active .consultasTabCount{background:rgba(255,255,255,.25);color:#fff}
 .consultasTabsSep{width:1px;height:20px;background:var(--border-soft);margin:0 8px;flex-shrink:0}
 .consultasSearch{display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:rgba(255,255,255,.03);color:var(--text-muted);min-width:200px;transition:border-color .2s var(--ease),background .2s var(--ease)}
 .consultasSearch:focus-within{border-color:rgba(59,130,246,.4);background:rgba(255,255,255,.05)}
