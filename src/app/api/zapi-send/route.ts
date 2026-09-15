@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
 
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    return NextResponse.json({ error: body?.message ?? "Erro ao enviar mensagem." }, { status: res.status });
+    const detail = body?.message ?? body?.error ?? JSON.stringify(body);
+    console.error("[zapi-send] erro Z-API:", res.status, detail, "| phone:", formatPhone(phone));
+    return NextResponse.json({ error: `Z-API ${res.status}: ${detail}` }, { status: res.status });
   }
 
   return NextResponse.json({ ok: true });

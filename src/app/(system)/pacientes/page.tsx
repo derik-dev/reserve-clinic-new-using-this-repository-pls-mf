@@ -222,18 +222,23 @@ function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; o
   const [followUp, setFollowUp] = useState(false);
   const [msg, setMsg] = useState(`Olá, ${p.nome.split(" ")[0]}! Tudo bem? Passando para ver se você precisa agendar uma consulta. 😊`);
   const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<"ok" | "erro" | null>(null);
+  const [sendResult, setSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
   async function enviarMensagem() {
     if (!p.telefone || !msg.trim()) return;
     setSending(true);
     setSendResult(null);
-    const res = await fetch("/api/zapi-send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: p.telefone, message: msg }),
-    });
-    setSendResult(res.ok ? "ok" : "erro");
+    try {
+      const res = await fetch("/api/zapi-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: p.telefone, message: msg }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setSendResult(res.ok ? { ok: true, msg: "Mensagem enviada!" } : { ok: false, msg: data.error ?? "Erro desconhecido." });
+    } catch {
+      setSendResult({ ok: false, msg: "Sem conexão com o servidor." });
+    }
     setSending(false);
   }
 
@@ -292,10 +297,13 @@ function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; o
               onChange={(e) => { setMsg(e.target.value); setSendResult(null); }}
               placeholder="Digite a mensagem..."
             />
-            {sendResult === "ok" && <p className="ppopupSendOk">✓ Mensagem enviada!</p>}
-            {sendResult === "erro" && <p className="ppopupSendErr">Erro ao enviar. Verifique o Z-API.</p>}
+            {sendResult && (
+              <p className={sendResult.ok ? "ppopupSendOk" : "ppopupSendErr"}>
+                {sendResult.ok ? "✓ " : ""}{sendResult.msg}
+              </p>
+            )}
             <div className="ppopupFollowUpActions">
-              <button className="secondaryButton" onClick={() => { setFollowUp(false); setSendResult(null); }}>Cancelar</button>
+              <button className="secondaryButton" onClick={() => { setFollowUp(false); setSendResult(null); setSending(false); }}>Cancelar</button>
               <button className="primaryButton" disabled={sending || !msg.trim()} onClick={enviarMensagem}>
                 <Send size={14} /> {sending ? "Enviando…" : "Enviar"}
               </button>
