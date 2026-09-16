@@ -489,7 +489,6 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                             aria-label={`${p.nome}${p.especialidade ? `, ${p.especialidade}` : ""}`}
                             key={p.id}
                             onClick={() => setForm({ ...form, profissional_id: p.id, profissional_nome: p.nome, data: "", hora: "" })}
-                            style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 8, border: `1px solid ${active ? primary : "#dfe3eb"}`, background: active ? primary : "#fff", color: active ? "#fff" : "#394155", fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "left" }}
                           >
                             {p.foto_url ? (
                               <img src={p.foto_url} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
