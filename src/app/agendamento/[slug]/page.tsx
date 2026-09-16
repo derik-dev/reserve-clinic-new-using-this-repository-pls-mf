@@ -356,15 +356,15 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         </div>
       </section>
       {profParam && selectedProf && (
-        <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: "rgba(255,255,255,.55)", border: "1px solid rgba(0,0,0,.07)", borderRadius: 14, backdropFilter: "blur(4px)" }}>
+        <div className="bookingSelectedProfessional" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px" }}>
           {selectedProf.foto_url ? (
             <img src={selectedProf.foto_url} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: `2px solid ${primary}` }} />
           ) : (
             <span style={{ width: 48, height: 48, borderRadius: "50%", background: primary, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{selectedProf.nome.slice(0, 2).toUpperCase()}</span>
           )}
           <div>
-            <strong style={{ display: "block", fontSize: 15, color: "#1b2335" }}>{selectedProf.nome}</strong>
-            {selectedProf.especialidade && <small style={{ fontSize: 12, color: "#7d8597" }}>{selectedProf.especialidade}</small>}
+            <strong style={{ display: "block", fontSize: 15 }}>{selectedProf.nome}</strong>
+            {selectedProf.especialidade && <small style={{ fontSize: 12 }}>{selectedProf.especialidade}</small>}
           </div>
         </div>
       )}
