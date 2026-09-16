@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Check, Copy, Link2, Pencil, Plus, Search, Stethoscope, Trash2, X } from "lucide-react";
+import { Award, Camera, Check, Copy, Link2, Pencil, Phone, Plus, Search, Stethoscope, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -179,84 +179,108 @@ export default function ProfissionaisPage() {
     />
 
     <section className="panel dataPanel">
-      <div className="tableToolbar">
-        <label><Search size={17} /><input placeholder="Buscar por nome ou especialidade" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+      {/* Toolbar */}
+      <div className="profToolbar">
+        <label className="pacientesSearch">
+          <Search size={15} />
+          <input
+            placeholder="Buscar por nome ou especialidade"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <span className="pacientesCount">
+          {filtered.length} de {profissionais.length} profissional{profissionais.length !== 1 ? "is" : ""}
+        </span>
       </div>
-      <div className="tableScroll">
-        <table>
-          <thead>
-            <tr>
-              <th>PROFISSIONAL</th>
-              <th>ESPECIALIDADE</th>
-              <th>WHATSAPP</th>
-              <th>EXPERIÊNCIA</th>
-              <th>STATUS</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</td></tr>
-            ) : loadError ? (
-              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Não foi possível carregar os profissionais. <button className="linkButton" onClick={load}>Tentar novamente</button></td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "72px 24px", color: "var(--text-muted)", textAlign: "center" }}>
-                  <Stethoscope size={38} strokeWidth={1.4} style={{ color: "var(--text-subtle)", opacity: .7 }} />
-                  <div>
-                    <strong style={{ display: "block", font: "600 16px var(--font-space)", color: "var(--text)", letterSpacing: "-.01em", marginBottom: 6 }}>{profissionais.length === 0 ? "Nenhum profissional cadastrado ainda" : "Nenhum profissional encontrado"}</strong>
-                    <small style={{ display: "block", fontSize: 12, color: "var(--text-muted)", maxWidth: 340 }}>{profissionais.length === 0 ? "Cadastre a sua equipe para associar profissionais a horários e consultas." : "Ajuste a busca para encontrar outros profissionais."}</small>
-                  </div>
+
+      {/* Card grid or empty/loading states */}
+      {loading ? (
+        <div className="tableEmpty">
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Carregando…</span>
+        </div>
+      ) : loadError ? (
+        <div className="tableEmpty">
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            Não foi possível carregar os profissionais.{" "}
+            <button className="linkButton" onClick={load}>Tentar novamente</button>
+          </span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="tableEmpty">
+          <Stethoscope size={38} strokeWidth={1.4} />
+          <div>
+            <strong>{profissionais.length === 0 ? "Nenhum profissional cadastrado ainda" : "Nenhum profissional encontrado"}</strong>
+            <small>{profissionais.length === 0 ? "Cadastre a sua equipe para associar profissionais a horários e consultas." : "Ajuste a busca para encontrar outros profissionais."}</small>
+          </div>
+        </div>
+      ) : (
+        <div className="profGrid">
+          {filtered.map(p => (
+            <div
+              key={p.id}
+              className="profCard"
+              style={{ borderTop: `3px solid ${p.ativo ? "var(--success)" : "rgba(255,255,255,.10)"}` }}
+              onClick={() => setSelectedProf(p)}
+            >
+              <div className="profCardTop">
+                <div className="profCardAvatar">
+                  {p.foto_url
+                    ? <img src={p.foto_url} alt={p.nome} />
+                    : initials(p.nome)}
                 </div>
-              </td></tr>
-            ) : filtered.map(p => (
-              <tr key={p.id} className="rowClickable" onClick={() => setSelectedProf(p)}>
-                <td>
-                  <div className="patientCell">
-                    <div className="tableAvatar" style={{ overflow: "hidden" }}>
-                      {p.foto_url ? <img src={p.foto_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials(p.nome)}
-                    </div>
-                    <div><strong>{p.nome}</strong>{p.cpf && <small>CPF {p.cpf}</small>}</div>
-                  </div>
-                </td>
-                <td>{p.especialidade ?? "—"}</td>
-                <td>{p.whatsapp ?? "—"}</td>
-                <td>{p.anos_experiencia != null ? `${p.anos_experiencia} anos` : "—"}</td>
-                <td>
-                  <button onClick={(e) => { e.stopPropagation(); toggleAtivo(p); }} className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`} style={{ border: 0, cursor: "pointer" }}>
-                    {p.ativo ? "Ativo" : "Inativo"}
+                <p className="profCardName">{p.nome}</p>
+                {p.especialidade && <span className="profCardSpec">{p.especialidade}</span>}
+                <button
+                  className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`}
+                  style={{ border: 0, cursor: "pointer" }}
+                  onClick={(e) => { e.stopPropagation(); toggleAtivo(p); }}
+                >
+                  {p.ativo ? "Ativo" : "Inativo"}
+                </button>
+              </div>
+
+              <div className="profCardActions">
+                {perfilSlug && (
+                  <button
+                    className="iconButton"
+                    title="Copiar link de agendamento"
+                    aria-label="Copiar link de agendamento"
+                    style={{ color: copiedLinkId === p.id ? "#15967e" : undefined }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(`${window.location.origin}/agendamento/${perfilSlug}?p=${p.id}`);
+                      setCopiedLinkId(p.id);
+                      setTimeout(() => setCopiedLinkId(null), 1600);
+                    }}
+                  >
+                    {copiedLinkId === p.id ? <Check size={15} /> : <Link2 size={15} />}
                   </button>
-                </td>
-                <td>
-                  <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                    {perfilSlug && (
-                      <button
-                        className="iconButton"
-                        title="Copiar link de agendamento"
-                        aria-label="Copiar link de agendamento"
-                        style={{ color: copiedLinkId === p.id ? "#15967e" : undefined }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(`${window.location.origin}/agendamento/${perfilSlug}?p=${p.id}`);
-                          setCopiedLinkId(p.id);
-                          setTimeout(() => setCopiedLinkId(null), 1600);
-                        }}
-                      >{copiedLinkId === p.id ? <Check size={15} /> : <Link2 size={15} />}</button>
-                    )}
-                    <button className="iconButton" onClick={(e) => { e.stopPropagation(); openEdit(p); }} aria-label="Editar"><Pencil size={15} /></button>
-                    <button className="iconButton" onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }} disabled={deleting === p.id} aria-label="Excluir" style={{ color: "#e5484d" }}><Trash2 size={15} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="tablePagination">
-        <span>Mostrando {filtered.length} de {profissionais.length} profissionais</span>
-      </div>
+                )}
+                <button
+                  className="iconButton"
+                  onClick={(e) => { e.stopPropagation(); openEdit(p); }}
+                  aria-label="Editar"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  className="iconButton"
+                  onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
+                  disabled={deleting === p.id}
+                  aria-label="Excluir"
+                  style={{ color: "#e5484d" }}
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
 
+    {/* Detail popup */}
     {selectedProf && (
       <ProfissionalPopup
         prof={selectedProf}
@@ -266,6 +290,7 @@ export default function ProfissionaisPage() {
       />
     )}
 
+    {/* Create / Edit modal */}
     {modalOpen && (
       <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
         <div className="modalCard">
@@ -316,59 +341,73 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
 
   return (
     <div className="modalBackdrop" onClick={onClose}>
-      <div className="modalCard" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-        <header className="modalHeader">
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div className="tableAvatar" style={{ width: 48, height: 48, borderRadius: 14, fontSize: 14, overflow: "hidden" }}>
-              {p.foto_url ? <img src={p.foto_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials(p.nome)}
-            </div>
-            <div>
-              <h2 style={{ margin: 0 }}>{p.nome}</h2>
-              {p.especialidade && <small style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 3, display: "block" }}>{p.especialidade}</small>}
-              <div style={{ marginTop: 6 }}>
-                <span className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`}>{p.ativo ? "Ativo" : "Inativo"}</span>
-              </div>
-            </div>
+      <div className="profpopup" onClick={(e) => e.stopPropagation()}>
+        {/* Close button */}
+        <button className="iconButton ppopupClose" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
+
+        {/* Header: avatar + name + specialty + status */}
+        <div className="profpopupProfile">
+          <div className="profpopupAvatar">
+            {p.foto_url
+              ? <img src={p.foto_url} alt={p.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : initials(p.nome)}
           </div>
-          <button className="iconButton" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
-        </header>
-        <div className="modalBody">
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {p.whatsapp && <ProfField label="WhatsApp" value={p.whatsapp} />}
-            {p.cpf && <ProfField label="CPF" value={p.cpf} />}
-            {p.anos_experiencia != null && <ProfField label="Experiência" value={`${p.anos_experiencia} anos`} />}
-            {p.especialidade && <ProfField label="Especialidade" value={p.especialidade} />}
-          </div>
+          <p className="profpopupName">{p.nome}</p>
+          {p.especialidade && <span className="profpopupSpec">{p.especialidade}</span>}
+          <span className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`}>
+            {p.ativo ? "Ativo" : "Inativo"}
+          </span>
+        </div>
+
+        {/* Info rows */}
+        <div className="profpopupInfo">
+          {p.whatsapp && (
+            <a className="profpopupInfoRow" href={`tel:${p.whatsapp}`}>
+              <Phone size={15} />
+              <span>{p.whatsapp}</span>
+            </a>
+          )}
+          {p.cpf && (
+            <div className="profpopupInfoRow">
+              <Copy size={15} />
+              <span>CPF {p.cpf}</span>
+            </div>
+          )}
+          {p.anos_experiencia != null && (
+            <div className="profpopupInfoRow">
+              <Award size={15} />
+              <span>{p.anos_experiencia} anos de experiência</span>
+            </div>
+          )}
+
+          {/* Booking link row */}
           {bookingPath && (
-            <div style={{ marginTop: 10, padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-              <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Link de agendamento</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <code style={{ fontSize: 11, color: "var(--text-muted)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{bookingPath}</code>
-                <button
-                  className="iconButton"
-                  aria-label="Copiar link"
-                  title="Copiar link"
-                  style={{ flexShrink: 0, color: copiedLink ? "#15967e" : undefined }}
-                  onClick={() => { navigator.clipboard.writeText(window.location.origin + bookingPath); setCopiedLink(true); setTimeout(() => setCopiedLink(false), 1600); }}
-                >{copiedLink ? <Check size={14} /> : <Copy size={14} />}</button>
-              </div>
+            <div className="profpopupLink">
+              <Link2 size={14} style={{ flexShrink: 0, color: "var(--text-subtle)" }} />
+              <code>{bookingPath}</code>
+              <button
+                className="iconButton"
+                aria-label="Copiar link"
+                title="Copiar link de agendamento"
+                style={{ flexShrink: 0, color: copiedLink ? "#15967e" : undefined }}
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.origin + bookingPath);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 1600);
+                }}
+              >
+                {copiedLink ? <Check size={14} /> : <Copy size={14} />}
+              </button>
             </div>
           )}
         </div>
-        <footer className="modalFooter">
+
+        {/* Footer */}
+        <div className="profpopupFooter">
           <button className="secondaryButton" onClick={onClose}>Fechar</button>
           <button className="primaryButton" onClick={onEdit}>Editar profissional</button>
-        </footer>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function ProfField({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "10px 14px", background: "rgba(255,255,255,.03)", border: "1px solid var(--border-soft)", borderRadius: 10 }}>
-      <span style={{ fontSize: 9, color: "var(--text-subtle)", fontWeight: 600, letterSpacing: ".12em", textTransform: "uppercase" }}>{label}</span>
-      <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500 }}>{value}</span>
     </div>
   );
 }
