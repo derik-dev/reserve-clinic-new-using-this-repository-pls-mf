@@ -15,7 +15,9 @@ type AgendaConfig = {
   feriados: string[];
   profissionais: { id: string; nome: string; dias: DayKey[] }[];
   duracao_min: number;
+  disponibilidade: Record<string, { dias?: Partial<Record<DayKey, DayConfig>> }>;
 };
+type ProfessionalSetup = { id: string; valor_consulta: number | null; ativo: boolean };
 
 const DAY_ORDER: DayKey[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
 const DEFAULT_CONFIG: AgendaConfig = {
@@ -31,6 +33,7 @@ const DEFAULT_CONFIG: AgendaConfig = {
   feriados: [],
   profissionais: [],
   duracao_min: 60,
+  disponibilidade: {},
 };
 
 const WEEKDAY_LABEL = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
@@ -51,7 +54,12 @@ function mergeConfig(raw: unknown): AgendaConfig {
     feriados: Array.isArray(r.feriados) ? r.feriados : [],
     profissionais: Array.isArray(r.profissionais) ? r.profissionais : [],
     duracao_min: typeof r.duracao_min === "number" && r.duracao_min > 0 ? r.duracao_min : 60,
+    disponibilidade: r.disponibilidade && typeof r.disponibilidade === "object" ? r.disponibilidade as AgendaConfig["disponibilidade"] : {},
   };
+}
+
+function hasOpenDay(dias: Partial<Record<DayKey, DayConfig>> | undefined) {
+  return DAY_ORDER.some((day) => dias?.[day]?.aberto === true);
 }
 
 function monthGrid(view: Date) {
@@ -151,6 +159,8 @@ export default function DashboardPage() {
   const [perfilCreatedAt, setPerfilCreatedAt] = useState<string | null>(null);
   const [perfilTipo, setPerfilTipo] = useState<"autonomo" | "clinica">("clinica");
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
+  const [agendaConfigurada, setAgendaConfigurada] = useState(false);
+  const [profissionaisSetup, setProfissionaisSetup] = useState<ProfessionalSetup[]>([]);
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
@@ -164,10 +174,11 @@ export default function DashboardPage() {
       try {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
-      const [{ data: p, error: pErr }, { data: conf }, { data: ps }] = await Promise.all([
+      const [{ data: p, error: pErr }, { data: conf }, { data: ps }, { data: profs }] = await Promise.all([
         supabase.from("perfis").select("nome, slug, tipo, created_at").eq("id", session.user.id).maybeSingle(),
         supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
         supabase.from("pacientes").select("*"),
+        supabase.from("profissionais").select("id, valor_consulta, ativo").eq("ativo", true),
       ]);
       if (p) {
         const pp = p as { nome: string; slug: string; tipo: string; created_at: string | null };
@@ -185,6 +196,9 @@ export default function DashboardPage() {
         }
       }
       setConfig(mergeConfig(conf?.agenda_config));
+      const rawConfig = conf?.agenda_config as { dias?: unknown; disponibilidade?: unknown } | null;
+      setAgendaConfigurada(Boolean(rawConfig && (rawConfig.dias || rawConfig.disponibilidade)));
+      setProfissionaisSetup((profs as ProfessionalSetup[] | null) ?? []);
       setPacientes((ps as Paciente[] | null) ?? []);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -224,6 +238,14 @@ export default function DashboardPage() {
     const base = typeof window !== "undefined" ? window.location.origin : "";
     return `${base}/agendamento/${perfilSlug}`;
   }, [perfilSlug]);
+
+  const linkLiberado = useMemo(() => {
+    if (!agendaConfigurada || profissionaisSetup.length === 0) return false;
+    return profissionaisSetup.some((professional) => {
+      const individualDays = config.disponibilidade[professional.id]?.dias;
+      return Number(professional.valor_consulta) > 0 && hasOpenDay(individualDays ?? config.dias);
+    });
+  }, [agendaConfigurada, profissionaisSetup, config]);
 
   const faturamentoMes = useMemo(() => {
     const from = startOfMonth(viewMonth).getTime();
@@ -342,7 +364,7 @@ export default function DashboardPage() {
   const pacientesAtivos = useMemo(() => pacientes.filter(p => p.status === "ativo").length, [pacientes]);
 
   async function handleCopy() {
-    if (!linkPublico) return;
+    if (!linkLiberado || !linkPublico) return;
     await navigator.clipboard.writeText(linkPublico);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
@@ -364,9 +386,10 @@ export default function DashboardPage() {
           <div className="dashLinkLabel">Seu link de agendamento</div>
           <div className="dashLinkRow">
             <code>{linkPublico}</code>
-            <button className="secondaryButton" onClick={handleCopy}>{copied ? <><Check size={15} /> Copiado</> : <><Copy size={15} /> Copiar</>}</button>
-            <a className="iconButton" href={linkPublico} target="_blank" rel="noreferrer" aria-label="Abrir link"><ExternalLink size={15} /></a>
+            <button className="secondaryButton" onClick={handleCopy} disabled={!linkLiberado} title={!linkLiberado ? "Termine a configuração para liberar seu link" : undefined}>{copied ? <><Check size={15} /> Copiado</> : <><Copy size={15} /> Copiar</>}</button>
+            {linkLiberado ? <a className="iconButton" href={linkPublico} target="_blank" rel="noreferrer" aria-label="Abrir link"><ExternalLink size={15} /></a> : <button className="iconButton" disabled aria-label="Link bloqueado" title="Termine a configuração para liberar seu link"><ExternalLink size={15} /></button>}
           </div>
+          {!linkLiberado && <small style={{ display: "block", marginTop: 10, color: "#f0bd79", fontSize: 11, lineHeight: 1.45 }}>Termine a configuração: cadastre um profissional, defina o valor da consulta e configure pelo menos um dia de atendimento.</small>}
         </div>
       )}
     </section>
