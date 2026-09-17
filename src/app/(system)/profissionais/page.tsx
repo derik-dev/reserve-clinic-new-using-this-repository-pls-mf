@@ -28,6 +28,19 @@ type FormState = {
 };
 
 const emptyForm: FormState = { nome: "", especialidade: "", whatsapp: "", cpf: "", anos_experiencia: "" };
+const SAVE_TIMEOUT_MS = 15000;
+
+async function withTimeout<T>(promise: PromiseLike<T>, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), SAVE_TIMEOUT_MS);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 export default function ProfissionaisPage() {
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
@@ -121,42 +134,44 @@ export default function ProfissionaisPage() {
     if (!form.nome.trim()) { setError("Informe o nome do profissional."); return; }
     setError(null);
     setSaving(true);
-    const { data: session } = await supabase.auth.getUser();
-    if (!session.user) { setSaving(false); return; }
+    try {
+      const { data: session } = await withTimeout(supabase.auth.getUser(), "A sessão demorou para responder. Entre novamente e tente de novo.");
+      if (!session.user) throw new Error("Sua sessão expirou. Entre novamente para cadastrar o profissional.");
 
-    let foto_url = editing?.foto_url ?? null;
-    if (fotoFile) {
-      const fd = new FormData();
-      fd.append("file", fotoFile);
-      fd.append("userId", session.user.id);
-      fd.append("bucket", "profissional-fotos");
-      const res = await fetch("/api/upload-logo", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) { setError(data?.error ?? "Falha ao enviar foto."); setSaving(false); return; }
-      foto_url = data.url;
+      let foto_url = editing?.foto_url ?? null;
+      if (fotoFile) {
+        const fd = new FormData();
+        fd.append("file", fotoFile);
+        fd.append("userId", session.user.id);
+        fd.append("bucket", "profissional-fotos");
+        const res = await withTimeout(fetch("/api/upload-logo", { method: "POST", body: fd }), "O envio da foto demorou demais. Tente novamente sem a foto ou escolha outro arquivo.");
+        const data = await withTimeout(res.json().catch(() => null), "A resposta do upload ficou incompleta. Tente novamente.");
+        if (!res.ok) throw new Error(data?.error ?? "Falha ao enviar foto.");
+        foto_url = data?.url ?? null;
+      }
+
+      const payload = {
+        perfil_id: session.user.id,
+        nome: form.nome.trim(),
+        especialidade: form.especialidade || null,
+        whatsapp: form.whatsapp || null,
+        cpf: form.cpf || null,
+        anos_experiencia: form.anos_experiencia ? Number(form.anos_experiencia) : null,
+        foto_url,
+      };
+
+      const result = editing
+        ? await withTimeout(supabase.from("profissionais").update(payload).eq("id", editing.id), "O banco demorou para salvar. Tente novamente.")
+        : await withTimeout(supabase.from("profissionais").insert(payload), "O banco demorou para salvar. Tente novamente.");
+      if (result.error) throw new Error(result.error.message);
+
+      closeModal();
+      await load();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Não foi possível completar o cadastro. Tente novamente.");
+    } finally {
+      setSaving(false);
     }
-
-    const payload = {
-      perfil_id: session.user.id,
-      nome: form.nome.trim(),
-      especialidade: form.especialidade || null,
-      whatsapp: form.whatsapp || null,
-      cpf: form.cpf || null,
-      anos_experiencia: form.anos_experiencia ? Number(form.anos_experiencia) : null,
-      foto_url,
-    };
-
-    if (editing) {
-      const { error: err } = await supabase.from("profissionais").update(payload).eq("id", editing.id);
-      if (err) { setError(err.message); setSaving(false); return; }
-    } else {
-      const { error: err } = await supabase.from("profissionais").insert(payload);
-      if (err) { setError(err.message); setSaving(false); return; }
-    }
-
-    setSaving(false);
-    closeModal();
-    load();
   }
 
   async function handleDelete(id: string) {
