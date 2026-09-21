@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, BanknoteIcon, Plus, Settings, Stethoscope, User, Users, X, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -116,8 +116,13 @@ function layoutOverlaps(eventos: Consulta[]) {
 
 export default function AgendaPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
-  const [selectedDay, setSelectedDay] = useState<Date>(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
+  const [selectedDay, setSelectedDay] = useState<Date>(() => {
+    const dataParam = searchParams.get("data");
+    if (dataParam) { const d = new Date(dataParam + "T00:00:00"); if (!isNaN(d.getTime())) { d.setHours(0, 0, 0, 0); return d; } }
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+  });
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
   const [sqlProfissionais, setSqlProfissionais] = useState<ProfissionalSql[]>([]);

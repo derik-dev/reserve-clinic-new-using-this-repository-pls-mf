@@ -23,8 +23,8 @@ const C = {
   surface:  "#10141d",
   surface2: "#161b26",
   border:   "#232a38",
-  blue:     "#3b82f6",
-  blueGlow: "rgba(59,130,246,0.35)",
+  blue:     "#1d4ed8",
+  blueGlow: "rgba(29,78,216,0.35)",
   text:     "#e8eaf0",
   muted:    "#6b7585",
   success:  "#22c55e",
@@ -357,7 +357,7 @@ export function PixCheckout({
                     border: `1px solid ${copied ? C.success : C.blue}`,
                     background: copied
                       ? "rgba(34,197,94,0.08)"
-                      : `rgba(59,130,246,0.08)`,
+                      : `rgba(29,78,216,0.08)`,
                     color: copied ? C.success : C.blue,
                     fontSize: 14,
                     fontWeight: 600,
@@ -365,7 +365,7 @@ export function PixCheckout({
                     transition: "all 0.2s ease",
                     boxShadow: copied
                       ? `0 0 16px ${C.successG}`
-                      : `0 0 16px rgba(59,130,246,0.15)`,
+                      : `0 0 16px rgba(29,78,216,0.15)`,
                   }}
                 >
                   {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -448,7 +448,7 @@ function PulsingDot() {
             width: 6,
             height: 6,
             borderRadius: "50%",
-            background: "#3b82f6",
+            background: "#1d4ed8",
             animation: `pulse-dot 1.4s ease-in-out ${delay}ms infinite`,
           }}
         />

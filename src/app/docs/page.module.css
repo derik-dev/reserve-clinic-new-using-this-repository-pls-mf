@@ -62,7 +62,7 @@
   width: 31px;
   height: 31px;
   border-radius: 9px;
-  background: #3b82f6;
+  background: #1d4ed8;
   display: grid;
   place-items: center;
   box-shadow: 0 0 32px rgba(59, 130, 246, 0.4);
@@ -94,7 +94,7 @@
 }
 
 .sideNav .activeLink {
-  box-shadow: inset 3px 0 #3b82f6, 0 0 26px rgba(59, 130, 246, 0.1);
+  box-shadow: inset 3px 0 #1d4ed8, 0 0 26px rgba(59, 130, 246, 0.1);
 }
 
 .sideNav a span {
@@ -224,7 +224,7 @@
   font-size: 13px;
   font-weight: 700;
   color: #fff;
-  background: #3b82f6;
+  background: #1d4ed8;
   box-shadow: 0 0 36px rgba(59, 130, 246, 0.34);
 }
 
@@ -287,7 +287,7 @@
 }
 
 .productSignal svg {
-  color: #3b82f6;
+  color: #1d4ed8;
   margin-bottom: 10px;
 }
 
@@ -533,7 +533,7 @@
 
 .tableNote {
   margin-top: 12px;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #1d4ed8;
   padding: 9px 12px;
   border-radius: 8px;
   background: rgba(59, 130, 246, 0.08);
@@ -590,7 +590,7 @@
   top: 20px;
   bottom: 20px;
   width: 1px;
-  background: linear-gradient(#3b82f6, rgba(59, 130, 246, 0.08));
+  background: linear-gradient(#1d4ed8, rgba(59, 130, 246, 0.08));
 }
 
 .stepCard {
@@ -607,7 +607,7 @@
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: #3b82f6;
+  background: #1d4ed8;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -758,7 +758,7 @@
 }
 
 .clientBadge {
-  color: #bfdbfe;
+  color: #1d4ed8;
   background: rgba(59, 130, 246, 0.11);
 }
 
@@ -783,7 +783,7 @@
 }
 
 .statusCard header svg {
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .statusCard ul {
@@ -809,7 +809,7 @@
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: #3b82f6;
+  background: #1d4ed8;
 }
 
 .securityCallout {

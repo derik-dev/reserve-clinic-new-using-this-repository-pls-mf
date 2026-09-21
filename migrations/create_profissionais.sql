@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS profissionais (
   especialidade    TEXT,
   whatsapp         TEXT,
   cpf              TEXT,
+  crm              TEXT,
   anos_experiencia INTEGER,
   foto_url         TEXT,
   ativo            BOOLEAN NOT NULL DEFAULT TRUE,

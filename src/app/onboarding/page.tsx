@@ -192,9 +192,9 @@ export default function OnboardingPage() {
               <input value={form.nome} onChange={(e) => { update("nome", e.target.value); if (!form.slug) update("slug", slugify(e.target.value)); }} placeholder={form.tipo === "autonomo" ? "Ex.: Dra. Ana Lima" : "Ex.: Clínica Vida Nova"} />
             </div>
             <div className="formRow">
-              <label>Link personalizado</label>
+              <label>Endereço da página de agendamento</label>
               <input value={form.slug} onChange={(e) => update("slug", slugify(e.target.value))} placeholder={form.tipo === "autonomo" ? "ana-lima" : "vida-nova"} />
-              <small>reserveclinic.com/agendamento/{form.slug || (form.tipo === "autonomo" ? "seu-nome" : "sua-clinica")}</small>
+              <small>Esse é o link que você vai compartilhar com seus pacientes: reserveclinic.com/agendamento/{form.slug || (form.tipo === "autonomo" ? "seu-nome" : "sua-clinica")}</small>
             </div>
             <div className="formRow split">
               <div className="formRow"><label>{form.tipo === "autonomo" ? "Seu telefone" : "Telefone"}</label><input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
@@ -205,9 +205,9 @@ export default function OnboardingPage() {
 
         {step === 1 && <>
           <h1>{form.tipo === "autonomo" ? "Onde você atende?" : "Onde sua clínica fica?"}</h1>
-          <p>Esse endereço aparece na página pública de agendamento.</p>
+          <p>Informe o endereço que seus pacientes verão na página pública de agendamento.</p>
           <div className="formGrid">
-            <div className="formRow split"><div className="formRow"><label>CEP</label><input value={form.endereco_cep} onChange={(e) => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" /><small>{cepLoading ? "Buscando endereço…" : "Preenchemos rua, cidade e UF automaticamente."}</small></div><div className="formRow"><label>Cidade</label><input value={form.endereco_cidade} onChange={(e) => update("endereco_cidade", e.target.value)} placeholder="São Paulo" /></div></div>
+            <div className="formRow split"><div className="formRow"><label>CEP</label><input value={form.endereco_cep} onChange={(e) => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" /><small>{cepLoading ? "Buscando endereço…" : "Digite o CEP para preencher rua, cidade e UF automaticamente."}</small></div><div className="formRow"><label>Cidade</label><input value={form.endereco_cidade} onChange={(e) => update("endereco_cidade", e.target.value)} placeholder="São Paulo" /></div></div>
             <div className="formRow"><label>Rua / avenida</label><input value={form.endereco_rua} onChange={(e) => update("endereco_rua", e.target.value)} placeholder="Av. Paulista" /></div>
             <div className="formRow split"><div className="formRow"><label>Número</label><input value={form.endereco_numero} onChange={(e) => update("endereco_numero", e.target.value)} placeholder="1200" /></div><div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={(e) => update("endereco_uf", e.target.value.toUpperCase().slice(0,2))} placeholder="SP" maxLength={2} /></div></div>
           </div>

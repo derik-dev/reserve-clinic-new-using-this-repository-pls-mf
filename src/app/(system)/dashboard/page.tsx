@@ -82,12 +82,12 @@ function ProgressRing({ value, size = 148, stroke = 8, label, sub }: { value: nu
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="#3b82f6"
+          stroke="#1d4ed8"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${dash} ${c - dash}`}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ filter: "drop-shadow(0 0 8px rgba(59,130,246,0.55))", transition: "stroke-dasharray .8s cubic-bezier(.4,0,.2,1)" }}
+          style={{ filter: "drop-shadow(0 0 8px rgba(29,78,216,0.55))", transition: "stroke-dasharray .8s cubic-bezier(.4,0,.2,1)" }}
         />
       </svg>
       <div className="dashRingCenter">
@@ -136,8 +136,8 @@ function AreaChart({ data }: { data: { day: number; value: number }[] }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="dashChartSvg" preserveAspectRatio="none" role="img" aria-label="Faturamento diário">
       <defs>
         <linearGradient id="dashChartFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.32" />
-          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+          <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.32" />
+          <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0" />
         </linearGradient>
       </defs>
       {Array.from({ length: ticks + 1 }, (_, i) => {
@@ -145,7 +145,7 @@ function AreaChart({ data }: { data: { day: number; value: number }[] }) {
         return <line key={i} x1={padL} x2={W - padR} y1={y} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />;
       })}
       {rawMax > 0 && <path d={areaPath} fill="url(#dashChartFill)" />}
-      {rawMax > 0 && <path d={linePath} fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />}
+      {rawMax > 0 && <path d={linePath} fill="none" stroke="#1d4ed8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />}
       {pts.filter((_, i) => i % labelEvery === 0 || i === pts.length - 1).map(p => (
         <text key={p.day} x={p.x} y={H - 10} fontSize="10" textAnchor="middle" fill="rgba(255,255,255,0.35)" fontFamily="var(--font-space)">{p.day}</text>
       ))}
@@ -238,6 +238,14 @@ export default function DashboardPage() {
     const base = typeof window !== "undefined" ? window.location.origin : "";
     return `${base}/agendamento/${perfilSlug}`;
   }, [perfilSlug]);
+
+  const linkFaltando = useMemo(() => {
+    const itens: string[] = [];
+    if (profissionaisSetup.length === 0) itens.push("Cadastre pelo menos 1 profissional");
+    else if (!profissionaisSetup.some(p => p.valor_consulta != null)) itens.push("Defina o valor da consulta do profissional");
+    if (!agendaConfigurada) itens.push("Configure a disponibilidade em Configurações");
+    return itens;
+  }, [profissionaisSetup, agendaConfigurada]);
 
   const linkLiberado = useMemo(() => {
     if (!agendaConfigurada || profissionaisSetup.length === 0) return false;
@@ -382,25 +390,30 @@ export default function DashboardPage() {
         <p>{perfilTipo === "autonomo" ? "Gerencie sua agenda e acompanhe seus pacientes." : "Gerencie os horários e acompanhe os pacientes da equipe."}</p>
       </div>
       {perfilSlug && (
-        <div className="dashLinkCard">
+        <div className={`dashLinkCard${!linkLiberado ? " isBlocked" : ""}`}>
           <div className="dashLinkLabel">Seu link de agendamento</div>
           <div className="dashLinkRow">
-            <code>{linkPublico}</code>
+            <code className={!linkLiberado ? "isBlocked" : ""}>{linkPublico}</code>
             <button className="secondaryButton" onClick={handleCopy} disabled={!linkLiberado} title={!linkLiberado ? "Termine a configuração para liberar seu link" : undefined}>{copied ? <><Check size={15} /> Copiado</> : <><Copy size={15} /> Copiar</>}</button>
             {linkLiberado ? <a className="iconButton" href={linkPublico} target="_blank" rel="noreferrer" aria-label="Abrir link"><ExternalLink size={15} /></a> : <button className="iconButton" disabled aria-label="Link bloqueado" title="Termine a configuração para liberar seu link"><ExternalLink size={15} /></button>}
           </div>
-          {!linkLiberado && <small style={{ display: "block", marginTop: 10, color: "#f0bd79", fontSize: 11, lineHeight: 1.45 }}>Termine a configuração: cadastre um profissional, defina o valor da consulta e configure pelo menos um dia de atendimento.</small>}
+          {!linkLiberado && linkFaltando.length > 0 && (
+            <div className="dashLinkBlockedHint">
+              <span>Para liberar o link, complete:</span>
+              <ul>{linkFaltando.map(item => <li key={item}>{item}</li>)}</ul>
+            </div>
+          )}
         </div>
       )}
     </section>
 
     <div className="dashKpiRow">
-      <div className="dashKpi">
+      <div className="dashKpi dashKpiFeatured">
         <span>Consultas hoje</span>
         <strong>{consultasHoje.length}</strong>
         <small>{consultasHojeRestantes > 0 ? `${consultasHojeRestantes} ainda por vir` : consultasHoje.length > 0 ? "Todas realizadas" : "Nenhuma marcada"}</small>
       </div>
-      <div className="dashKpi">
+      <div className="dashKpi dashKpiFeatured">
         <span>Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</span>
         <strong>{formatCurrency(faturamentoMes)}</strong>
         <small>{statusCounts.confirmada + statusCounts.concluida} consultas contabilizadas</small>
@@ -454,7 +467,10 @@ export default function DashboardPage() {
                 {s.consulta ? (
                   <>
                     <span>{s.consulta.paciente_nome}{s.consulta.servico ? ` · ${s.consulta.servico}` : ""}</span>
-                    <em className={`statusBadge ${STATUS_CLASS[s.consulta.status]}`}>{STATUS_LABEL[s.consulta.status]}</em>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                      <em className={`statusBadge ${STATUS_CLASS[s.consulta.status]}`}>{STATUS_LABEL[s.consulta.status]}</em>
+                      <Link href={`/agenda?data=${new Date(s.consulta.data_hora).toISOString().slice(0, 10)}`} className="dashSlotAction">Ver na agenda</Link>
+                    </div>
                   </>
                 ) : (
                   <>
