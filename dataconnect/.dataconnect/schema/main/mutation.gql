@@ -1,0 +1,786 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `Configuracao` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  configuracao_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Configuracao_Data!
+  ): Configuracao_KeyOutput! @fdc_generated(from: "Configuracao", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Consulta` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consulta_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Consulta_Data!
+  ): Consulta_KeyOutput! @fdc_generated(from: "Consulta", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `DisponibilidadeSemanal` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  disponibilidadeSemanal_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: DisponibilidadeSemanal_Data!
+  ): DisponibilidadeSemanal_KeyOutput! @fdc_generated(from: "DisponibilidadeSemanal", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Excecao` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  excecao_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Excecao_Data!
+  ): Excecao_KeyOutput! @fdc_generated(from: "Excecao", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Paciente` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  paciente_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Paciente_Data!
+  ): Paciente_KeyOutput! @fdc_generated(from: "Paciente", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Perfil` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  perfil_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Perfil_Data!
+  ): Perfil_KeyOutput! @fdc_generated(from: "Perfil", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Profissional` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  profissional_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Profissional_Data!
+  ): Profissional_KeyOutput! @fdc_generated(from: "Profissional", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `Configuracao` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  configuracao_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Configuracao_Data!]!
+  ): [Configuracao_KeyOutput!]! @fdc_generated(from: "Configuracao", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Consulta` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  consulta_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Consulta_Data!]!
+  ): [Consulta_KeyOutput!]! @fdc_generated(from: "Consulta", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `DisponibilidadeSemanal` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  disponibilidadeSemanal_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [DisponibilidadeSemanal_Data!]!
+  ): [DisponibilidadeSemanal_KeyOutput!]! @fdc_generated(from: "DisponibilidadeSemanal", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Excecao` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  excecao_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Excecao_Data!]!
+  ): [Excecao_KeyOutput!]! @fdc_generated(from: "Excecao", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Paciente` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  paciente_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Paciente_Data!]!
+  ): [Paciente_KeyOutput!]! @fdc_generated(from: "Paciente", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Perfil` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  perfil_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Perfil_Data!]!
+  ): [Perfil_KeyOutput!]! @fdc_generated(from: "Perfil", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Profissional` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  profissional_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Profissional_Data!]!
+  ): [Profissional_KeyOutput!]! @fdc_generated(from: "Profissional", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `Configuracao` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Configuracao`.
+  """
+  configuracao_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Configuracao_Data!
+  ): Configuracao_KeyOutput! @fdc_generated(from: "Configuracao", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Consulta` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Consulta`.
+  """
+  consulta_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Consulta_Data!
+  ): Consulta_KeyOutput! @fdc_generated(from: "Consulta", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `DisponibilidadeSemanal` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `DisponibilidadeSemanal`.
+  """
+  disponibilidadeSemanal_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: DisponibilidadeSemanal_Data!
+  ): DisponibilidadeSemanal_KeyOutput! @fdc_generated(from: "DisponibilidadeSemanal", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Excecao` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Excecao`.
+  """
+  excecao_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Excecao_Data!
+  ): Excecao_KeyOutput! @fdc_generated(from: "Excecao", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Paciente` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Paciente`.
+  """
+  paciente_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Paciente_Data!
+  ): Paciente_KeyOutput! @fdc_generated(from: "Paciente", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Perfil` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Perfil`.
+  """
+  perfil_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Perfil_Data!
+  ): Perfil_KeyOutput! @fdc_generated(from: "Perfil", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Profissional` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Profissional`.
+  """
+  profissional_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Profissional_Data!
+  ): Profissional_KeyOutput! @fdc_generated(from: "Profissional", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `Configuracao` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Configuracao`.
+  """
+  configuracao_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Configuracao_Data!]!
+  ): [Configuracao_KeyOutput!]! @fdc_generated(from: "Configuracao", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Consulta` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Consulta`.
+  """
+  consulta_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Consulta_Data!]!
+  ): [Consulta_KeyOutput!]! @fdc_generated(from: "Consulta", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `DisponibilidadeSemanal` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `DisponibilidadeSemanal`.
+  """
+  disponibilidadeSemanal_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [DisponibilidadeSemanal_Data!]!
+  ): [DisponibilidadeSemanal_KeyOutput!]! @fdc_generated(from: "DisponibilidadeSemanal", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Excecao` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Excecao`.
+  """
+  excecao_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Excecao_Data!]!
+  ): [Excecao_KeyOutput!]! @fdc_generated(from: "Excecao", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Paciente` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Paciente`.
+  """
+  paciente_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Paciente_Data!]!
+  ): [Paciente_KeyOutput!]! @fdc_generated(from: "Paciente", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Perfil` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Perfil`.
+  """
+  perfil_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Perfil_Data!]!
+  ): [Perfil_KeyOutput!]! @fdc_generated(from: "Perfil", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Profissional` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Profissional`.
+  """
+  profissional_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Profissional_Data!]!
+  ): [Profissional_KeyOutput!]! @fdc_generated(from: "Profissional", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `Configuracao` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Configuracao` or `null` if not found.
+  """
+  configuracao_update(
+    """
+    The key used to identify the object.
+    """
+    key: Configuracao_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Configuracao_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Configuracao_Data!
+  ): Configuracao_KeyOutput @fdc_generated(from: "Configuracao", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Consulta` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Consulta` or `null` if not found.
+  """
+  consulta_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Consulta_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Consulta_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Consulta_Data!
+  ): Consulta_KeyOutput @fdc_generated(from: "Consulta", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `DisponibilidadeSemanal` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `DisponibilidadeSemanal` or `null` if not found.
+  """
+  disponibilidadeSemanal_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: DisponibilidadeSemanal_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: DisponibilidadeSemanal_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: DisponibilidadeSemanal_Data!
+  ): DisponibilidadeSemanal_KeyOutput @fdc_generated(from: "DisponibilidadeSemanal", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Excecao` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Excecao` or `null` if not found.
+  """
+  excecao_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Excecao_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Excecao_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Excecao_Data!
+  ): Excecao_KeyOutput @fdc_generated(from: "Excecao", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Paciente` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Paciente` or `null` if not found.
+  """
+  paciente_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Paciente_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Paciente_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Paciente_Data!
+  ): Paciente_KeyOutput @fdc_generated(from: "Paciente", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Perfil` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Perfil` or `null` if not found.
+  """
+  perfil_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Perfil_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Perfil_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Perfil_Data!
+  ): Perfil_KeyOutput @fdc_generated(from: "Perfil", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Profissional` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Profissional` or `null` if not found.
+  """
+  profissional_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Profissional_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Profissional_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Profissional_Data!
+  ): Profissional_KeyOutput @fdc_generated(from: "Profissional", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `Configuracao` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  configuracao_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Configuracao_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Configuracao_Data!
+  ): Int! @fdc_generated(from: "Configuracao", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Consulta` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  consulta_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Consulta_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Consulta_Data!
+  ): Int! @fdc_generated(from: "Consulta", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `DisponibilidadeSemanal` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  disponibilidadeSemanal_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: DisponibilidadeSemanal_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: DisponibilidadeSemanal_Data!
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Excecao` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  excecao_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Excecao_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Excecao_Data!
+  ): Int! @fdc_generated(from: "Excecao", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Paciente` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  paciente_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Paciente_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Paciente_Data!
+  ): Int! @fdc_generated(from: "Paciente", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Perfil` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  perfil_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Perfil_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Perfil_Data!
+  ): Int! @fdc_generated(from: "Perfil", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Profissional` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  profissional_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Profissional_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Profissional_Data!
+  ): Int! @fdc_generated(from: "Profissional", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `Configuracao` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  configuracao_delete(
+    """
+    The key used to identify the object.
+    """
+    key: Configuracao_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Configuracao_FirstRow
+  ): Configuracao_KeyOutput @fdc_generated(from: "Configuracao", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Consulta` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  consulta_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Consulta_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Consulta_FirstRow
+  ): Consulta_KeyOutput @fdc_generated(from: "Consulta", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `DisponibilidadeSemanal` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  disponibilidadeSemanal_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: DisponibilidadeSemanal_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: DisponibilidadeSemanal_FirstRow
+  ): DisponibilidadeSemanal_KeyOutput @fdc_generated(from: "DisponibilidadeSemanal", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Excecao` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  excecao_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Excecao_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Excecao_FirstRow
+  ): Excecao_KeyOutput @fdc_generated(from: "Excecao", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Paciente` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  paciente_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Paciente_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Paciente_FirstRow
+  ): Paciente_KeyOutput @fdc_generated(from: "Paciente", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Perfil` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  perfil_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Perfil_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Perfil_FirstRow
+  ): Perfil_KeyOutput @fdc_generated(from: "Perfil", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Profissional` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  profissional_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Profissional_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Profissional_FirstRow
+  ): Profissional_KeyOutput @fdc_generated(from: "Profissional", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `Configuracao` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  configuracao_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Configuracao_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Consulta` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  consulta_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Consulta_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `DisponibilidadeSemanal` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  disponibilidadeSemanal_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: DisponibilidadeSemanal_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Excecao` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  excecao_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Excecao_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Paciente` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  paciente_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Paciente_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Perfil` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  perfil_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Perfil_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Profissional` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  profissional_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Profissional_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional", purpose: DELETE_MULTIPLE)
+}

@@ -1,0 +1,14 @@
+specVersion: "v1"
+serviceId: "reserve-clinic"
+location: "us-east4"
+schemaValidation: "COMPATIBLE"
+schemas:
+  - source: "./schema"
+    datasource:
+      postgresql:
+        database: "fdcdb"
+        cloudSql:
+          instanceId: "reserve-clinic-fdc"
+          # schemaValidation: "STRICT"     # STRICT mode makes Postgres schema match Data Connect exactly.
+          # schemaValidation: "COMPATIBLE" # COMPATIBLE mode makes Postgres schema compatible with Data Connect.
+connectorDirs: ["./reserve_clinic"]

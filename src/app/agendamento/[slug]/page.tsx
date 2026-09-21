@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Clock, Copy, MapPin, MessageCircle, Check } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Copy, ShieldCheck, CalendarDays, MessageCircle, Check } from "lucide-react";
 import QRCode from "react-qr-code";
-import { useEffect, useMemo, useState, use } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, use } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { PixCheckout } from "@/components/PixCheckout";
 import { reportarErroCliente } from "@/lib/reportarErroCliente";
+import { BookingAvatar, BookingClinicSummary, BookingComparison, BookingSteps, type BookingAppearance } from "./BookingPresentation";
+import styles from "./booking.module.css";
 
 type PerfilPublic = {
   id: string;
@@ -120,6 +122,10 @@ function isFeriado(config: AgendaConfig, profId: string | null, isoDate: string)
 export default function AgendamentoPublicoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const appearance: BookingAppearance = searchParams.get("visual") === "premium" ? "premium" : "clean";
+  const comparing = searchParams.get("comparar") === "1";
+  const stepHeading = useRef<HTMLHeadingElement>(null);
   const profParam = searchParams.get("p");
   const [perfil, setPerfil] = useState<PerfilPublic | null>(null);
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
@@ -133,9 +139,19 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [agendamentoId, setAgendamentoId] = useState<string | null>(null);
-  const [pendingBooking, setPendingBooking] = useState<PendingBooking | null>(null);
+
   const [copiedPix, setCopiedPix] = useState(false);
   const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
+
+  function changeAppearance(value: BookingAppearance) {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("visual", value);
+    router.replace(`?${next.toString()}`, { scroll: false });
+  }
+
+  useEffect(() => {
+    if (step > 0) stepHeading.current?.focus();
+  }, [step]);
 
   async function loadData() {
     setInitError(false);
@@ -164,10 +180,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         })(),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
       ]);
-      try {
-        const stored = localStorage.getItem(`rc_booking_${slug}`);
-        if (stored) setPendingBooking(JSON.parse(stored));
-      } catch { /* ignorar */ }
+      try { localStorage.removeItem(`rc_booking_${slug}`); } catch { /* ignorar */ }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       void reportarErroCliente(`agendamento/${slug}`, msg);
@@ -284,8 +297,6 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
     }
 
     setSaving(false);
-    const bookingData: PendingBooking = { nome: form.nome.trim(), data: form.data, hora: form.hora, servico: form.servico, profissional: form.profissional_nome, clinicNome: perfil.nome };
-    try { localStorage.setItem(`rc_booking_${slug}`, JSON.stringify(bookingData)); } catch { /* ignorar */ }
     setAgendamentoId(agId);
     setDone(true);
   }
@@ -335,33 +346,21 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
 
   const diaMensagem = diaInfo && (!diaInfo.dayConfig.aberto ? "Não atendemos nesse dia da semana." : diaInfo.feriado ? "Esse dia é feriado — sem atendimento." : slots.length === 0 || slots.every(s => s.ocupado) ? "Nenhum horário disponível." : null);
 
-  return <main className="bookingPage" style={{ ["--brand-primary" as string]: primary }}>
+  return <main className={`bookingPage ${styles.page}`} data-appearance={appearance} style={{ ["--brand-primary" as string]: primary }}>
     <header className="bookingHeader">
       <Link href="/" className="bookingBrand" aria-label="Reserve Clinic">
-        <Image src="/logo.svg" alt="Reserve Clinic" width={156} height={28} priority className="bookingBrandLogo" />
+        <span className={styles.brandMark}><Image src="/logo.svg" alt="" width={156} height={28} priority /></span><b>Reserve Clinic</b>
       </Link>
-      <small>Agendamento seguro</small>
+      <small><ShieldCheck size={18} aria-hidden="true" /> Agendamento seguro</small>
     </header>
-    <div className="bookingContainer">
-      <section className="bookingClinic">
-        <div className="clinicLogo" style={{ background: primary, color: "#fff", overflow: "hidden" }}>{perfil.logo_url ? <img src={perfil.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : perfil.nome.slice(0, 1)}</div>
-        <div>
-          <h1>{perfil.nome}</h1>
-          {endereco && <p><MapPin size={15} /> {endereco}</p>}
-          {valorEfetivo != null && (
-            <p style={{ margin: "6px 0 0", display: "inline-flex", alignItems: "center", gap: 6, background: "#f0f4ff", color: primary, borderRadius: 20, padding: "4px 12px", fontSize: 13, fontWeight: 600 }}>
-              Consulta: {valorEfetivo.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </p>
-          )}
-        </div>
-      </section>
+    {comparing && <BookingComparison appearance={appearance} onChange={changeAppearance} />}
+    <div className={styles.layout}>
+      <BookingClinicSummary name={perfil.nome} photo={perfil.logo_url} address={endereco} price={valorEfetivo} professional={selectedProf} date={form.data} time={form.hora} duration={config.duracao_min} />
+      <div className={styles.flow}>
+      <BookingSteps current={done ? 2 : step} />
       {profParam && selectedProf && (
         <div className="bookingSelectedProfessional" style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px" }}>
-          {selectedProf.foto_url ? (
-            <img src={selectedProf.foto_url} alt="" style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: `2px solid ${primary}` }} />
-          ) : (
-            <span style={{ width: 48, height: 48, borderRadius: "50%", background: primary, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{selectedProf.nome.slice(0, 2).toUpperCase()}</span>
-          )}
+          <BookingAvatar name={selectedProf.nome} photo={selectedProf.foto_url} />
           <div>
             <strong style={{ display: "block", fontSize: 15 }}>{selectedProf.nome}</strong>
             {selectedProf.especialidade && <small style={{ fontSize: 12 }}>{selectedProf.especialidade}</small>}
@@ -374,35 +373,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         </div>
       )}
 
-      {pendingBooking && !done ? (
-        /* Tela de aguardando confirmação — aparece ao voltar ao link */
-        <section className="panel bookingPendingCard">
-          <div className="bookingPendingIcon"><Clock size={26} /></div>
-          <h2>Aguardando confirmação</h2>
-          <p>Assim que a clínica confirmar o PIX, você receberá uma mensagem confirmando sua consulta.</p>
-          <div className="bookingPendingDetails">
-            <span><strong>Paciente:</strong> {pendingBooking.nome}</span>
-            <span><strong>Data:</strong> {new Date(`${pendingBooking.data}T12:00:00`).toLocaleDateString("pt-BR")} às {pendingBooking.hora}</span>
-            {pendingBooking.servico && <span><strong>Serviço:</strong> {pendingBooking.servico}</span>}
-            {pendingBooking.profissional && <span><strong>Profissional:</strong> {pendingBooking.profissional}</span>}
-          </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginTop: 20 }}>
-            {perfil.telefone && (
-              <a className="bookingWhatsappBtn" href={buildWhatsapp(perfil.telefone, pendingBooking)} target="_blank" rel="noreferrer">
-                <MessageCircle size={16} /> Reenviar comprovante
-              </a>
-            )}
-            <button className="secondaryButton" onClick={() => {
-              try { localStorage.removeItem(`rc_booking_${slug}`); } catch { /* ignorar */ }
-              setPendingBooking(null);
-              setForm(emptyForm);
-              setStep(0);
-            }}>
-              Novo agendamento
-            </button>
-          </div>
-        </section>
-      ) : done ? (
+      {done ? (
         <>
           <section className="panel" style={{ padding: 28, textAlign: "center" }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#e8f8f3", color: "#15967e", display: "grid", placeItems: "center", margin: "0 auto 12px" }}><Check size={24} /></div>
@@ -464,21 +435,14 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
         </>
       ) : (
         <>
-          <div className="bookingSteps">
-            <div className={step === 0 ? "active" : step > 0 ? "done" : ""}><span>1</span><strong>Data e horário</strong></div>
-            <i />
-            <div className={step === 1 ? "active" : ""}><span>2</span><strong>Seus dados</strong></div>
-            <i />
-            <div><span>3</span><strong>Confirmação</strong></div>
-          </div>
-          <p className="bookingStepHint">{profParam ? "Escolha uma data e horário disponível. Leva menos de 2 minutos." : "Escolha um profissional e um horário. Leva menos de 2 minutos."}</p>
-          <section className="panel bookingFormPanel" style={{ padding: 22 }}>
+          <section className="panel bookingFormPanel" aria-labelledby="booking-step-title">
+            <div className={styles.sectionHeading}><span className={styles.eyebrow}>Etapa {step + 1} de 3</span><h2 id="booking-step-title" ref={stepHeading} tabIndex={-1}>{step === 0 ? "Vamos encontrar o melhor horário?" : "Agora, seus dados"}</h2><p>{step === 0 ? "Escolha com quem e quando você quer se cuidar." : "Confira seu agendamento e preencha seus dados para continuar."}</p></div>
             {step === 0 && (
               <div className="formGrid">
                 {profissionais.length > 0 && !profParam && (
                   <div className="formRow bookingProfessionalPicker">
-                    <label>Profissional</label>
-                    <div className="bookingProfessionalOptions">
+                    <label id="booking-professionals-label">Escolha seu profissional</label>
+                    <div className="bookingProfessionalOptions" role="group" aria-labelledby="booking-professionals-label">
                       {profissionais.map(p => {
                         const active = form.profissional_id === p.id;
                         return (
@@ -490,34 +454,28 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                             key={p.id}
                             onClick={() => setForm({ ...form, profissional_id: p.id, profissional_nome: p.nome, data: "", hora: "" })}
                           >
-                            {p.foto_url ? (
-                              <img src={p.foto_url} alt="" style={{ width: 26, height: 26, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-                            ) : (
-                              <span className="professionalAvatar" style={{ width: 26, height: 26, borderRadius: "50%", background: active ? "rgba(255,255,255,0.25)" : "#eef0f6", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 700, flexShrink: 0, color: active ? "#fff" : "#858d9f" }}>
-                                {p.nome.slice(0, 2).toUpperCase()}
-                              </span>
-                            )}
-                            <span><strong>{p.nome}</strong>{p.especialidade && <small>{p.especialidade}</small>}</span>
-                            <i aria-hidden />
+                            <BookingAvatar name={p.nome} photo={p.foto_url} />
+                            <span className={styles.professionalText}><strong>{p.nome}</strong>{p.especialidade && <small>{p.especialidade}</small>}</span>
+                            <span className={styles.selectionMark} aria-hidden="true">{active && <Check size={14} />}</span>
                           </button>
                         );
                       })}
                     </div>
                   </div>
                 )}
-                <div className="formRow"><label>Serviço (opcional)</label><input value={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.value })} placeholder="Consulta clínica" /></div>
+<div className={styles.schedule}>
                 <div className="formRow">
-                  <label>Selecione uma data</label>
+                  <label id="booking-date-label">Selecione a melhor data</label>
                   <div className="bookingCalendarWrap">
                     <div className="bookingCalHead">
                       <button type="button" className="iconButton" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))} aria-label="Mês anterior"><ChevronLeft size={16} /></button>
-                      <span style={{ fontWeight: 600, fontSize: 13, color: "#1b2335", textTransform: "capitalize" }}>{viewMonth.toLocaleDateString("pt-BR", { month: "long" })} <small style={{ fontWeight: 400, color: "#7d8597" }}>{viewMonth.getFullYear()}</small></span>
+                      <span aria-live="polite">{viewMonth.toLocaleDateString("pt-BR", { month: "long" })} <small>{viewMonth.getFullYear()}</small></span>
                       <button type="button" className="iconButton" onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))} aria-label="Próximo mês"><ChevronRight size={16} /></button>
                     </div>
                     <div className="bookingCalWeek">
                       {WEEKDAY_LABELS.map(l => <span key={l}>{l}</span>)}
                     </div>
-                    <div className="bookingCalGrid">
+                    <div className="bookingCalGrid" role="group" aria-labelledby="booking-date-label">
                       {calDias.map(d => {
                         const iso = toIsoDate(d);
                         const outroMes = d.getMonth() !== viewMonth.getMonth();
@@ -537,54 +495,59 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
                             className={`bookingCalCell${selected ? " isSelected" : ""}${ehHoje ? " isToday" : ""}${outroMes ? " isOtherMonth" : ""}${fechado && !outroMes ? " isClosed" : ""}`}
                             aria-label={d.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}
                             aria-pressed={selected}
+                            aria-current={ehHoje ? "date" : undefined}
                           >
-                            {d.getDate()}
+                            {d.getDate()}{selected && <Check className={styles.dateCheck} size={10} aria-hidden="true" />}
                           </button>
                         );
                       })}
                     </div>
                   </div>
                 </div>
-                {form.data && (
-                  <div className="formRow">
-                    <label>Horários disponíveis <small style={{ fontWeight: 500 }}>({config.duracao_min} min cada)</small></label>
+                  <div className={`formRow ${styles.times}`} aria-live="polite">
+                    <label id="booking-times-label">Escolha o horário <small>({config.duracao_min} min)</small></label>
+                    {!form.data ? <div className={styles.timeEmpty}><CalendarDays size={28} /><strong>Qual é o melhor dia para você?</strong><p>Selecione uma data para ver os horários disponíveis.</p></div> : <>
+                    <p className={styles.selectedDate}>{new Date(`${form.data}T12:00:00`).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</p>
                     {diaMensagem ? (
-                      <p style={{ padding: 14, background: "#fafbfc", border: "1px solid #eceef3", borderRadius: 8, color: "#7d8597", fontSize: 12, margin: 0 }}>{diaMensagem}</p>
+                      <p className={styles.timeEmpty}>{diaMensagem}</p>
                     ) : (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      <div className={styles.timeGrid} role="group" aria-labelledby="booking-times-label">
                         {slots.map(s => {
                           const active = form.hora === s.hora;
-                          return <button type="button" key={s.hora} className={`bookingTimeOption${active ? " isSelected" : ""}${s.ocupado ? " isOccupied" : ""}`} disabled={s.ocupado} onClick={() => setForm({ ...form, hora: s.hora })}>{s.hora}</button>;
+                          return <button type="button" key={s.hora} className={`bookingTimeOption${active ? " isSelected" : ""}${s.ocupado ? " isOccupied" : ""}`} aria-pressed={active} disabled={s.ocupado} onClick={() => setForm({ ...form, hora: s.hora })}>{s.hora}{active && <Check size={14} aria-hidden="true" />}</button>;
                         })}
                       </div>
                     )}
+                    </>}
                   </div>
-                )}
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-                  <button className="primaryButton" disabled={!form.data || !form.hora} onClick={() => setStep(1)} style={{ background: primary }}>Continuar</button>
+                </div>
+                <div className={styles.actions}>
+                  <p>{form.data && form.hora ? `${new Date(`${form.data}T12:00:00`).toLocaleDateString("pt-BR")} às ${form.hora}` : "Selecione uma data e um horário para continuar."}</p>
+                  <button className="primaryButton" disabled={!form.data || !form.hora} onClick={() => setStep(1)}>Continuar <ArrowRight size={18} /></button>
                 </div>
               </div>
             )}
             {step === 1 && (
               <div className="formGrid">
-                <div className="formRow"><label>Nome completo</label><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Seu nome" /></div>
+                <div className={styles.review}><CalendarDays size={22} /><div><strong>{new Date(`${form.data}T12:00:00`).toLocaleDateString("pt-BR")} às {form.hora}</strong><span>{form.profissional_nome}{form.servico ? ` · ${form.servico}` : ""}</span></div><button type="button" className="secondaryButton" onClick={() => setStep(0)}>Alterar</button></div>
+                <div className="formRow"><label htmlFor="booking-name">Nome completo</label><input id="booking-name" autoComplete="name" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Seu nome" /></div>
                 <div className="formRow split">
-                  <div className="formRow"><label>Telefone</label><input value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 99999-9999" /></div>
+                  <div className="formRow"><label htmlFor="booking-phone">Telefone</label><input id="booking-phone" type="tel" autoComplete="tel" value={form.telefone} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 99999-9999" /></div>
                   <div className="formRow">
-                    <label>E-mail {valorEfetivo && <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span>}</label>
-                    <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" required={!!valorEfetivo} />
+                    <label htmlFor="booking-email">E-mail {valorEfetivo && <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span>}</label>
+                    <input id="booking-email" type="email" autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="voce@email.com" required={!!valorEfetivo} />
                   </div>
                 </div>
                 {valorEfetivo && (
                   <div className="formRow" style={{ maxWidth: 240 }}>
-                    <label>CPF <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span> <span style={{ color: "#858d9f", fontWeight: 400 }}>(obrigatório para PIX)</span></label>
-                    <input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" inputMode="numeric" required />
+                    <label htmlFor="booking-cpf">CPF <span style={{ color: "#dc2626", fontWeight: 400 }}>*</span> <small>(obrigatório para PIX)</small></label>
+                    <input id="booking-cpf" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" inputMode="numeric" required />
                   </div>
                 )}
-                <div className="formRow"><label>Observações (opcional)</label><textarea rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Convênio, sintomas, etc." /></div>
-                {error && <div className="onboardingError">{error}</div>}
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
-                  <button className="secondaryButton" onClick={() => setStep(0)}>Voltar</button>
+                <div className="formRow"><label htmlFor="booking-notes">Observações (opcional)</label><textarea id="booking-notes" rows={3} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Convênio, sintomas, etc." /></div>
+                {error && <div className="onboardingError" role="alert">{error}</div>}
+                <div className={styles.actions}>
+                  <button className="secondaryButton" onClick={() => setStep(0)}><ChevronLeft size={18} /> Voltar</button>
                   <button className="primaryButton" disabled={saving} onClick={handleConfirm} style={{ background: primary }}>{saving ? "Enviando…" : "Confirmar agendamento"}</button>
                 </div>
               </div>
@@ -592,6 +555,7 @@ export default function AgendamentoPublicoPage({ params }: { params: Promise<{ s
           </section>
         </>
       )}
+    </div>
     </div>
     <footer className="bookingFooter">Agendamento protegido pela <strong>Reserve Clinic</strong> · Seus dados estão seguros</footer>
   </main>;

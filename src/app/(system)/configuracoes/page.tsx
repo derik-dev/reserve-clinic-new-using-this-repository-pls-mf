@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Check, Plus, Trash2 } from "lucide-react";
+import { Building2, Camera, Check, Image, MapPin, Plus, Trash2, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -84,7 +84,17 @@ function mergeAgendaConfig(raw: unknown): AgendaConfig {
   };
 }
 
+type Tab = "empresa" | "visual" | "endereco" | "disponibilidade";
+
+const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: "empresa",        label: "Empresa",        icon: <Building2 size={15} /> },
+  { id: "visual",         label: "Visual",          icon: <Image size={15} /> },
+  { id: "endereco",       label: "Endereço",        icon: <MapPin size={15} /> },
+  { id: "disponibilidade",label: "Disponibilidade", icon: <Users size={15} /> },
+];
+
 export default function ConfiguracoesPage() {
+  const [tab, setTab] = useState<Tab>("empresa");
   const [form, setForm] = useState<Form>(emptyForm);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -105,7 +115,6 @@ export default function ConfiguracoesPage() {
   const [agendaError, setAgendaError] = useState<string | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
-
   const up = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -270,227 +279,260 @@ export default function ConfiguracoesPage() {
     setTimeout(() => setAgendaSaved(false), 2000);
   }
 
-  if (loading) return <><PageHeader title="Configurações" description="Gerencie os dados da sua conta." /><section className="panel" style={{ padding: 72, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</section></>;
+  if (loading) return (
+    <>
+      <PageHeader title="Configurações" description="Gerencie os dados da sua conta." />
+      <section className="panel" style={{ padding: 72, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</section>
+    </>
+  );
 
   return <>
-    <PageHeader title="Configurações" description="Gerencie os dados da sua conta e clínica." actions={
-      <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
-        {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
-      </button>
-    } />
+    <PageHeader title="Configurações" description="Gerencie os dados da sua conta e clínica." />
 
-    <div className="settingsGrid">
-      {/* Dados da empresa */}
-      <section className="panel settingsSection">
-        <div className="settingsSectionHead"><strong>Dados da empresa</strong><small>Informações exibidas na página pública de agendamento.</small></div>
-        <div className="formGrid">
-          <div className="formRow"><label>Nome da clínica / profissional</label><input value={form.nome} onChange={e => up("nome", e.target.value)} placeholder="Ex.: Clínica Vida Nova" /></div>
-          <div className="formRow split">
-            <div className="formRow"><label>Telefone / WhatsApp</label><input value={form.telefone} onChange={e => up("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
-            <div className="formRow"><label>E-mail de contato</label><input type="email" value={form.email_contato} onChange={e => up("email_contato", e.target.value)} placeholder="contato@clinica.com.br" /></div>
-          </div>
-          <div className="formRow split">
-            <div className="formRow" style={{ maxWidth: 240 }}>
-              <label>CPF / CNPJ</label>
-              <input
-                value={form.cpf_cnpj}
-                onChange={e => up("cpf_cnpj", formatCpfCnpj(e.target.value))}
-                placeholder="000.000.000-00"
-                inputMode="numeric"
-              />
-              <small style={{ color: "#858d9f" }}>Necessário para receber pagamentos via Asaas.</small>
+    <div className="cfgLayout">
+      {/* Sidebar */}
+      <nav className="cfgSidebar panel">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            className={`cfgSidebarBtn${tab === t.id ? " active" : ""}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.icon}
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </nav>
+
+      {/* Content */}
+      <div className="cfgContent panel">
+
+        {tab === "empresa" && (
+          <div className="cfgSection">
+            <div className="cfgSectionHead">
+              <strong>Dados da empresa</strong>
+              <small>Informações exibidas na página pública de agendamento.</small>
             </div>
-            <div className="formRow" style={{ maxWidth: 240 }}>
-              <label>Valor padrão da consulta (R$)</label>
-              <input value={form.valor_consulta} onChange={e => up("valor_consulta", e.target.value)} placeholder="150,00" inputMode="decimal" />
-              <small style={{ color: "#858d9f" }}>Usado quando o profissional não tem valor próprio.</small>
-            </div>
-          </div>
-          <div className="formRow">
-            <label>Link personalizado</label>
-            <input value={form.slug} onChange={e => up("slug", slugify(e.target.value))} placeholder="sua-clinica" />
-            <small style={{ color: "#858d9f" }}>reserveclinic.com/agendamento/{form.slug || "sua-clinica"} — alterar quebra links já compartilhados.</small>
-          </div>
-          <div className="formRow">
-            <label>Site</label>
-            <input value={form.site} onChange={e => up("site", e.target.value)} placeholder="https://suaclinica.com.br" type="url" />
-          </div>
-          <div className="formRow split">
-            <div className="formRow">
-              <label>Instagram</label>
-              <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#858d9f", fontSize: 13, pointerEvents: "none" }}>@</span>
-                <input value={form.instagram} onChange={e => up("instagram", e.target.value.replace(/^@/, ""))} placeholder="suaclinica" style={{ paddingLeft: 24 }} />
+            <div className="formGrid">
+              <div className="formRow"><label>Nome da clínica / profissional</label><input value={form.nome} onChange={e => up("nome", e.target.value)} placeholder="Ex.: Clínica Vida Nova" /></div>
+              <div className="formRow split">
+                <div className="formRow"><label>Telefone / WhatsApp</label><input value={form.telefone} onChange={e => up("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
+                <div className="formRow"><label>E-mail de contato</label><input type="email" value={form.email_contato} onChange={e => up("email_contato", e.target.value)} placeholder="contato@clinica.com.br" /></div>
               </div>
-            </div>
-            <div className="formRow">
-              <label>TikTok</label>
-              <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#858d9f", fontSize: 13, pointerEvents: "none" }}>@</span>
-                <input value={form.tiktok} onChange={e => up("tiktok", e.target.value.replace(/^@/, ""))} placeholder="suaclinica" style={{ paddingLeft: 24 }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Identidade visual */}
-      <section className="panel settingsSection">
-        <div className="settingsSectionHead"><strong>Identidade visual</strong><small>Logo exibida no painel e no link de agendamento.</small></div>
-        <div className="formGrid">
-          <div className="formRow">
-            <label>Logo</label>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 14, background: "#eef0f6", overflow: "hidden", display: "grid", placeItems: "center", flexShrink: 0, color: "#858d9f" }}>
-                {logoPreview ? <img src={logoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={24} />}
-              </div>
-              <div>
-                <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0] ?? null; if (f) handleLogoChange(f); }} />
-                <button className="secondaryButton" type="button" style={{ height: 34, fontSize: 12 }} onClick={() => fileRef.current?.click()}>
-                  {logoUploading ? "Enviando…" : <><Camera size={13} /> {logoPreview ? "Trocar logo" : "Enviar logo"}</>}
-                </button>
-                <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>PNG, JPG ou SVG · 512×512 recomendado.</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Endereço */}
-      <section className="panel settingsSection">
-        <div className="settingsSectionHead"><strong>Endereço</strong><small>Aparece na página pública abaixo do nome da clínica.</small></div>
-        <div className="formGrid">
-          <div className="formRow split">
-            <div className="formRow">
-              <label>CEP</label>
-              <input value={form.endereco_cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" />
-              {cepLoading && <small style={{ color: "#858d9f" }}>Buscando…</small>}
-            </div>
-            <div className="formRow"><label>Cidade</label><input value={form.endereco_cidade} onChange={e => up("endereco_cidade", e.target.value)} placeholder="São Paulo" /></div>
-          </div>
-          <div className="formRow"><label>Rua / avenida</label><input value={form.endereco_rua} onChange={e => up("endereco_rua", e.target.value)} placeholder="Av. Paulista" /></div>
-          <div className="formRow split">
-            <div className="formRow"><label>Número</label><input value={form.endereco_numero} onChange={e => up("endereco_numero", e.target.value)} placeholder="1200" /></div>
-            <div className="formRow"><label>Bairro</label><input value={form.endereco_bairro} onChange={e => up("endereco_bairro", e.target.value)} placeholder="Centro" /></div>
-            <div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={e => up("endereco_uf", e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} /></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Profissionais e disponibilidade */}
-      <section className="panel settingsSection">
-        <div className="settingsSectionHead">
-          <strong>Profissionais e disponibilidade</strong>
-          <small>Configure os horários de atendimento e o valor da consulta de cada profissional.</small>
-        </div>
-
-        {profissionais.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
-            Nenhum profissional cadastrado ainda. Acesse <strong>Profissionais</strong> no menu para cadastrar.
-          </p>
-        ) : (
-          <>
-            <div className="ajustesProfSelect">
-              {profissionais.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`ajustesProfTab${profSelecionado === p.id ? " active" : ""}${agendaConfig.disponibilidade[p.id] ? " hasCustom" : ""}`}
-                  onClick={() => setProfSelecionado(p.id)}
-                >
-                  {p.nome}
-                </button>
-              ))}
-            </div>
-
-            {profSelecionado && (() => {
-              const profAtual = agendaConfig.disponibilidade[profSelecionado] ?? { dias: { ...agendaConfig.dias }, feriados: [] };
-              const temCustom = !!agendaConfig.disponibilidade[profSelecionado];
-              return (
-                <div className="ajustesProfBody">
-                  <div className="formRow" style={{ maxWidth: 220, marginBottom: 20 }}>
-                    <label>Valor da consulta (R$)</label>
-                    <input
-                      value={valorConsultaProf[profSelecionado] ?? ""}
-                      onChange={e => setValorConsultaProf(v => ({ ...v, [profSelecionado]: e.target.value }))}
-                      placeholder="150,00"
-                      inputMode="decimal"
-                    />
-                  </div>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <small style={{ color: "var(--text-muted)" }}>
-                      {temCustom ? "Horário personalizado ativo" : "Usando horários padrão da clínica"}
-                    </small>
-                    {temCustom && (
-                      <button className="secondaryButton" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => resetProfDisp(profSelecionado)}>
-                        Restaurar padrão
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="ajustesDias">
-                    {DAY_ORDER.map(k => {
-                      const d = profAtual.dias[k];
-                      return (
-                        <div className={`ajustesDia ${d.aberto ? "isOpen" : ""}`} key={k}>
-                          <label className="ajustesSwitch">
-                            <input type="checkbox" checked={d.aberto} onChange={e => updateProfDia(profSelecionado, k, { aberto: e.target.checked })} />
-                            <span>{DAY_LABEL_FULL[k]}</span>
-                          </label>
-                          <div className="ajustesHoras">
-                            <input type="time" value={d.inicio} disabled={!d.aberto} onChange={e => updateProfDia(profSelecionado, k, { inicio: e.target.value })} />
-                            <em>até</em>
-                            <input type="time" value={d.fim} disabled={!d.aberto} onChange={e => updateProfDia(profSelecionado, k, { fim: e.target.value })} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <p className="ajustesHint" style={{ marginTop: 16 }}>Folgas exclusivas deste profissional (somam-se aos feriados gerais).</p>
-                  <div className="ajustesAddRow">
-                    <input type="date" value={novoFeriadoProf} onChange={e => setNovoFeriadoProf(e.target.value)} />
-                    <button className="secondaryButton" onClick={() => addFeriadoProf(profSelecionado)} disabled={!novoFeriadoProf}>
-                      <Plus size={15} /> Adicionar folga
-                    </button>
-                  </div>
-                  {profAtual.feriados.length === 0 ? (
-                    <p className="ajustesEmpty">Nenhuma folga individual.</p>
-                  ) : (
-                    <ul className="ajustesLista">
-                      {profAtual.feriados.map(f => (
-                        <li key={f}>
-                          <span>{new Date(f + "T00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</span>
-                          <button className="iconButton" onClick={() => removeFeriadoProf(profSelecionado, f)} aria-label="Remover"><Trash2 size={15} /></button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+              <div className="formRow split">
+                <div className="formRow">
+                  <label>CPF / CNPJ</label>
+                  <input value={form.cpf_cnpj} onChange={e => up("cpf_cnpj", formatCpfCnpj(e.target.value))} placeholder="000.000.000-00" inputMode="numeric" />
+                  <small style={{ color: "#858d9f" }}>Necessário para receber pagamentos via Asaas.</small>
                 </div>
-              );
-            })()}
-
-            {agendaError && <div className="onboardingError" style={{ marginTop: 16 }}>{agendaError}</div>}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
-              <button className="primaryButton" disabled={agendaSaving} onClick={handleSaveAgenda} style={{ minWidth: 200 }}>
-                {agendaSaved ? <><Check size={15} /> Configurações salvas</> : agendaSaving ? "Salvando…" : "Salvar disponibilidade"}
+                <div className="formRow">
+                  <label>Valor padrão da consulta (R$)</label>
+                  <input value={form.valor_consulta} onChange={e => up("valor_consulta", e.target.value)} placeholder="150,00" inputMode="decimal" />
+                  <small style={{ color: "#858d9f" }}>Usado quando o profissional não tem valor próprio.</small>
+                </div>
+              </div>
+              <div className="formRow">
+                <label>Link personalizado</label>
+                <input value={form.slug} onChange={e => up("slug", slugify(e.target.value))} placeholder="sua-clinica" />
+                <small style={{ color: "#858d9f" }}>reserveclinic.com/agendamento/{form.slug || "sua-clinica"} — alterar quebra links já compartilhados.</small>
+              </div>
+              <div className="formRow">
+                <label>Site</label>
+                <input value={form.site} onChange={e => up("site", e.target.value)} placeholder="https://suaclinica.com.br" type="url" />
+              </div>
+              <div className="formRow split">
+                <div className="formRow">
+                  <label>Instagram</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#858d9f", fontSize: 13, pointerEvents: "none" }}>@</span>
+                    <input value={form.instagram} onChange={e => up("instagram", e.target.value.replace(/^@/, ""))} placeholder="suaclinica" style={{ paddingLeft: 24 }} />
+                  </div>
+                </div>
+                <div className="formRow">
+                  <label>TikTok</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#858d9f", fontSize: 13, pointerEvents: "none" }}>@</span>
+                    <input value={form.tiktok} onChange={e => up("tiktok", e.target.value.replace(/^@/, ""))} placeholder="suaclinica" style={{ paddingLeft: 24 }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            {error && <div className="onboardingError" style={{ marginTop: 16 }}>{error}</div>}
+            <div className="cfgFooter">
+              <button className="primaryButton" disabled={saving} onClick={handleSave}>
+                {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
               </button>
             </div>
-          </>
+          </div>
         )}
-      </section>
 
-    </div>
+        {tab === "visual" && (
+          <div className="cfgSection">
+            <div className="cfgSectionHead">
+              <strong>Identidade visual</strong>
+              <small>Logo exibida no painel e no link de agendamento.</small>
+            </div>
+            <div className="formGrid">
+              <div className="formRow">
+                <label>Logo</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                  <div className="cfgLogoPreview">
+                    {logoPreview ? <img src={logoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Camera size={28} />}
+                  </div>
+                  <div>
+                    <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0] ?? null; if (f) handleLogoChange(f); }} />
+                    <button className="secondaryButton" type="button" style={{ height: 36, fontSize: 13 }} onClick={() => fileRef.current?.click()}>
+                      {logoUploading ? "Enviando…" : <><Camera size={14} /> {logoPreview ? "Trocar logo" : "Enviar logo"}</>}
+                    </button>
+                    <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 6 }}>PNG, JPG ou SVG · 512×512 recomendado.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="cfgFooter">
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>A logo é salva automaticamente ao fazer o upload.</span>
+            </div>
+          </div>
+        )}
 
-    <div style={{ maxWidth: 820, margin: "0 auto" }}>
-      {error && <div className="onboardingError">{error}</div>}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 4 }}>
-        <button className="primaryButton" disabled={saving} onClick={handleSave} style={{ minWidth: 160 }}>
-          {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar alterações"}
-        </button>
+        {tab === "endereco" && (
+          <div className="cfgSection">
+            <div className="cfgSectionHead">
+              <strong>Endereço</strong>
+              <small>Aparece na página pública abaixo do nome da clínica.</small>
+            </div>
+            <div className="formGrid">
+              <div className="formRow split">
+                <div className="formRow">
+                  <label>CEP</label>
+                  <input value={form.endereco_cep} onChange={e => handleCepChange(e.target.value)} placeholder="00000-000" inputMode="numeric" />
+                  {cepLoading && <small style={{ color: "#858d9f" }}>Buscando…</small>}
+                </div>
+                <div className="formRow"><label>Cidade</label><input value={form.endereco_cidade} onChange={e => up("endereco_cidade", e.target.value)} placeholder="São Paulo" /></div>
+              </div>
+              <div className="formRow"><label>Rua / avenida</label><input value={form.endereco_rua} onChange={e => up("endereco_rua", e.target.value)} placeholder="Av. Paulista" /></div>
+              <div className="formRow split">
+                <div className="formRow"><label>Número</label><input value={form.endereco_numero} onChange={e => up("endereco_numero", e.target.value)} placeholder="1200" /></div>
+                <div className="formRow"><label>Bairro</label><input value={form.endereco_bairro} onChange={e => up("endereco_bairro", e.target.value)} placeholder="Centro" /></div>
+                <div className="formRow"><label>UF</label><input value={form.endereco_uf} onChange={e => up("endereco_uf", e.target.value.toUpperCase().slice(0, 2))} placeholder="SP" maxLength={2} /></div>
+              </div>
+            </div>
+            {error && <div className="onboardingError" style={{ marginTop: 16 }}>{error}</div>}
+            <div className="cfgFooter">
+              <button className="primaryButton" disabled={saving} onClick={handleSave}>
+                {saved ? <><Check size={15} /> Alterações salvas</> : saving ? "Salvando…" : "Salvar endereço"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === "disponibilidade" && (
+          <div className="cfgSection">
+            <div className="cfgSectionHead">
+              <strong>Profissionais e disponibilidade</strong>
+              <small>Configure os horários de atendimento e o valor da consulta de cada profissional.</small>
+            </div>
+
+            {profissionais.length === 0 ? (
+              <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>
+                Nenhum profissional cadastrado ainda. Acesse <strong>Profissionais</strong> no menu para cadastrar.
+              </p>
+            ) : (
+              <>
+                <div className="ajustesProfSelect">
+                  {profissionais.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`ajustesProfTab${profSelecionado === p.id ? " active" : ""}${agendaConfig.disponibilidade[p.id] ? " hasCustom" : ""}`}
+                      onClick={() => setProfSelecionado(p.id)}
+                    >
+                      {p.nome}
+                    </button>
+                  ))}
+                </div>
+
+                {profSelecionado && (() => {
+                  const profAtual = agendaConfig.disponibilidade[profSelecionado] ?? { dias: { ...agendaConfig.dias }, feriados: [] };
+                  const temCustom = !!agendaConfig.disponibilidade[profSelecionado];
+                  return (
+                    <div className="ajustesProfBody">
+                      <div className="formRow" style={{ maxWidth: 220, marginBottom: 20 }}>
+                        <label>Valor da consulta (R$)</label>
+                        <input
+                          value={valorConsultaProf[profSelecionado] ?? ""}
+                          onChange={e => setValorConsultaProf(v => ({ ...v, [profSelecionado]: e.target.value }))}
+                          placeholder="150,00"
+                          inputMode="decimal"
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <small style={{ color: "var(--text-muted)" }}>
+                          {temCustom ? "Horário personalizado ativo" : "Usando horários padrão da clínica"}
+                        </small>
+                        {temCustom && (
+                          <button className="secondaryButton" style={{ fontSize: 12, padding: "4px 10px" }} onClick={() => resetProfDisp(profSelecionado)}>
+                            Restaurar padrão
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="ajustesDias">
+                        {DAY_ORDER.map(k => {
+                          const d = profAtual.dias[k];
+                          return (
+                            <div className={`ajustesDia ${d.aberto ? "isOpen" : ""}`} key={k}>
+                              <label className="ajustesSwitch">
+                                <input type="checkbox" checked={d.aberto} onChange={e => updateProfDia(profSelecionado, k, { aberto: e.target.checked })} />
+                                <span>{DAY_LABEL_FULL[k]}</span>
+                              </label>
+                              <div className="ajustesHoras">
+                                <input type="time" value={d.inicio} disabled={!d.aberto} onChange={e => updateProfDia(profSelecionado, k, { inicio: e.target.value })} />
+                                <em>até</em>
+                                <input type="time" value={d.fim} disabled={!d.aberto} onChange={e => updateProfDia(profSelecionado, k, { fim: e.target.value })} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <p className="ajustesHint" style={{ marginTop: 16 }}>Folgas exclusivas deste profissional (somam-se aos feriados gerais).</p>
+                      <div className="ajustesAddRow">
+                        <input type="date" value={novoFeriadoProf} onChange={e => setNovoFeriadoProf(e.target.value)} />
+                        <button className="secondaryButton" onClick={() => addFeriadoProf(profSelecionado)} disabled={!novoFeriadoProf}>
+                          <Plus size={15} /> Adicionar folga
+                        </button>
+                      </div>
+                      {profAtual.feriados.length === 0 ? (
+                        <p className="ajustesEmpty">Nenhuma folga individual.</p>
+                      ) : (
+                        <ul className="ajustesLista">
+                          {profAtual.feriados.map(f => (
+                            <li key={f}>
+                              <span>{new Date(f + "T00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}</span>
+                              <button className="iconButton" onClick={() => removeFeriadoProf(profSelecionado, f)} aria-label="Remover"><Trash2 size={15} /></button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {agendaError && <div className="onboardingError" style={{ marginTop: 16 }}>{agendaError}</div>}
+                <div className="cfgFooter">
+                  <button className="primaryButton" disabled={agendaSaving} onClick={handleSaveAgenda}>
+                    {agendaSaved ? <><Check size={15} /> Configurações salvas</> : agendaSaving ? "Salvando…" : "Salvar disponibilidade"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
-
   </>;
 }

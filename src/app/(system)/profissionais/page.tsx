@@ -1,6 +1,7 @@
 "use client";
 
-import { Award, Camera, Check, Copy, Link2, Pencil, Phone, Plus, Search, Stethoscope, Trash2, X } from "lucide-react";
+import { Award, Camera, Check, Copy, Link2, Pencil, Phone, Plus, Search, Stethoscope, Trash2, X, BarChart3 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +14,7 @@ type Profissional = {
   especialidade: string | null;
   whatsapp: string | null;
   cpf: string | null;
+  crm: string | null;
   anos_experiencia: number | null;
   foto_url: string | null;
   ativo: boolean;
@@ -24,10 +26,11 @@ type FormState = {
   especialidade: string;
   whatsapp: string;
   cpf: string;
+  crm: string;
   anos_experiencia: string;
 };
 
-const emptyForm: FormState = { nome: "", especialidade: "", whatsapp: "", cpf: "", anos_experiencia: "" };
+const emptyForm: FormState = { nome: "", especialidade: "", whatsapp: "", cpf: "", crm: "", anos_experiencia: "" };
 const SAVE_TIMEOUT_MS = 15000;
 
 async function withTimeout<T>(promise: PromiseLike<T>, message: string): Promise<T> {
@@ -108,6 +111,7 @@ export default function ProfissionaisPage() {
       especialidade: p.especialidade ?? "",
       whatsapp: p.whatsapp ?? "",
       cpf: p.cpf ?? "",
+      crm: p.crm ?? "",
       anos_experiencia: p.anos_experiencia != null ? String(p.anos_experiencia) : "",
     });
     setFotoFile(null);
@@ -156,6 +160,7 @@ export default function ProfissionaisPage() {
         especialidade: form.especialidade || null,
         whatsapp: form.whatsapp || null,
         cpf: form.cpf || null,
+        crm: form.crm.trim() || null,
         anos_experiencia: form.anos_experiencia ? Number(form.anos_experiencia) : null,
         foto_url,
       };
@@ -272,6 +277,16 @@ export default function ProfissionaisPage() {
                     {copiedLinkId === p.id ? <Check size={15} /> : <Link2 size={15} />}
                   </button>
                 )}
+                <Link
+                  href={`/profissionais/${p.id}`}
+                  className="iconButton"
+                  title="Ver relatório"
+                  aria-label="Ver relatório"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ textDecoration: "none" }}
+                >
+                  <BarChart3 size={15} />
+                </Link>
                 <button
                   className="iconButton"
                   onClick={(e) => { e.stopPropagation(); openEdit(p); }}
@@ -334,8 +349,8 @@ export default function ProfissionaisPage() {
                 <div className="formRow"><label>CPF</label><input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" /></div>
               </div>
               <div className="formRow" style={{ maxWidth: 180 }}>
-                <label>Anos de experiência</label>
-                <input type="number" min={0} max={60} value={form.anos_experiencia} onChange={(e) => setForm({ ...form, anos_experiencia: e.target.value })} placeholder="Ex.: 5" />
+                <label>CRM</label>
+                <input type="text" value={form.crm} onChange={(e) => setForm({ ...form, crm: e.target.value })} placeholder="CRM-UF 123456" />
               </div>
             </div>
             {error && <div className="onboardingError">{error}</div>}
@@ -395,6 +410,13 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
             </div>
           )}
 
+          {p.crm && (
+            <div className="profpopupInfoRow">
+              <Award size={15} />
+              <span>CRM {p.crm}</span>
+            </div>
+          )}
+
           {/* Booking link row */}
           {bookingPath && (
             <div className="profpopupLink">
@@ -420,6 +442,9 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
         {/* Footer */}
         <div className="profpopupFooter">
           <button className="secondaryButton" onClick={onClose}>Fechar</button>
+          <Link href={`/profissionais/${p.id}`} className="secondaryButton" style={{ textDecoration: "none" }} onClick={onClose}>
+            <BarChart3 size={14} /> Relatório
+          </Link>
           <button className="primaryButton" onClick={onEdit}>Editar profissional</button>
         </div>
       </div>

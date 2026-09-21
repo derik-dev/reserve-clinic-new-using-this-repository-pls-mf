@@ -1,0 +1,373 @@
+extend type Query {
+  """
+  ✨ Look up a single `Configuracao` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  configuracao(
+    """
+    The key used to identify the object.
+    """
+    key: Configuracao_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Configuracao_FirstRow
+  ): Configuracao @fdc_generated(from: "Configuracao", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Consulta` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  consulta(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Consulta_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Consulta_FirstRow
+  ): Consulta @fdc_generated(from: "Consulta", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `DisponibilidadeSemanal` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  disponibilidadeSemanal(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: DisponibilidadeSemanal_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: DisponibilidadeSemanal_FirstRow
+  ): DisponibilidadeSemanal @fdc_generated(from: "DisponibilidadeSemanal", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Excecao` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  excecao(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Excecao_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Excecao_FirstRow
+  ): Excecao @fdc_generated(from: "Excecao", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Paciente` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  paciente(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Paciente_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Paciente_FirstRow
+  ): Paciente @fdc_generated(from: "Paciente", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Perfil` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  perfil(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Perfil_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Perfil_FirstRow
+  ): Perfil @fdc_generated(from: "Perfil", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Profissional` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  profissional(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Profissional_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Profissional_FirstRow
+  ): Profissional @fdc_generated(from: "Profissional", purpose: QUERY_SINGLE)
+  """
+  ✨ List `Configuracao` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  configuracoes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Configuracao_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Configuracao_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Configuracao_Having
+  ): [Configuracao!]! @fdc_generated(from: "Configuracao", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Consulta` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  consultas(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Consulta_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Consulta_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Consulta_Having
+  ): [Consulta!]! @fdc_generated(from: "Consulta", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `DisponibilidadeSemanal` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  disponibilidadesSemanais(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: DisponibilidadeSemanal_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [DisponibilidadeSemanal_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: DisponibilidadeSemanal_Having
+  ): [DisponibilidadeSemanal!]! @fdc_generated(from: "DisponibilidadeSemanal", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Excecao` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  excecoes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Excecao_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Excecao_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Excecao_Having
+  ): [Excecao!]! @fdc_generated(from: "Excecao", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Paciente` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  pacientes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Paciente_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Paciente_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Paciente_Having
+  ): [Paciente!]! @fdc_generated(from: "Paciente", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Perfil` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  perfis(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Perfil_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Perfil_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Perfil_Having
+  ): [Perfil!]! @fdc_generated(from: "Perfil", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Profissional` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  profissionais(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Profissional_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Profissional_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Profissional_Having
+  ): [Profissional!]! @fdc_generated(from: "Profissional", purpose: QUERY_MULTIPLE)
+}

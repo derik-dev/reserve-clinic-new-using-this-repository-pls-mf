@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CalendarX, ChevronDown, Download, Plus, Search, Trash2, X, Clock, User, Stethoscope, BanknoteIcon } from "lucide-react";
+import { CalendarDays, CalendarX, ChevronDown, Download, Plus, Search, Trash2, X, Clock, User, Stethoscope, BanknoteIcon, ArrowUpDown } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -66,7 +66,11 @@ export default function ConsultasPage() {
   const [showPeriodo, setShowPeriodo] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
+  const [highlightNew, setHighlightNew] = useState(true);
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [showSort, setShowSort] = useState(false);
   const periodoRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
@@ -74,7 +78,7 @@ export default function ConsultasPage() {
     try {
       const [cs, ps, pr] = await Promise.race([
         Promise.all([
-          supabase.from("consultas").select("*").order("data_hora", { ascending: true }),
+          supabase.from("consultas").select("*").order("created_at", { ascending: false }),
           supabase.from("pacientes").select("*").eq("status", "ativo").order("nome"),
           supabase.from("profissionais").select("id, nome, especialidade").eq("ativo", true).order("nome"),
         ]),
@@ -94,6 +98,8 @@ export default function ConsultasPage() {
   }
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { const t = setTimeout(() => setHighlightNew(false), 2000); return () => clearTimeout(t); }, []);
+  useEffect(() => { try { localStorage.setItem("consultas-seen-at", new Date().toISOString()); } catch {} }, []);
 
   useEffect(() => {
     if (searchParams.get("nova") === "1") {
@@ -147,8 +153,13 @@ export default function ConsultasPage() {
       r = r.filter(c => { const d = new Date(c.data_hora); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); });
     }
     if (statusFiltro !== "todos") r = r.filter(c => c.status === statusFiltro);
+    r = [...r].sort((a, b) => {
+      const ta = new Date(a.created_at).getTime();
+      const tb = new Date(b.created_at).getTime();
+      return sortOrder === "desc" ? tb - ta : ta - tb;
+    });
     return r;
-  }, [consultas, query, periodo, statusFiltro, today]);
+  }, [consultas, query, periodo, statusFiltro, today, sortOrder]);
 
   function openEdit(c: Consulta) {
     const dt = new Date(c.data_hora);
@@ -273,6 +284,17 @@ export default function ConsultasPage() {
         <div className="consultasTabsSep" />
         {/* Toolbar inline com as tabs */}
         <label className="consultasSearch"><Search size={15} /><input placeholder="Buscar paciente ou serviço" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+        <div ref={sortRef} style={{ position: "relative" }}>
+          <button className={`dateButton${sortOrder !== "desc" ? " active" : ""}`} onClick={() => setShowSort(v => !v)}>
+            <ArrowUpDown size={15} /> {sortOrder === "desc" ? "Mais recente" : "Mais antiga"} <ChevronDown size={13} />
+          </button>
+          {showSort && (
+            <div className="tableDropdown">
+              <button className={sortOrder === "desc" ? "active" : ""} onClick={() => { setSortOrder("desc"); setShowSort(false); }}>Mais recente primeiro</button>
+              <button className={sortOrder === "asc" ? "active" : ""} onClick={() => { setSortOrder("asc"); setShowSort(false); }}>Mais antiga primeiro</button>
+            </div>
+          )}
+        </div>
         <div ref={periodoRef} style={{ position: "relative", marginLeft: "auto" }}>
           <button className={`dateButton${periodo !== "todos" ? " active" : ""}`} onClick={() => setShowPeriodo(v => !v)}>
             <CalendarDays size={15} /> {PERIODO_LABEL[periodo]} <ChevronDown size={13} />
@@ -312,8 +334,12 @@ export default function ConsultasPage() {
               const when = formatWhen(c.data_hora, today);
               const isAguardando = c.status === "aguardando";
               return (
-                <tr key={c.id} className="rowClickable" onClick={() => setSelectedConsulta(c)}>
-                  <td><strong className={when.isToday ? "isTodayLabel" : ""}>{when.label}</strong><small>{c.duracao_min} min</small></td>
+                <tr key={c.id} className={`rowClickable${isAguardando && highlightNew ? " rowNewAlert" : ""}`} onClick={() => setSelectedConsulta(c)}>
+                  <td>
+                    <strong className={when.isToday ? "isTodayLabel" : ""}>{when.label}</strong>
+                    <small>{c.duracao_min} min</small>
+                    <small style={{ color: "var(--text-subtle)", marginTop: 2 }}>Marcada {formatDate(c.created_at)}</small>
+                  </td>
                   <td><div className="patientCell"><div className="tableAvatar">{initials(c.paciente_nome)}</div><div><strong>{c.paciente_nome}</strong>{c.servico && <small>{c.servico}</small>}</div></div></td>
                   <td>{c.profissional ?? "—"}</td>
                   <td className="valorCell">{formatCurrency(c.valor)}</td>

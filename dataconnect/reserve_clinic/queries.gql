@@ -1,0 +1,165 @@
+# Reserve Clinic read operations.
+
+query GetMeuPerfil @auth(level: USER) {
+  perfil(key: { id_expr: "auth.uid" }) {
+    id
+    nome
+    slug
+    tipo
+    logoUrl
+    corPrimaria
+    corSecundaria
+    telefone
+    emailContato
+    onboardingConcluido
+    pixChave
+    site
+    instagram
+    tiktok
+    valorConsulta
+    createdAt
+  }
+}
+
+query GetPublicPerfilBySlug($slug: String!)
+@auth(level: PUBLIC, insecureReason: "The booking page needs public clinic profile data by slug.") {
+  perfis(where: { slug: { eq: $slug } }, limit: 1) {
+    id
+    nome
+    slug
+    logoUrl
+    corPrimaria
+    corSecundaria
+    telefone
+    emailContato
+    enderecoRua
+    enderecoNumero
+    enderecoCidade
+    enderecoUf
+    pixChave
+    valorConsulta
+  }
+}
+
+query GetPublicConfiguracao($perfilId: String!)
+@auth(level: PUBLIC, insecureReason: "The booking page needs public opening hours for the selected clinic.") {
+  configuracao(key: { perfilId: $perfilId }) {
+    agendaConfig
+    duracaoAtendimentoMin
+    tipoPagamento
+    valorAtendimento
+    valorSinal
+    antecedenciaMinimaHoras
+  }
+}
+
+query ListPublicProfissionais($perfilId: String!)
+@auth(level: PUBLIC, insecureReason: "The booking page lists active professionals for the selected clinic.") {
+  profissionais(
+    where: { perfilId: { eq: $perfilId }, ativo: { eq: true } }
+    orderBy: [{ nome: ASC }]
+  ) {
+    id
+    nome
+    especialidade
+    fotoUrl
+    valorConsulta
+  }
+}
+
+query ListPublicBusyConsultas($perfilId: String!, $from: Timestamp!, $to: Timestamp!)
+@auth(level: PUBLIC, insecureReason: "The booking page checks occupied slots before creating a booking.") {
+  consultas(
+    where: {
+      perfilId: { eq: $perfilId }
+      dataHora: { ge: $from, le: $to }
+      status: { nin: ["cancelada"] }
+    }
+    orderBy: [{ dataHora: ASC }]
+  ) {
+    id
+    dataHora
+    duracaoMin
+    profissionalId
+  }
+}
+
+query GetMinhaConfiguracao @auth(level: USER) {
+  configuracao(key: { perfilId_expr: "auth.uid" }) {
+    perfilId
+    agendaConfig
+    duracaoAtendimentoMin
+    tipoPagamento
+    valorAtendimento
+    valorSinal
+    antecedenciaMinimaHoras
+    qrCodeManualUrl
+    chavePixManual
+  }
+}
+
+query ListMeusPacientes @auth(level: USER) {
+  pacientes(
+    where: { perfilId: { eq_expr: "auth.uid" } }
+    orderBy: [{ createdAt: DESC }]
+  ) {
+    id
+    perfilId
+    nome
+    telefone
+    email
+    cpf
+    dataNascimento
+    observacoes
+    status
+    createdAt
+  }
+}
+
+query ListMinhasConsultas($from: Timestamp, $to: Timestamp) @auth(level: USER) {
+  consultas(
+    where: {
+      perfilId: { eq_expr: "auth.uid" }
+      dataHora: { ge: $from, le: $to }
+    }
+    orderBy: [{ dataHora: ASC }]
+  ) {
+    id
+    perfilId
+    pacienteId
+    pacienteNome
+    pacienteTelefone
+    pacienteEmail
+    dataHora
+    duracaoMin
+    servico
+    profissional
+    profissionalId
+    valor
+    status
+    pixId
+    metodoPagamento
+    observacoes
+    origem
+    createdAt
+  }
+}
+
+query ListMeusProfissionais @auth(level: USER) {
+  profissionais(
+    where: { perfilId: { eq_expr: "auth.uid" } }
+    orderBy: [{ nome: ASC }]
+  ) {
+    id
+    perfilId
+    nome
+    especialidade
+    whatsapp
+    cpf
+    anosExperiencia
+    fotoUrl
+    ativo
+    valorConsulta
+    createdAt
+  }
+}

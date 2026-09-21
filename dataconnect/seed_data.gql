@@ -1,0 +1,68 @@
+mutation @transaction {
+  perfil_insert(data: {
+    id: "demo-clinic-owner"
+    nome: "Clinica Demo"
+    slug: "clinica-demo"
+    tipo: "clinica"
+    telefone: "(24) 99999-0000"
+    emailContato: "contato@clinicademo.com.br"
+    enderecoRua: "Rua das Flores"
+    enderecoNumero: "100"
+    enderecoCidade: "Macae"
+    enderecoUf: "RJ"
+    onboardingConcluido: true
+    pixChave: "pix-demo@clinicademo.com.br"
+    valorConsulta: 150
+  })
+  configuracao_insert(data: {
+    perfilId: "demo-clinic-owner"
+    agendaConfig: {
+      dias: {
+        seg: { aberto: true, inicio: "08:00", fim: "18:00" }
+        ter: { aberto: true, inicio: "08:00", fim: "18:00" }
+        qua: { aberto: true, inicio: "08:00", fim: "18:00" }
+        qui: { aberto: true, inicio: "08:00", fim: "18:00" }
+        sex: { aberto: true, inicio: "08:00", fim: "18:00" }
+        sab: { aberto: false, inicio: "08:00", fim: "13:00" }
+        dom: { aberto: false, inicio: "08:00", fim: "13:00" }
+      }
+      feriados: []
+      profissionais: []
+      duracao_min: 60
+      disponibilidade: {}
+    }
+  })
+  profissional_insert(data: {
+    id: "550e8400-e29b-41d4-a716-446655440010"
+    perfilId: "demo-clinic-owner"
+    nome: "Dra. Ana Lima"
+    especialidade: "Fonoaudiologia"
+    whatsapp: "(24) 99999-1111"
+    ativo: true
+    valorConsulta: 180
+  })
+  paciente_insert(data: {
+    id: "550e8400-e29b-41d4-a716-446655440020"
+    perfilId: "demo-clinic-owner"
+    nome: "Maria Souza"
+    telefone: "(24) 98888-7777"
+    email: "maria@example.com"
+    status: "ativo"
+  })
+  consulta_insert(data: {
+    id: "550e8400-e29b-41d4-a716-446655440030"
+    perfilId: "demo-clinic-owner"
+    pacienteId: "550e8400-e29b-41d4-a716-446655440020"
+    pacienteNome: "Maria Souza"
+    pacienteTelefone: "(24) 98888-7777"
+    pacienteEmail: "maria@example.com"
+    dataHora: "2026-09-16T13:00:00.000Z"
+    duracaoMin: 60
+    servico: "Consulta inicial"
+    profissional: "Dra. Ana Lima"
+    profissionalId: "550e8400-e29b-41d4-a716-446655440010"
+    valor: 180
+    status: "confirmada"
+    origem: "painel"
+  })
+}

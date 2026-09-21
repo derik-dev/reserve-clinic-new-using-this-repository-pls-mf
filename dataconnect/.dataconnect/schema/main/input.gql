@@ -1,0 +1,3451 @@
+"""
+✨ `Configuracao_KeyOutput` returns the primary key fields of table type `Configuracao`.
+
+It has the same format as `Configuracao_Key`, but is only used as mutation return value.
+"""
+scalar Configuracao_KeyOutput
+"""
+✨ `Consulta_KeyOutput` returns the primary key fields of table type `Consulta`.
+
+It has the same format as `Consulta_Key`, but is only used as mutation return value.
+"""
+scalar Consulta_KeyOutput
+"""
+✨ `DisponibilidadeSemanal_KeyOutput` returns the primary key fields of table type `DisponibilidadeSemanal`.
+
+It has the same format as `DisponibilidadeSemanal_Key`, but is only used as mutation return value.
+"""
+scalar DisponibilidadeSemanal_KeyOutput
+"""
+✨ `Excecao_KeyOutput` returns the primary key fields of table type `Excecao`.
+
+It has the same format as `Excecao_Key`, but is only used as mutation return value.
+"""
+scalar Excecao_KeyOutput
+"""
+✨ `Paciente_KeyOutput` returns the primary key fields of table type `Paciente`.
+
+It has the same format as `Paciente_Key`, but is only used as mutation return value.
+"""
+scalar Paciente_KeyOutput
+"""
+✨ `Perfil_KeyOutput` returns the primary key fields of table type `Perfil`.
+
+It has the same format as `Perfil_Key`, but is only used as mutation return value.
+"""
+scalar Perfil_KeyOutput
+"""
+✨ `Profissional_KeyOutput` returns the primary key fields of table type `Profissional`.
+
+It has the same format as `Profissional_Key`, but is only used as mutation return value.
+"""
+scalar Profissional_KeyOutput
+"""
+✨ Generated data input type for table 'Configuracao'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Configuracao_Data {
+  """
+  ✨ Generated from Field `Configuracao`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `Configuracao`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig` of type `Any!`
+  """
+  agendaConfig: Any
+  """
+  ✨ `_expr` server value variant of `agendaConfig` (✨ Generated from Field `Configuracao`.`agendaConfig` of type `Any!`)
+  """
+  agendaConfig_expr: Any_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras` of type `Int`
+  """
+  antecedenciaMinimaHoras: Int
+  """
+  ✨ `_expr` server value variant of `antecedenciaMinimaHoras` (✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras` of type `Int`)
+  """
+  antecedenciaMinimaHoras_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `antecedenciaMinimaHoras` (✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras` of type `Int`)
+  """
+  antecedenciaMinimaHoras_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`chavePixManual` of type `String`
+  """
+  chavePixManual: String
+  """
+  ✨ `_expr` server value variant of `chavePixManual` (✨ Generated from Field `Configuracao`.`chavePixManual` of type `String`)
+  """
+  chavePixManual_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin` of type `Int`
+  """
+  duracaoAtendimentoMin: Int
+  """
+  ✨ `_expr` server value variant of `duracaoAtendimentoMin` (✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin` of type `Int`)
+  """
+  duracaoAtendimentoMin_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `duracaoAtendimentoMin` (✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin` of type `Int`)
+  """
+  duracaoAtendimentoMin_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`qrCodeManualUrl` of type `String`
+  """
+  qrCodeManualUrl: String
+  """
+  ✨ `_expr` server value variant of `qrCodeManualUrl` (✨ Generated from Field `Configuracao`.`qrCodeManualUrl` of type `String`)
+  """
+  qrCodeManualUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`tipoPagamento` of type `String`
+  """
+  tipoPagamento: String
+  """
+  ✨ `_expr` server value variant of `tipoPagamento` (✨ Generated from Field `Configuracao`.`tipoPagamento` of type `String`)
+  """
+  tipoPagamento_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento` of type `Float`
+  """
+  valorAtendimento: Float
+  """
+  ✨ `_expr` server value variant of `valorAtendimento` (✨ Generated from Field `Configuracao`.`valorAtendimento` of type `Float`)
+  """
+  valorAtendimento_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `valorAtendimento` (✨ Generated from Field `Configuracao`.`valorAtendimento` of type `Float`)
+  """
+  valorAtendimento_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal` of type `Float`
+  """
+  valorSinal: Float
+  """
+  ✨ `_expr` server value variant of `valorSinal` (✨ Generated from Field `Configuracao`.`valorSinal` of type `Float`)
+  """
+  valorSinal_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `valorSinal` (✨ Generated from Field `Configuracao`.`valorSinal` of type `Float`)
+  """
+  valorSinal_update: [Float_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Configuracao'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Configuracao_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Configuracao_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Configuracao_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Configuracao_Filter!]
+  """
+  ✨ Generated from Field `Configuracao`.`perfilId` of type `String!`
+  """
+  perfilId: String_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig` of type `Any!`
+  """
+  agendaConfig: Any_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras` of type `Int`
+  """
+  antecedenciaMinimaHoras: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`chavePixManual` of type `String`
+  """
+  chavePixManual: String_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin` of type `Int`
+  """
+  duracaoAtendimentoMin: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`qrCodeManualUrl` of type `String`
+  """
+  qrCodeManualUrl: String_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`tipoPagamento` of type `String`
+  """
+  tipoPagamento: String_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento` of type `Float`
+  """
+  valorAtendimento: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal` of type `Float`
+  """
+  valorSinal: Float_Filter
+}
+"""
+✨ Generated first-row input type for table 'Configuracao'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Configuracao_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Configuracao_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Configuracao_Filter
+}
+"""
+✨ Generated having input type for table 'Configuracao'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Configuracao_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Configuracao_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Configuracao_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Configuracao_Having!]
+  """
+  ✨ Generated from Field `Configuracao`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig_count` of type `Int!`
+  """
+  agendaConfig_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_count` of type `Int!`
+  """
+  antecedenciaMinimaHoras_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`chavePixManual_count` of type `Int!`
+  """
+  chavePixManual_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_count` of type `Int!`
+  """
+  duracaoAtendimentoMin_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`qrCodeManualUrl_count` of type `Int!`
+  """
+  qrCodeManualUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`tipoPagamento_count` of type `Int!`
+  """
+  tipoPagamento_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_count` of type `Int!`
+  """
+  valorAtendimento_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_count` of type `Int!`
+  """
+  valorSinal_count: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_sum` of type `Int`
+  """
+  antecedenciaMinimaHoras_sum: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_sum` of type `Int`
+  """
+  duracaoAtendimentoMin_sum: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_sum` of type `Float`
+  """
+  valorAtendimento_sum: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_sum` of type `Float`
+  """
+  valorSinal_sum: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_avg` of type `Float`
+  """
+  antecedenciaMinimaHoras_avg: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_avg` of type `Float`
+  """
+  duracaoAtendimentoMin_avg: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_avg` of type `Float`
+  """
+  valorAtendimento_avg: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_avg` of type `Float`
+  """
+  valorSinal_avg: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig_min` of type `Any`
+  """
+  agendaConfig_min: Any_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_min` of type `Int`
+  """
+  antecedenciaMinimaHoras_min: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_min` of type `Int`
+  """
+  duracaoAtendimentoMin_min: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_min` of type `Float`
+  """
+  valorAtendimento_min: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_min` of type `Float`
+  """
+  valorSinal_min: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig_max` of type `Any`
+  """
+  agendaConfig_max: Any_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_max` of type `Int`
+  """
+  antecedenciaMinimaHoras_max: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_max` of type `Int`
+  """
+  duracaoAtendimentoMin_max: Int_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_max` of type `Float`
+  """
+  valorAtendimento_max: Float_Filter
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_max` of type `Float`
+  """
+  valorSinal_max: Float_Filter
+}
+"""
+✨ Generated key input type for table 'Configuracao'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Configuracao_Key {
+  """
+  ✨ Generated from Field `Configuracao`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `Configuracao`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Configuracao'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Configuracao_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Configuracao_Filter
+}
+"""
+✨ Generated order input type for table 'Configuracao'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Configuracao_Order {
+  """
+  ✨ Generated from Field `Configuracao`.`perfilId` of type `String!`
+  """
+  perfilId: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Order
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig` of type `Any!`
+  """
+  agendaConfig: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras` of type `Int`
+  """
+  antecedenciaMinimaHoras: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`chavePixManual` of type `String`
+  """
+  chavePixManual: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin` of type `Int`
+  """
+  duracaoAtendimentoMin: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`qrCodeManualUrl` of type `String`
+  """
+  qrCodeManualUrl: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`tipoPagamento` of type `String`
+  """
+  tipoPagamento: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento` of type `Float`
+  """
+  valorAtendimento: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal` of type `Float`
+  """
+  valorSinal: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig_count` of type `Int!`
+  """
+  agendaConfig_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_count` of type `Int!`
+  """
+  antecedenciaMinimaHoras_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`chavePixManual_count` of type `Int!`
+  """
+  chavePixManual_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_count` of type `Int!`
+  """
+  duracaoAtendimentoMin_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`qrCodeManualUrl_count` of type `Int!`
+  """
+  qrCodeManualUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`tipoPagamento_count` of type `Int!`
+  """
+  tipoPagamento_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_count` of type `Int!`
+  """
+  valorAtendimento_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_count` of type `Int!`
+  """
+  valorSinal_count: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_sum` of type `Int`
+  """
+  antecedenciaMinimaHoras_sum: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_sum` of type `Int`
+  """
+  duracaoAtendimentoMin_sum: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_sum` of type `Float`
+  """
+  valorAtendimento_sum: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_sum` of type `Float`
+  """
+  valorSinal_sum: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_avg` of type `Float`
+  """
+  antecedenciaMinimaHoras_avg: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_avg` of type `Float`
+  """
+  duracaoAtendimentoMin_avg: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_avg` of type `Float`
+  """
+  valorAtendimento_avg: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_avg` of type `Float`
+  """
+  valorSinal_avg: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig_min` of type `Any`
+  """
+  agendaConfig_min: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_min` of type `Int`
+  """
+  antecedenciaMinimaHoras_min: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_min` of type `Int`
+  """
+  duracaoAtendimentoMin_min: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_min` of type `Float`
+  """
+  valorAtendimento_min: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_min` of type `Float`
+  """
+  valorSinal_min: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`agendaConfig_max` of type `Any`
+  """
+  agendaConfig_max: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`antecedenciaMinimaHoras_max` of type `Int`
+  """
+  antecedenciaMinimaHoras_max: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`duracaoAtendimentoMin_max` of type `Int`
+  """
+  duracaoAtendimentoMin_max: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorAtendimento_max` of type `Float`
+  """
+  valorAtendimento_max: OrderDirection
+  """
+  ✨ Generated from Field `Configuracao`.`valorSinal_max` of type `Float`
+  """
+  valorSinal_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Consulta'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Consulta_Data {
+  """
+  ✨ Generated from Field `Consulta`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Consulta`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`pacienteId` of type `UUID`
+  """
+  pacienteId: UUID
+  """
+  ✨ `_expr` server value variant of `pacienteId` (✨ Generated from Field `Consulta`.`pacienteId` of type `UUID`)
+  """
+  pacienteId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `Consulta`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`profissionalId` of type `UUID`
+  """
+  profissionalId: UUID
+  """
+  ✨ `_expr` server value variant of `profissionalId` (✨ Generated from Field `Consulta`.`profissionalId` of type `UUID`)
+  """
+  profissionalId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`paciente` of type `Paciente`
+  """
+  paciente: Paciente_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`profissionalRef` of type `Profissional`
+  """
+  profissionalRef: Profissional_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Consulta`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Consulta`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Consulta`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`dataHora` of type `Timestamp!`
+  """
+  dataHora: Timestamp
+  """
+  ✨ `_expr` server value variant of `dataHora` (✨ Generated from Field `Consulta`.`dataHora` of type `Timestamp!`)
+  """
+  dataHora_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `dataHora` (✨ Generated from Field `Consulta`.`dataHora` of type `Timestamp!`)
+  """
+  dataHora_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `dataHora` (✨ Generated from Field `Consulta`.`dataHora` of type `Timestamp!`)
+  """
+  dataHora_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin` of type `Int!`
+  """
+  duracaoMin: Int
+  """
+  ✨ `_expr` server value variant of `duracaoMin` (✨ Generated from Field `Consulta`.`duracaoMin` of type `Int!`)
+  """
+  duracaoMin_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `duracaoMin` (✨ Generated from Field `Consulta`.`duracaoMin` of type `Int!`)
+  """
+  duracaoMin_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`metodoPagamento` of type `String`
+  """
+  metodoPagamento: String
+  """
+  ✨ `_expr` server value variant of `metodoPagamento` (✨ Generated from Field `Consulta`.`metodoPagamento` of type `String`)
+  """
+  metodoPagamento_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`observacoes` of type `String`
+  """
+  observacoes: String
+  """
+  ✨ `_expr` server value variant of `observacoes` (✨ Generated from Field `Consulta`.`observacoes` of type `String`)
+  """
+  observacoes_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`origem` of type `String!`
+  """
+  origem: String
+  """
+  ✨ `_expr` server value variant of `origem` (✨ Generated from Field `Consulta`.`origem` of type `String!`)
+  """
+  origem_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`pacienteEmail` of type `String`
+  """
+  pacienteEmail: String
+  """
+  ✨ `_expr` server value variant of `pacienteEmail` (✨ Generated from Field `Consulta`.`pacienteEmail` of type `String`)
+  """
+  pacienteEmail_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`pacienteNome` of type `String!`
+  """
+  pacienteNome: String
+  """
+  ✨ `_expr` server value variant of `pacienteNome` (✨ Generated from Field `Consulta`.`pacienteNome` of type `String!`)
+  """
+  pacienteNome_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`pacienteTelefone` of type `String`
+  """
+  pacienteTelefone: String
+  """
+  ✨ `_expr` server value variant of `pacienteTelefone` (✨ Generated from Field `Consulta`.`pacienteTelefone` of type `String`)
+  """
+  pacienteTelefone_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`pixId` of type `String`
+  """
+  pixId: String
+  """
+  ✨ `_expr` server value variant of `pixId` (✨ Generated from Field `Consulta`.`pixId` of type `String`)
+  """
+  pixId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`profissional` of type `String`
+  """
+  profissional: String
+  """
+  ✨ `_expr` server value variant of `profissional` (✨ Generated from Field `Consulta`.`profissional` of type `String`)
+  """
+  profissional_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`servico` of type `String`
+  """
+  servico: String
+  """
+  ✨ `_expr` server value variant of `servico` (✨ Generated from Field `Consulta`.`servico` of type `String`)
+  """
+  servico_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Consulta`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Consulta`.`valor` of type `Float`
+  """
+  valor: Float
+  """
+  ✨ `_expr` server value variant of `valor` (✨ Generated from Field `Consulta`.`valor` of type `Float`)
+  """
+  valor_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `valor` (✨ Generated from Field `Consulta`.`valor` of type `Float`)
+  """
+  valor_update: [Float_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Consulta'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Consulta_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Consulta_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Consulta_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Consulta_Filter!]
+  """
+  ✨ Generated from Field `Consulta`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteId` of type `UUID`
+  """
+  pacienteId: UUID_Filter
+  """
+  ✨ Generated from Field `Consulta`.`perfilId` of type `String!`
+  """
+  perfilId: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`profissionalId` of type `UUID`
+  """
+  profissionalId: UUID_Filter
+  """
+  ✨ Generated from Field `Consulta`.`paciente` of type `Paciente`
+  """
+  paciente: Paciente_Filter
+  """
+  ✨ Generated from Field `Consulta`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Filter
+  """
+  ✨ Generated from Field `Consulta`.`profissionalRef` of type `Profissional`
+  """
+  profissionalRef: Profissional_Filter
+  """
+  ✨ Generated from Field `Consulta`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Consulta`.`dataHora` of type `Timestamp!`
+  """
+  dataHora: Timestamp_Filter
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin` of type `Int!`
+  """
+  duracaoMin: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`metodoPagamento` of type `String`
+  """
+  metodoPagamento: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`observacoes` of type `String`
+  """
+  observacoes: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`origem` of type `String!`
+  """
+  origem: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteEmail` of type `String`
+  """
+  pacienteEmail: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteNome` of type `String!`
+  """
+  pacienteNome: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteTelefone` of type `String`
+  """
+  pacienteTelefone: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pixId` of type `String`
+  """
+  pixId: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`profissional` of type `String`
+  """
+  profissional: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`servico` of type `String`
+  """
+  servico: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Consulta`.`valor` of type `Float`
+  """
+  valor: Float_Filter
+}
+"""
+✨ Generated first-row input type for table 'Consulta'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Consulta_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Consulta_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Consulta_Filter
+}
+"""
+✨ Generated having input type for table 'Consulta'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Consulta_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Consulta_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Consulta_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Consulta_Having!]
+  """
+  ✨ Generated from Field `Consulta`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`dataHora_count` of type `Int!`
+  """
+  dataHora_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_count` of type `Int!`
+  """
+  duracaoMin_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`metodoPagamento_count` of type `Int!`
+  """
+  metodoPagamento_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`observacoes_count` of type `Int!`
+  """
+  observacoes_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`origem_count` of type `Int!`
+  """
+  origem_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteEmail_count` of type `Int!`
+  """
+  pacienteEmail_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteId_count` of type `Int!`
+  """
+  pacienteId_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteNome_count` of type `Int!`
+  """
+  pacienteNome_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pacienteTelefone_count` of type `Int!`
+  """
+  pacienteTelefone_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`pixId_count` of type `Int!`
+  """
+  pixId_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`profissionalId_count` of type `Int!`
+  """
+  profissionalId_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`profissional_count` of type `Int!`
+  """
+  profissional_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`servico_count` of type `Int!`
+  """
+  servico_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`valor_count` of type `Int!`
+  """
+  valor_count: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_sum` of type `Int`
+  """
+  duracaoMin_sum: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`valor_sum` of type `Float`
+  """
+  valor_sum: Float_Filter
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_avg` of type `Float`
+  """
+  duracaoMin_avg: Float_Filter
+  """
+  ✨ Generated from Field `Consulta`.`valor_avg` of type `Float`
+  """
+  valor_avg: Float_Filter
+  """
+  ✨ Generated from Field `Consulta`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Consulta`.`dataHora_min` of type `Timestamp`
+  """
+  dataHora_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_min` of type `Int`
+  """
+  duracaoMin_min: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`valor_min` of type `Float`
+  """
+  valor_min: Float_Filter
+  """
+  ✨ Generated from Field `Consulta`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Consulta`.`dataHora_max` of type `Timestamp`
+  """
+  dataHora_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_max` of type `Int`
+  """
+  duracaoMin_max: Int_Filter
+  """
+  ✨ Generated from Field `Consulta`.`valor_max` of type `Float`
+  """
+  valor_max: Float_Filter
+}
+"""
+✨ Generated key input type for table 'Consulta'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Consulta_Key {
+  """
+  ✨ Generated from Field `Consulta`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Consulta`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Consulta'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Consulta_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Consulta_Filter
+}
+"""
+✨ Generated order input type for table 'Consulta'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Consulta_Order {
+  """
+  ✨ Generated from Field `Consulta`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteId` of type `UUID`
+  """
+  pacienteId: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`perfilId` of type `String!`
+  """
+  perfilId: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`profissionalId` of type `UUID`
+  """
+  profissionalId: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`paciente` of type `Paciente`
+  """
+  paciente: Paciente_Order
+  """
+  ✨ Generated from Field `Consulta`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Order
+  """
+  ✨ Generated from Field `Consulta`.`profissionalRef` of type `Profissional`
+  """
+  profissionalRef: Profissional_Order
+  """
+  ✨ Generated from Field `Consulta`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`dataHora` of type `Timestamp!`
+  """
+  dataHora: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin` of type `Int!`
+  """
+  duracaoMin: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`metodoPagamento` of type `String`
+  """
+  metodoPagamento: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`observacoes` of type `String`
+  """
+  observacoes: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`origem` of type `String!`
+  """
+  origem: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteEmail` of type `String`
+  """
+  pacienteEmail: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteNome` of type `String!`
+  """
+  pacienteNome: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteTelefone` of type `String`
+  """
+  pacienteTelefone: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pixId` of type `String`
+  """
+  pixId: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`profissional` of type `String`
+  """
+  profissional: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`servico` of type `String`
+  """
+  servico: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`valor` of type `Float`
+  """
+  valor: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`dataHora_count` of type `Int!`
+  """
+  dataHora_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_count` of type `Int!`
+  """
+  duracaoMin_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`metodoPagamento_count` of type `Int!`
+  """
+  metodoPagamento_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`observacoes_count` of type `Int!`
+  """
+  observacoes_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`origem_count` of type `Int!`
+  """
+  origem_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteEmail_count` of type `Int!`
+  """
+  pacienteEmail_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteId_count` of type `Int!`
+  """
+  pacienteId_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteNome_count` of type `Int!`
+  """
+  pacienteNome_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pacienteTelefone_count` of type `Int!`
+  """
+  pacienteTelefone_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`pixId_count` of type `Int!`
+  """
+  pixId_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`profissionalId_count` of type `Int!`
+  """
+  profissionalId_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`profissional_count` of type `Int!`
+  """
+  profissional_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`servico_count` of type `Int!`
+  """
+  servico_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`valor_count` of type `Int!`
+  """
+  valor_count: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_sum` of type `Int`
+  """
+  duracaoMin_sum: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`valor_sum` of type `Float`
+  """
+  valor_sum: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_avg` of type `Float`
+  """
+  duracaoMin_avg: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`valor_avg` of type `Float`
+  """
+  valor_avg: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`dataHora_min` of type `Timestamp`
+  """
+  dataHora_min: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_min` of type `Int`
+  """
+  duracaoMin_min: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`valor_min` of type `Float`
+  """
+  valor_min: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`dataHora_max` of type `Timestamp`
+  """
+  dataHora_max: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`duracaoMin_max` of type `Int`
+  """
+  duracaoMin_max: OrderDirection
+  """
+  ✨ Generated from Field `Consulta`.`valor_max` of type `Float`
+  """
+  valor_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'DisponibilidadeSemanal'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input DisponibilidadeSemanal_Data {
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `DisponibilidadeSemanal`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `DisponibilidadeSemanal`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana` of type `Int!`
+  """
+  diaSemana: Int
+  """
+  ✨ `_expr` server value variant of `diaSemana` (✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana` of type `Int!`)
+  """
+  diaSemana_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `diaSemana` (✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana` of type `Int!`)
+  """
+  diaSemana_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaFim` of type `String!`
+  """
+  horaFim: String
+  """
+  ✨ `_expr` server value variant of `horaFim` (✨ Generated from Field `DisponibilidadeSemanal`.`horaFim` of type `String!`)
+  """
+  horaFim_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaInicio` of type `String!`
+  """
+  horaInicio: String
+  """
+  ✨ `_expr` server value variant of `horaInicio` (✨ Generated from Field `DisponibilidadeSemanal`.`horaInicio` of type `String!`)
+  """
+  horaInicio_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'DisponibilidadeSemanal'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input DisponibilidadeSemanal_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [DisponibilidadeSemanal_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: DisponibilidadeSemanal_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [DisponibilidadeSemanal_Filter!]
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfilId` of type `String!`
+  """
+  perfilId: String_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana` of type `Int!`
+  """
+  diaSemana: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaFim` of type `String!`
+  """
+  horaFim: String_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaInicio` of type `String!`
+  """
+  horaInicio: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'DisponibilidadeSemanal'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input DisponibilidadeSemanal_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [DisponibilidadeSemanal_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: DisponibilidadeSemanal_Filter
+}
+"""
+✨ Generated having input type for table 'DisponibilidadeSemanal'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input DisponibilidadeSemanal_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [DisponibilidadeSemanal_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: DisponibilidadeSemanal_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [DisponibilidadeSemanal_Having!]
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_count` of type `Int!`
+  """
+  diaSemana_count: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaFim_count` of type `Int!`
+  """
+  horaFim_count: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaInicio_count` of type `Int!`
+  """
+  horaInicio_count: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_sum` of type `Int`
+  """
+  diaSemana_sum: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_avg` of type `Float`
+  """
+  diaSemana_avg: Float_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_min` of type `Int`
+  """
+  diaSemana_min: Int_Filter
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_max` of type `Int`
+  """
+  diaSemana_max: Int_Filter
+}
+"""
+✨ Generated key input type for table 'DisponibilidadeSemanal'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input DisponibilidadeSemanal_Key {
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `DisponibilidadeSemanal`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'DisponibilidadeSemanal'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input DisponibilidadeSemanal_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: DisponibilidadeSemanal_Filter
+}
+"""
+✨ Generated order input type for table 'DisponibilidadeSemanal'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input DisponibilidadeSemanal_Order {
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfilId` of type `String!`
+  """
+  perfilId: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Order
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana` of type `Int!`
+  """
+  diaSemana: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaFim` of type `String!`
+  """
+  horaFim: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaInicio` of type `String!`
+  """
+  horaInicio: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_count` of type `Int!`
+  """
+  diaSemana_count: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaFim_count` of type `Int!`
+  """
+  horaFim_count: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`horaInicio_count` of type `Int!`
+  """
+  horaInicio_count: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_sum` of type `Int`
+  """
+  diaSemana_sum: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_avg` of type `Float`
+  """
+  diaSemana_avg: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_min` of type `Int`
+  """
+  diaSemana_min: OrderDirection
+  """
+  ✨ Generated from Field `DisponibilidadeSemanal`.`diaSemana_max` of type `Int`
+  """
+  diaSemana_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Excecao'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Excecao_Data {
+  """
+  ✨ Generated from Field `Excecao`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Excecao`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Excecao`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `Excecao`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Excecao`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Excecao`.`data` of type `Date!`
+  """
+  data: Date
+  """
+  ✨ `_date` server value variant of `data` (✨ Generated from Field `Excecao`.`data` of type `Date!`)
+  """
+  data_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `data` (✨ Generated from Field `Excecao`.`data` of type `Date!`)
+  """
+  data_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `data` (✨ Generated from Field `Excecao`.`data` of type `Date!`)
+  """
+  data_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Excecao`.`horaFim` of type `String`
+  """
+  horaFim: String
+  """
+  ✨ `_expr` server value variant of `horaFim` (✨ Generated from Field `Excecao`.`horaFim` of type `String`)
+  """
+  horaFim_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Excecao`.`horaInicio` of type `String`
+  """
+  horaInicio: String
+  """
+  ✨ `_expr` server value variant of `horaInicio` (✨ Generated from Field `Excecao`.`horaInicio` of type `String`)
+  """
+  horaInicio_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Excecao`.`tipo` of type `String!`
+  """
+  tipo: String
+  """
+  ✨ `_expr` server value variant of `tipo` (✨ Generated from Field `Excecao`.`tipo` of type `String!`)
+  """
+  tipo_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Excecao'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Excecao_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Excecao_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Excecao_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Excecao_Filter!]
+  """
+  ✨ Generated from Field `Excecao`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Excecao`.`perfilId` of type `String!`
+  """
+  perfilId: String_Filter
+  """
+  ✨ Generated from Field `Excecao`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Filter
+  """
+  ✨ Generated from Field `Excecao`.`data` of type `Date!`
+  """
+  data: Date_Filter
+  """
+  ✨ Generated from Field `Excecao`.`horaFim` of type `String`
+  """
+  horaFim: String_Filter
+  """
+  ✨ Generated from Field `Excecao`.`horaInicio` of type `String`
+  """
+  horaInicio: String_Filter
+  """
+  ✨ Generated from Field `Excecao`.`tipo` of type `String!`
+  """
+  tipo: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'Excecao'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Excecao_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Excecao_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Excecao_Filter
+}
+"""
+✨ Generated having input type for table 'Excecao'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Excecao_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Excecao_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Excecao_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Excecao_Having!]
+  """
+  ✨ Generated from Field `Excecao`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`data_count` of type `Int!`
+  """
+  data_count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`horaFim_count` of type `Int!`
+  """
+  horaFim_count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`horaInicio_count` of type `Int!`
+  """
+  horaInicio_count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`tipo_count` of type `Int!`
+  """
+  tipo_count: Int_Filter
+  """
+  ✨ Generated from Field `Excecao`.`data_min` of type `Date`
+  """
+  data_min: Date_Filter
+  """
+  ✨ Generated from Field `Excecao`.`data_max` of type `Date`
+  """
+  data_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'Excecao'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Excecao_Key {
+  """
+  ✨ Generated from Field `Excecao`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Excecao`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Excecao'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Excecao_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Excecao_Filter
+}
+"""
+✨ Generated order input type for table 'Excecao'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Excecao_Order {
+  """
+  ✨ Generated from Field `Excecao`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`perfilId` of type `String!`
+  """
+  perfilId: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Order
+  """
+  ✨ Generated from Field `Excecao`.`data` of type `Date!`
+  """
+  data: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`horaFim` of type `String`
+  """
+  horaFim: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`horaInicio` of type `String`
+  """
+  horaInicio: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`tipo` of type `String!`
+  """
+  tipo: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`data_count` of type `Int!`
+  """
+  data_count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`horaFim_count` of type `Int!`
+  """
+  horaFim_count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`horaInicio_count` of type `Int!`
+  """
+  horaInicio_count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`tipo_count` of type `Int!`
+  """
+  tipo_count: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`data_min` of type `Date`
+  """
+  data_min: OrderDirection
+  """
+  ✨ Generated from Field `Excecao`.`data_max` of type `Date`
+  """
+  data_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Paciente'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Paciente_Data {
+  """
+  ✨ Generated from Field `Paciente`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Paciente`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `Paciente`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`cpf` of type `String`
+  """
+  cpf: String
+  """
+  ✨ `_expr` server value variant of `cpf` (✨ Generated from Field `Paciente`.`cpf` of type `String`)
+  """
+  cpf_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Paciente`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Paciente`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Paciente`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento` of type `Date`
+  """
+  dataNascimento: Date
+  """
+  ✨ `_date` server value variant of `dataNascimento` (✨ Generated from Field `Paciente`.`dataNascimento` of type `Date`)
+  """
+  dataNascimento_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `dataNascimento` (✨ Generated from Field `Paciente`.`dataNascimento` of type `Date`)
+  """
+  dataNascimento_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `dataNascimento` (✨ Generated from Field `Paciente`.`dataNascimento` of type `Date`)
+  """
+  dataNascimento_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`email` of type `String`
+  """
+  email: String
+  """
+  ✨ `_expr` server value variant of `email` (✨ Generated from Field `Paciente`.`email` of type `String`)
+  """
+  email_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`nome` of type `String!`
+  """
+  nome: String
+  """
+  ✨ `_expr` server value variant of `nome` (✨ Generated from Field `Paciente`.`nome` of type `String!`)
+  """
+  nome_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`observacoes` of type `String`
+  """
+  observacoes: String
+  """
+  ✨ `_expr` server value variant of `observacoes` (✨ Generated from Field `Paciente`.`observacoes` of type `String`)
+  """
+  observacoes_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Paciente`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`telefone` of type `String`
+  """
+  telefone: String
+  """
+  ✨ `_expr` server value variant of `telefone` (✨ Generated from Field `Paciente`.`telefone` of type `String`)
+  """
+  telefone_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Paciente`.`consultas_on_paciente` of type `[Consulta!]!`
+  """
+  consultas_on_paciente: [Consulta_Data!]
+}
+"""
+✨ Generated filter input type for table 'Paciente'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Paciente_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Paciente_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Paciente_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Paciente_Filter!]
+  """
+  ✨ Generated from Field `Paciente`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Paciente`.`perfilId` of type `String!`
+  """
+  perfilId: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Filter
+  """
+  ✨ Generated from Field `Paciente`.`cpf` of type `String`
+  """
+  cpf: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento` of type `Date`
+  """
+  dataNascimento: Date_Filter
+  """
+  ✨ Generated from Field `Paciente`.`email` of type `String`
+  """
+  email: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`nome` of type `String!`
+  """
+  nome: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`observacoes` of type `String`
+  """
+  observacoes: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`status` of type `String!`
+  """
+  status: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`telefone` of type `String`
+  """
+  telefone: String_Filter
+  """
+  ✨ Generated from Field `Paciente`.`consultas_on_paciente` of type `[Consulta!]!`
+  """
+  consultas_on_paciente: Consulta_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Paciente'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Paciente_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Paciente_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Paciente_Filter
+}
+"""
+✨ Generated having input type for table 'Paciente'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Paciente_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Paciente_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Paciente_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Paciente_Having!]
+  """
+  ✨ Generated from Field `Paciente`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`cpf_count` of type `Int!`
+  """
+  cpf_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento_count` of type `Int!`
+  """
+  dataNascimento_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`email_count` of type `Int!`
+  """
+  email_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`nome_count` of type `Int!`
+  """
+  nome_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`observacoes_count` of type `Int!`
+  """
+  observacoes_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`telefone_count` of type `Int!`
+  """
+  telefone_count: Int_Filter
+  """
+  ✨ Generated from Field `Paciente`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento_min` of type `Date`
+  """
+  dataNascimento_min: Date_Filter
+  """
+  ✨ Generated from Field `Paciente`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento_max` of type `Date`
+  """
+  dataNascimento_max: Date_Filter
+}
+"""
+✨ Generated key input type for table 'Paciente'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Paciente_Key {
+  """
+  ✨ Generated from Field `Paciente`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Paciente`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Paciente'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Paciente_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Paciente_Filter
+}
+"""
+✨ Generated order input type for table 'Paciente'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Paciente_Order {
+  """
+  ✨ Generated from Field `Paciente`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`perfilId` of type `String!`
+  """
+  perfilId: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Order
+  """
+  ✨ Generated from Field `Paciente`.`cpf` of type `String`
+  """
+  cpf: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento` of type `Date`
+  """
+  dataNascimento: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`email` of type `String`
+  """
+  email: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`nome` of type `String!`
+  """
+  nome: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`observacoes` of type `String`
+  """
+  observacoes: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`telefone` of type `String`
+  """
+  telefone: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`cpf_count` of type `Int!`
+  """
+  cpf_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento_count` of type `Int!`
+  """
+  dataNascimento_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`email_count` of type `Int!`
+  """
+  email_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`nome_count` of type `Int!`
+  """
+  nome_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`observacoes_count` of type `Int!`
+  """
+  observacoes_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`telefone_count` of type `Int!`
+  """
+  telefone_count: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento_min` of type `Date`
+  """
+  dataNascimento_min: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Paciente`.`dataNascimento_max` of type `Date`
+  """
+  dataNascimento_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Perfil'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Perfil_Data {
+  """
+  ✨ Generated from Field `Perfil`.`id` of type `String!`
+  """
+  id: String
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Perfil`.`id` of type `String!`)
+  """
+  id_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`asaasApiKey` of type `String`
+  """
+  asaasApiKey: String
+  """
+  ✨ `_expr` server value variant of `asaasApiKey` (✨ Generated from Field `Perfil`.`asaasApiKey` of type `String`)
+  """
+  asaasApiKey_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`asaasContaId` of type `String`
+  """
+  asaasContaId: String
+  """
+  ✨ `_expr` server value variant of `asaasContaId` (✨ Generated from Field `Perfil`.`asaasContaId` of type `String`)
+  """
+  asaasContaId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`asaasWalletId` of type `String`
+  """
+  asaasWalletId: String
+  """
+  ✨ `_expr` server value variant of `asaasWalletId` (✨ Generated from Field `Perfil`.`asaasWalletId` of type `String`)
+  """
+  asaasWalletId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`corPrimaria` of type `String`
+  """
+  corPrimaria: String
+  """
+  ✨ `_expr` server value variant of `corPrimaria` (✨ Generated from Field `Perfil`.`corPrimaria` of type `String`)
+  """
+  corPrimaria_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`corSecundaria` of type `String`
+  """
+  corSecundaria: String
+  """
+  ✨ `_expr` server value variant of `corSecundaria` (✨ Generated from Field `Perfil`.`corSecundaria` of type `String`)
+  """
+  corSecundaria_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`cpfCnpj` of type `String`
+  """
+  cpfCnpj: String
+  """
+  ✨ `_expr` server value variant of `cpfCnpj` (✨ Generated from Field `Perfil`.`cpfCnpj` of type `String`)
+  """
+  cpfCnpj_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Perfil`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Perfil`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Perfil`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`emailContato` of type `String`
+  """
+  emailContato: String
+  """
+  ✨ `_expr` server value variant of `emailContato` (✨ Generated from Field `Perfil`.`emailContato` of type `String`)
+  """
+  emailContato_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`enderecoBairro` of type `String`
+  """
+  enderecoBairro: String
+  """
+  ✨ `_expr` server value variant of `enderecoBairro` (✨ Generated from Field `Perfil`.`enderecoBairro` of type `String`)
+  """
+  enderecoBairro_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCep` of type `String`
+  """
+  enderecoCep: String
+  """
+  ✨ `_expr` server value variant of `enderecoCep` (✨ Generated from Field `Perfil`.`enderecoCep` of type `String`)
+  """
+  enderecoCep_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCidade` of type `String`
+  """
+  enderecoCidade: String
+  """
+  ✨ `_expr` server value variant of `enderecoCidade` (✨ Generated from Field `Perfil`.`enderecoCidade` of type `String`)
+  """
+  enderecoCidade_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`enderecoNumero` of type `String`
+  """
+  enderecoNumero: String
+  """
+  ✨ `_expr` server value variant of `enderecoNumero` (✨ Generated from Field `Perfil`.`enderecoNumero` of type `String`)
+  """
+  enderecoNumero_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`enderecoRua` of type `String`
+  """
+  enderecoRua: String
+  """
+  ✨ `_expr` server value variant of `enderecoRua` (✨ Generated from Field `Perfil`.`enderecoRua` of type `String`)
+  """
+  enderecoRua_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`enderecoUf` of type `String`
+  """
+  enderecoUf: String
+  """
+  ✨ `_expr` server value variant of `enderecoUf` (✨ Generated from Field `Perfil`.`enderecoUf` of type `String`)
+  """
+  enderecoUf_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`instagram` of type `String`
+  """
+  instagram: String
+  """
+  ✨ `_expr` server value variant of `instagram` (✨ Generated from Field `Perfil`.`instagram` of type `String`)
+  """
+  instagram_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`logoUrl` of type `String`
+  """
+  logoUrl: String
+  """
+  ✨ `_expr` server value variant of `logoUrl` (✨ Generated from Field `Perfil`.`logoUrl` of type `String`)
+  """
+  logoUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`nome` of type `String!`
+  """
+  nome: String
+  """
+  ✨ `_expr` server value variant of `nome` (✨ Generated from Field `Perfil`.`nome` of type `String!`)
+  """
+  nome_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`onboardingConcluido` of type `Boolean!`
+  """
+  onboardingConcluido: Boolean
+  """
+  ✨ `_expr` server value variant of `onboardingConcluido` (✨ Generated from Field `Perfil`.`onboardingConcluido` of type `Boolean!`)
+  """
+  onboardingConcluido_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`pixChave` of type `String`
+  """
+  pixChave: String
+  """
+  ✨ `_expr` server value variant of `pixChave` (✨ Generated from Field `Perfil`.`pixChave` of type `String`)
+  """
+  pixChave_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`site` of type `String`
+  """
+  site: String
+  """
+  ✨ `_expr` server value variant of `site` (✨ Generated from Field `Perfil`.`site` of type `String`)
+  """
+  site_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`slug` of type `String!`
+  """
+  slug: String
+  """
+  ✨ `_expr` server value variant of `slug` (✨ Generated from Field `Perfil`.`slug` of type `String!`)
+  """
+  slug_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`telefone` of type `String`
+  """
+  telefone: String
+  """
+  ✨ `_expr` server value variant of `telefone` (✨ Generated from Field `Perfil`.`telefone` of type `String`)
+  """
+  telefone_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`tiktok` of type `String`
+  """
+  tiktok: String
+  """
+  ✨ `_expr` server value variant of `tiktok` (✨ Generated from Field `Perfil`.`tiktok` of type `String`)
+  """
+  tiktok_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`tipo` of type `String`
+  """
+  tipo: String
+  """
+  ✨ `_expr` server value variant of `tipo` (✨ Generated from Field `Perfil`.`tipo` of type `String`)
+  """
+  tipo_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta` of type `Float`
+  """
+  valorConsulta: Float
+  """
+  ✨ `_expr` server value variant of `valorConsulta` (✨ Generated from Field `Perfil`.`valorConsulta` of type `Float`)
+  """
+  valorConsulta_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `valorConsulta` (✨ Generated from Field `Perfil`.`valorConsulta` of type `Float`)
+  """
+  valorConsulta_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Perfil`.`consultas_on_perfil` of type `[Consulta!]!`
+  """
+  consultas_on_perfil: [Consulta_Data!]
+  """
+  ✨ Generated from Field `Perfil`.`disponibilidadesSemanais_on_perfil` of type `[DisponibilidadeSemanal!]!`
+  """
+  disponibilidadesSemanais_on_perfil: [DisponibilidadeSemanal_Data!]
+  """
+  ✨ Generated from Field `Perfil`.`excecoes_on_perfil` of type `[Excecao!]!`
+  """
+  excecoes_on_perfil: [Excecao_Data!]
+  """
+  ✨ Generated from Field `Perfil`.`pacientes_on_perfil` of type `[Paciente!]!`
+  """
+  pacientes_on_perfil: [Paciente_Data!]
+  """
+  ✨ Generated from Field `Perfil`.`profissionais_on_perfil` of type `[Profissional!]!`
+  """
+  profissionais_on_perfil: [Profissional_Data!]
+  """
+  ✨ Generated from Field `Perfil`.`configuracao_on_perfil` of type `Configuracao`
+  """
+  configuracao_on_perfil: Configuracao_Data
+}
+"""
+✨ Generated filter input type for table 'Perfil'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Perfil_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Perfil_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Perfil_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Perfil_Filter!]
+  """
+  ✨ Generated from Field `Perfil`.`id` of type `String!`
+  """
+  id: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`asaasApiKey` of type `String`
+  """
+  asaasApiKey: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`asaasContaId` of type `String`
+  """
+  asaasContaId: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`asaasWalletId` of type `String`
+  """
+  asaasWalletId: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`corPrimaria` of type `String`
+  """
+  corPrimaria: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`corSecundaria` of type `String`
+  """
+  corSecundaria: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`cpfCnpj` of type `String`
+  """
+  cpfCnpj: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Perfil`.`emailContato` of type `String`
+  """
+  emailContato: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoBairro` of type `String`
+  """
+  enderecoBairro: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCep` of type `String`
+  """
+  enderecoCep: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCidade` of type `String`
+  """
+  enderecoCidade: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoNumero` of type `String`
+  """
+  enderecoNumero: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoRua` of type `String`
+  """
+  enderecoRua: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoUf` of type `String`
+  """
+  enderecoUf: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`instagram` of type `String`
+  """
+  instagram: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`logoUrl` of type `String`
+  """
+  logoUrl: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`nome` of type `String!`
+  """
+  nome: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`onboardingConcluido` of type `Boolean!`
+  """
+  onboardingConcluido: Boolean_Filter
+  """
+  ✨ Generated from Field `Perfil`.`pixChave` of type `String`
+  """
+  pixChave: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`site` of type `String`
+  """
+  site: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`slug` of type `String!`
+  """
+  slug: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`telefone` of type `String`
+  """
+  telefone: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`tiktok` of type `String`
+  """
+  tiktok: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`tipo` of type `String`
+  """
+  tipo: String_Filter
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta` of type `Float`
+  """
+  valorConsulta: Float_Filter
+  """
+  ✨ Generated from Field `Perfil`.`consultas_on_perfil` of type `[Consulta!]!`
+  """
+  consultas_on_perfil: Consulta_ListFilter
+  """
+  ✨ Generated from Field `Perfil`.`disponibilidadesSemanais_on_perfil` of type `[DisponibilidadeSemanal!]!`
+  """
+  disponibilidadesSemanais_on_perfil: DisponibilidadeSemanal_ListFilter
+  """
+  ✨ Generated from Field `Perfil`.`excecoes_on_perfil` of type `[Excecao!]!`
+  """
+  excecoes_on_perfil: Excecao_ListFilter
+  """
+  ✨ Generated from Field `Perfil`.`pacientes_on_perfil` of type `[Paciente!]!`
+  """
+  pacientes_on_perfil: Paciente_ListFilter
+  """
+  ✨ Generated from Field `Perfil`.`profissionais_on_perfil` of type `[Profissional!]!`
+  """
+  profissionais_on_perfil: Profissional_ListFilter
+  """
+  ✨ Generated from Field `Perfil`.`configuracao_on_perfil` of type `Configuracao`
+  """
+  configuracao_on_perfil: Configuracao_Filter
+}
+"""
+✨ Generated first-row input type for table 'Perfil'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Perfil_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Perfil_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Perfil_Filter
+}
+"""
+✨ Generated having input type for table 'Perfil'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Perfil_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Perfil_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Perfil_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Perfil_Having!]
+  """
+  ✨ Generated from Field `Perfil`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`asaasApiKey_count` of type `Int!`
+  """
+  asaasApiKey_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`asaasContaId_count` of type `Int!`
+  """
+  asaasContaId_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`asaasWalletId_count` of type `Int!`
+  """
+  asaasWalletId_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`corPrimaria_count` of type `Int!`
+  """
+  corPrimaria_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`corSecundaria_count` of type `Int!`
+  """
+  corSecundaria_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`cpfCnpj_count` of type `Int!`
+  """
+  cpfCnpj_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`emailContato_count` of type `Int!`
+  """
+  emailContato_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoBairro_count` of type `Int!`
+  """
+  enderecoBairro_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCep_count` of type `Int!`
+  """
+  enderecoCep_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCidade_count` of type `Int!`
+  """
+  enderecoCidade_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoNumero_count` of type `Int!`
+  """
+  enderecoNumero_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoRua_count` of type `Int!`
+  """
+  enderecoRua_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`enderecoUf_count` of type `Int!`
+  """
+  enderecoUf_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`instagram_count` of type `Int!`
+  """
+  instagram_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`logoUrl_count` of type `Int!`
+  """
+  logoUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`nome_count` of type `Int!`
+  """
+  nome_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`onboardingConcluido_count` of type `Int!`
+  """
+  onboardingConcluido_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`pixChave_count` of type `Int!`
+  """
+  pixChave_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`site_count` of type `Int!`
+  """
+  site_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`slug_count` of type `Int!`
+  """
+  slug_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`telefone_count` of type `Int!`
+  """
+  telefone_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`tiktok_count` of type `Int!`
+  """
+  tiktok_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`tipo_count` of type `Int!`
+  """
+  tipo_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_count` of type `Int!`
+  """
+  valorConsulta_count: Int_Filter
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_sum` of type `Float`
+  """
+  valorConsulta_sum: Float_Filter
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_avg` of type `Float`
+  """
+  valorConsulta_avg: Float_Filter
+  """
+  ✨ Generated from Field `Perfil`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_min` of type `Float`
+  """
+  valorConsulta_min: Float_Filter
+  """
+  ✨ Generated from Field `Perfil`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_max` of type `Float`
+  """
+  valorConsulta_max: Float_Filter
+}
+"""
+✨ Generated key input type for table 'Perfil'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Perfil_Key {
+  """
+  ✨ Generated from Field `Perfil`.`id` of type `String!`
+  """
+  id: String
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Perfil`.`id` of type `String!`)
+  """
+  id_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Perfil'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Perfil_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Perfil_Filter
+}
+"""
+✨ Generated order input type for table 'Perfil'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Perfil_Order {
+  """
+  ✨ Generated from Field `Perfil`.`id` of type `String!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`asaasApiKey` of type `String`
+  """
+  asaasApiKey: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`asaasContaId` of type `String`
+  """
+  asaasContaId: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`asaasWalletId` of type `String`
+  """
+  asaasWalletId: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`corPrimaria` of type `String`
+  """
+  corPrimaria: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`corSecundaria` of type `String`
+  """
+  corSecundaria: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`cpfCnpj` of type `String`
+  """
+  cpfCnpj: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`emailContato` of type `String`
+  """
+  emailContato: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoBairro` of type `String`
+  """
+  enderecoBairro: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCep` of type `String`
+  """
+  enderecoCep: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCidade` of type `String`
+  """
+  enderecoCidade: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoNumero` of type `String`
+  """
+  enderecoNumero: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoRua` of type `String`
+  """
+  enderecoRua: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoUf` of type `String`
+  """
+  enderecoUf: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`instagram` of type `String`
+  """
+  instagram: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`logoUrl` of type `String`
+  """
+  logoUrl: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`nome` of type `String!`
+  """
+  nome: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`onboardingConcluido` of type `Boolean!`
+  """
+  onboardingConcluido: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`pixChave` of type `String`
+  """
+  pixChave: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`site` of type `String`
+  """
+  site: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`slug` of type `String!`
+  """
+  slug: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`telefone` of type `String`
+  """
+  telefone: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`tiktok` of type `String`
+  """
+  tiktok: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`tipo` of type `String`
+  """
+  tipo: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta` of type `Float`
+  """
+  valorConsulta: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`asaasApiKey_count` of type `Int!`
+  """
+  asaasApiKey_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`asaasContaId_count` of type `Int!`
+  """
+  asaasContaId_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`asaasWalletId_count` of type `Int!`
+  """
+  asaasWalletId_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`corPrimaria_count` of type `Int!`
+  """
+  corPrimaria_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`corSecundaria_count` of type `Int!`
+  """
+  corSecundaria_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`cpfCnpj_count` of type `Int!`
+  """
+  cpfCnpj_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`emailContato_count` of type `Int!`
+  """
+  emailContato_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoBairro_count` of type `Int!`
+  """
+  enderecoBairro_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCep_count` of type `Int!`
+  """
+  enderecoCep_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoCidade_count` of type `Int!`
+  """
+  enderecoCidade_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoNumero_count` of type `Int!`
+  """
+  enderecoNumero_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoRua_count` of type `Int!`
+  """
+  enderecoRua_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`enderecoUf_count` of type `Int!`
+  """
+  enderecoUf_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`instagram_count` of type `Int!`
+  """
+  instagram_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`logoUrl_count` of type `Int!`
+  """
+  logoUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`nome_count` of type `Int!`
+  """
+  nome_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`onboardingConcluido_count` of type `Int!`
+  """
+  onboardingConcluido_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`pixChave_count` of type `Int!`
+  """
+  pixChave_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`site_count` of type `Int!`
+  """
+  site_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`slug_count` of type `Int!`
+  """
+  slug_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`telefone_count` of type `Int!`
+  """
+  telefone_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`tiktok_count` of type `Int!`
+  """
+  tiktok_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`tipo_count` of type `Int!`
+  """
+  tipo_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_count` of type `Int!`
+  """
+  valorConsulta_count: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_sum` of type `Float`
+  """
+  valorConsulta_sum: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_avg` of type `Float`
+  """
+  valorConsulta_avg: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_min` of type `Float`
+  """
+  valorConsulta_min: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Perfil`.`valorConsulta_max` of type `Float`
+  """
+  valorConsulta_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Profissional'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Profissional_Data {
+  """
+  ✨ Generated from Field `Profissional`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Profissional`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`perfilId` of type `String!`
+  """
+  perfilId: String
+  """
+  ✨ `_expr` server value variant of `perfilId` (✨ Generated from Field `Profissional`.`perfilId` of type `String!`)
+  """
+  perfilId_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia` of type `Int`
+  """
+  anosExperiencia: Int
+  """
+  ✨ `_expr` server value variant of `anosExperiencia` (✨ Generated from Field `Profissional`.`anosExperiencia` of type `Int`)
+  """
+  anosExperiencia_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `anosExperiencia` (✨ Generated from Field `Profissional`.`anosExperiencia` of type `Int`)
+  """
+  anosExperiencia_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`ativo` of type `Boolean!`
+  """
+  ativo: Boolean
+  """
+  ✨ `_expr` server value variant of `ativo` (✨ Generated from Field `Profissional`.`ativo` of type `Boolean!`)
+  """
+  ativo_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`cpf` of type `String`
+  """
+  cpf: String
+  """
+  ✨ `_expr` server value variant of `cpf` (✨ Generated from Field `Profissional`.`cpf` of type `String`)
+  """
+  cpf_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Profissional`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Profissional`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Profissional`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`especialidade` of type `String`
+  """
+  especialidade: String
+  """
+  ✨ `_expr` server value variant of `especialidade` (✨ Generated from Field `Profissional`.`especialidade` of type `String`)
+  """
+  especialidade_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`fotoUrl` of type `String`
+  """
+  fotoUrl: String
+  """
+  ✨ `_expr` server value variant of `fotoUrl` (✨ Generated from Field `Profissional`.`fotoUrl` of type `String`)
+  """
+  fotoUrl_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`nome` of type `String!`
+  """
+  nome: String
+  """
+  ✨ `_expr` server value variant of `nome` (✨ Generated from Field `Profissional`.`nome` of type `String!`)
+  """
+  nome_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta` of type `Float`
+  """
+  valorConsulta: Float
+  """
+  ✨ `_expr` server value variant of `valorConsulta` (✨ Generated from Field `Profissional`.`valorConsulta` of type `Float`)
+  """
+  valorConsulta_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `valorConsulta` (✨ Generated from Field `Profissional`.`valorConsulta` of type `Float`)
+  """
+  valorConsulta_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`whatsapp` of type `String`
+  """
+  whatsapp: String
+  """
+  ✨ `_expr` server value variant of `whatsapp` (✨ Generated from Field `Profissional`.`whatsapp` of type `String`)
+  """
+  whatsapp_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Profissional`.`consultas_on_profissionalRef` of type `[Consulta!]!`
+  """
+  consultas_on_profissionalRef: [Consulta_Data!]
+}
+"""
+✨ Generated filter input type for table 'Profissional'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Profissional_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Profissional_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Profissional_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Profissional_Filter!]
+  """
+  ✨ Generated from Field `Profissional`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Profissional`.`perfilId` of type `String!`
+  """
+  perfilId: String_Filter
+  """
+  ✨ Generated from Field `Profissional`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Filter
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia` of type `Int`
+  """
+  anosExperiencia: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`ativo` of type `Boolean!`
+  """
+  ativo: Boolean_Filter
+  """
+  ✨ Generated from Field `Profissional`.`cpf` of type `String`
+  """
+  cpf: String_Filter
+  """
+  ✨ Generated from Field `Profissional`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Profissional`.`especialidade` of type `String`
+  """
+  especialidade: String_Filter
+  """
+  ✨ Generated from Field `Profissional`.`fotoUrl` of type `String`
+  """
+  fotoUrl: String_Filter
+  """
+  ✨ Generated from Field `Profissional`.`nome` of type `String!`
+  """
+  nome: String_Filter
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta` of type `Float`
+  """
+  valorConsulta: Float_Filter
+  """
+  ✨ Generated from Field `Profissional`.`whatsapp` of type `String`
+  """
+  whatsapp: String_Filter
+  """
+  ✨ Generated from Field `Profissional`.`consultas_on_profissionalRef` of type `[Consulta!]!`
+  """
+  consultas_on_profissionalRef: Consulta_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Profissional'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Profissional_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Profissional_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Profissional_Filter
+}
+"""
+✨ Generated having input type for table 'Profissional'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Profissional_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Profissional_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Profissional_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Profissional_Having!]
+  """
+  ✨ Generated from Field `Profissional`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_count` of type `Int!`
+  """
+  anosExperiencia_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`ativo_count` of type `Int!`
+  """
+  ativo_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`cpf_count` of type `Int!`
+  """
+  cpf_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`especialidade_count` of type `Int!`
+  """
+  especialidade_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`fotoUrl_count` of type `Int!`
+  """
+  fotoUrl_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`nome_count` of type `Int!`
+  """
+  nome_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_count` of type `Int!`
+  """
+  valorConsulta_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`whatsapp_count` of type `Int!`
+  """
+  whatsapp_count: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_sum` of type `Int`
+  """
+  anosExperiencia_sum: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_sum` of type `Float`
+  """
+  valorConsulta_sum: Float_Filter
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_avg` of type `Float`
+  """
+  anosExperiencia_avg: Float_Filter
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_avg` of type `Float`
+  """
+  valorConsulta_avg: Float_Filter
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_min` of type `Int`
+  """
+  anosExperiencia_min: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_min` of type `Float`
+  """
+  valorConsulta_min: Float_Filter
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_max` of type `Int`
+  """
+  anosExperiencia_max: Int_Filter
+  """
+  ✨ Generated from Field `Profissional`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_max` of type `Float`
+  """
+  valorConsulta_max: Float_Filter
+}
+"""
+✨ Generated key input type for table 'Profissional'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Profissional_Key {
+  """
+  ✨ Generated from Field `Profissional`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Profissional`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Profissional'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Profissional_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Profissional_Filter
+}
+"""
+✨ Generated order input type for table 'Profissional'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Profissional_Order {
+  """
+  ✨ Generated from Field `Profissional`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`perfilId` of type `String!`
+  """
+  perfilId: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`perfil` of type `Perfil!`
+  """
+  perfil: Perfil_Order
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia` of type `Int`
+  """
+  anosExperiencia: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`ativo` of type `Boolean!`
+  """
+  ativo: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`cpf` of type `String`
+  """
+  cpf: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`especialidade` of type `String`
+  """
+  especialidade: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`fotoUrl` of type `String`
+  """
+  fotoUrl: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`nome` of type `String!`
+  """
+  nome: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta` of type `Float`
+  """
+  valorConsulta: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`whatsapp` of type `String`
+  """
+  whatsapp: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_count` of type `Int!`
+  """
+  anosExperiencia_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`ativo_count` of type `Int!`
+  """
+  ativo_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`cpf_count` of type `Int!`
+  """
+  cpf_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`especialidade_count` of type `Int!`
+  """
+  especialidade_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`fotoUrl_count` of type `Int!`
+  """
+  fotoUrl_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`nome_count` of type `Int!`
+  """
+  nome_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`perfilId_count` of type `Int!`
+  """
+  perfilId_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_count` of type `Int!`
+  """
+  valorConsulta_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`whatsapp_count` of type `Int!`
+  """
+  whatsapp_count: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_sum` of type `Int`
+  """
+  anosExperiencia_sum: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_sum` of type `Float`
+  """
+  valorConsulta_sum: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_avg` of type `Float`
+  """
+  anosExperiencia_avg: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_avg` of type `Float`
+  """
+  valorConsulta_avg: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_min` of type `Int`
+  """
+  anosExperiencia_min: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_min` of type `Float`
+  """
+  valorConsulta_min: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`anosExperiencia_max` of type `Int`
+  """
+  anosExperiencia_max: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `Profissional`.`valorConsulta_max` of type `Float`
+  """
+  valorConsulta_max: OrderDirection
+}

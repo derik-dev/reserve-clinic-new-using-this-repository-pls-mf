@@ -16,6 +16,10 @@ async function authenticate(req: NextRequest) {
   return error || !data.user ? null : data.user;
 }
 
+function serviceClient() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await authenticate(req);
@@ -25,11 +29,13 @@ export async function POST(req: NextRequest) {
     const defaultPixAddressKey = process.env.ASAAS_TRANSFER_PIX_KEY;
     const defaultPixAddressKeyType = process.env.ASAAS_TRANSFER_PIX_KEY_TYPE;
     if (!apiKey) return NextResponse.json({ error: "A integração financeira ainda não está configurada no servidor." }, { status: 503 });
+
     const body = await req.json().catch(() => null) as { value?: unknown; pixAddressKey?: unknown; pixAddressKeyType?: unknown } | null;
     const pixAddressKey = typeof body?.pixAddressKey === "string" && body.pixAddressKey.trim() ? body.pixAddressKey.trim() : defaultPixAddressKey;
     const pixAddressKeyType = typeof body?.pixAddressKeyType === "string" && body.pixAddressKeyType.trim() ? body.pixAddressKeyType.trim().toUpperCase() : defaultPixAddressKeyType?.toUpperCase();
     if (!pixAddressKey || !pixAddressKeyType) return NextResponse.json({ error: "Informe a chave Pix e o tipo da chave de destino." }, { status: 400 });
-    if (!( ["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"] as string[]).includes(pixAddressKeyType)) return NextResponse.json({ error: "Tipo de chave Pix inválido." }, { status: 400 });
+    if (!(["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"] as string[]).includes(pixAddressKeyType)) return NextResponse.json({ error: "Tipo de chave Pix inválido." }, { status: 400 });
+
     const value = typeof body?.value === "number" ? body.value : Number(body?.value);
     if (!Number.isFinite(value) || value <= 0) {
       return NextResponse.json({ error: "Informe um valor de saque maior que zero." }, { status: 400 });
@@ -38,6 +44,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "O valor deve ter no máximo duas casas decimais." }, { status: 400 });
     }
 
+    // Validate balance before registering
+    const balanceRes = await fetch(`${ASAAS_BASE}/finance/balance`, {
+      headers: { access_token: apiKey },
+      cache: "no-store",
+    });
+    if (balanceRes.ok) {
+      const balanceData = await balanceRes.json().catch(() => ({})) as { balance?: number };
+      const available = balanceData.balance ?? 0;
+      if (available < value) {
+        return NextResponse.json({ error: `Saldo insuficiente. Disponível: R$ ${available.toFixed(2).replace(".", ",")}` }, { status: 422 });
+      }
+    }
+
+    // Resolve perfil_id for the authenticated user
+    const db = serviceClient();
+    const { data: perfil } = await db.from("perfis").select("id").eq("user_id", user.id).single();
+    if (!perfil) return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
+
+    // DB-first: record the saque before calling Asaas
+    const { data: saque, error: insertError } = await db.from("saques").insert({
+      perfil_id: perfil.id,
+      valor: value,
+      chave_pix: pixAddressKey,
+      tipo_chave: pixAddressKeyType,
+      status: "pendente",
+    }).select("id").single();
+
+    if (insertError || !saque) {
+      console.error("[api/sacar] erro ao registrar saque", insertError);
+      return NextResponse.json({ error: "Não foi possível registrar o saque. Tente novamente." }, { status: 500 });
+    }
+
+    const saqueId = saque.id as string;
+
+    // Call Asaas
     const response = await fetch(`${ASAAS_BASE}/transfers`, {
       method: "POST",
       headers: { "Content-Type": "application/json", access_token: apiKey },
@@ -50,11 +91,20 @@ export async function POST(req: NextRequest) {
       cache: "no-store",
     });
     const payload = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      return NextResponse.json({ error: errorMessage(payload, "A Asaas não autorizou o saque. Verifique o saldo e os dados de destino.") }, { status: response.status >= 400 && response.status < 500 ? response.status : 502 });
+      const errMsg = errorMessage(payload, "A Asaas não autorizou o saque. Verifique o saldo e os dados de destino.");
+      await db.from("saques").update({ status: "falhou", error_message: errMsg }).eq("id", saqueId);
+      return NextResponse.json({ error: errMsg }, { status: response.status >= 400 && response.status < 500 ? response.status : 502 });
     }
 
     const transfer = payload as { id?: string; status?: string; value?: number; dateCreated?: string };
+    await db.from("saques").update({
+      asaas_transfer_id: transfer.id ?? null,
+      status: "processando",
+      approved_at: new Date().toISOString(),
+    }).eq("id", saqueId);
+
     return NextResponse.json({
       transfer: {
         id: transfer.id ?? null,

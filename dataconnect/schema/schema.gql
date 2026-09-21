@@ -1,0 +1,116 @@
+# Reserve Clinic data model for Firebase SQL Connect.
+# This mirrors the current Supabase tables, with Firebase Auth UID as the tenant id.
+
+type Perfil @table(name: "perfis", key: "id", singular: "perfil", plural: "perfis") {
+  id: String! @default(expr: "auth.uid")
+  nome: String!
+  slug: String! @unique
+  tipo: String @default(value: "clinica")
+  logoUrl: String @col(name: "logo_url")
+  corPrimaria: String @col(name: "cor_primaria")
+  corSecundaria: String @col(name: "cor_secundaria")
+  telefone: String
+  emailContato: String @col(name: "email_contato")
+  cpfCnpj: String @col(name: "cpf_cnpj")
+  enderecoCep: String @col(name: "endereco_cep")
+  enderecoRua: String @col(name: "endereco_rua")
+  enderecoNumero: String @col(name: "endereco_numero")
+  enderecoBairro: String @col(name: "endereco_bairro")
+  enderecoCidade: String @col(name: "endereco_cidade")
+  enderecoUf: String @col(name: "endereco_uf")
+  onboardingConcluido: Boolean! @col(name: "onboarding_concluido") @default(value: false)
+  pixChave: String @col(name: "pix_chave")
+  site: String
+  instagram: String
+  tiktok: String
+  valorConsulta: Float @col(name: "valor_consulta", dataType: "numeric")
+  asaasContaId: String @col(name: "asaas_conta_id")
+  asaasApiKey: String @col(name: "asaas_api_key")
+  asaasWalletId: String @col(name: "asaas_wallet_id")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+}
+
+type Configuracao @table(name: "configuracoes", key: "perfil", singular: "configuracao", plural: "configuracoes") {
+  perfil: Perfil!
+  perfilId: String! @col(name: "perfil_id")
+  duracaoAtendimentoMin: Int @col(name: "duracao_atendimento_min")
+  tipoPagamento: String @col(name: "tipo_pagamento")
+  valorAtendimento: Float @col(name: "valor_atendimento", dataType: "numeric")
+  valorSinal: Float @col(name: "valor_sinal", dataType: "numeric")
+  antecedenciaMinimaHoras: Int @col(name: "antecedencia_minima_horas")
+  agendaConfig: Any! @col(name: "agenda_config") @default(value: {})
+  qrCodeManualUrl: String @col(name: "qr_code_manual_url")
+  chavePixManual: String @col(name: "chave_pix_manual")
+}
+
+type Paciente @table(name: "pacientes", singular: "paciente", plural: "pacientes") {
+  id: UUID! @default(expr: "uuidV4()")
+  perfil: Perfil!
+  perfilId: String! @col(name: "perfil_id") @index
+  nome: String!
+  telefone: String
+  email: String
+  cpf: String
+  dataNascimento: Date @col(name: "data_nascimento")
+  observacoes: String
+  status: String! @default(value: "ativo")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+}
+
+type Profissional @table(name: "profissionais", singular: "profissional", plural: "profissionais") {
+  id: UUID! @default(expr: "uuidV4()")
+  perfil: Perfil!
+  perfilId: String! @col(name: "perfil_id") @index
+  nome: String!
+  especialidade: String
+  whatsapp: String
+  cpf: String
+  anosExperiencia: Int @col(name: "anos_experiencia")
+  fotoUrl: String @col(name: "foto_url")
+  ativo: Boolean! @default(value: true)
+  valorConsulta: Float @col(name: "valor_consulta", dataType: "numeric")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+}
+
+type Consulta @table(name: "consultas", singular: "consulta", plural: "consultas") {
+  id: UUID! @default(expr: "uuidV4()")
+  perfil: Perfil!
+  perfilId: String! @col(name: "perfil_id") @index
+  paciente: Paciente
+  pacienteId: UUID @col(name: "paciente_id")
+  pacienteNome: String! @col(name: "paciente_nome")
+  pacienteTelefone: String @col(name: "paciente_telefone")
+  pacienteEmail: String @col(name: "paciente_email")
+  dataHora: Timestamp! @col(name: "data_hora") @index
+  duracaoMin: Int! @col(name: "duracao_min") @default(value: 30)
+  servico: String
+  profissionalRef: Profissional @ref(fields: "profissionalId", references: "id")
+  profissionalId: UUID @col(name: "profissional_id")
+  profissional: String
+  valor: Float @col(dataType: "numeric")
+  status: String! @default(value: "aguardando")
+  pixId: String @col(name: "pix_id")
+  metodoPagamento: String @col(name: "metodo_pagamento")
+  observacoes: String
+  origem: String! @default(value: "painel")
+  createdAt: Timestamp! @col(name: "created_at") @default(expr: "request.time")
+}
+
+type DisponibilidadeSemanal @table(name: "disponibilidade_semanal", singular: "disponibilidadeSemanal", plural: "disponibilidadesSemanais") {
+  id: UUID! @default(expr: "uuidV4()")
+  perfil: Perfil!
+  perfilId: String! @col(name: "perfil_id") @index
+  diaSemana: Int! @col(name: "dia_semana")
+  horaInicio: String! @col(name: "hora_inicio")
+  horaFim: String! @col(name: "hora_fim")
+}
+
+type Excecao @table(name: "excecoes", singular: "excecao", plural: "excecoes") {
+  id: UUID! @default(expr: "uuidV4()")
+  perfil: Perfil!
+  perfilId: String! @col(name: "perfil_id") @index
+  data: Date!
+  tipo: String!
+  horaInicio: String @col(name: "hora_inicio")
+  horaFim: String @col(name: "hora_fim")
+}

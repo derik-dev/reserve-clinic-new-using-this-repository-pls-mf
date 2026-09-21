@@ -113,46 +113,61 @@ export default function PacientesPage() {
   return <>
     <PageHeader title="Pacientes" description="Gerencie os cadastros e o histórico dos seus pacientes." actions={<button className="primaryButton" onClick={() => setModalOpen(true)}><Plus size={17} /> Novo paciente</button>} />
     <section className="panel dataPanel">
-      <div className="tableToolbar">
-        <label><Search size={17} /><input placeholder="Buscar por nome, telefone ou CPF" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-        <div>
-          <button className="secondaryButton"><Filter size={16} /> Filtros</button>
-          <button className="iconButton" aria-label="Exportar pacientes"><Download size={17} /></button>
-        </div>
+      <div className="pacientesToolbar">
+        <label className="pacientesSearch"><Search size={15} /><input placeholder="Buscar por nome, telefone ou CPF" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
+        <span className="pacientesCount">{filtered.length} paciente{filtered.length !== 1 ? "s" : ""}</span>
+        <button className="iconButton" aria-label="Exportar pacientes"><Download size={16} /></button>
       </div>
       <div className="tableScroll">
-        <table>
-          <thead><tr><th>PACIENTE</th><th>CONTATO</th><th>IDADE</th><th>CADASTRADO EM</th><th>STATUS</th><th /></tr></thead>
+        <table className="pacientesTable">
+          <thead><tr><th>PACIENTE</th><th>CONTATO</th><th>CADASTRADO</th><th>STATUS</th></tr></thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</td></tr>
+              <tr><td colSpan={4} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Carregando…</td></tr>
             ) : loadError ? (
-              <tr><td colSpan={6} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Não foi possível carregar os pacientes. <button className="linkButton" onClick={load}>Tentar novamente</button></td></tr>
+              <tr><td colSpan={4} style={{ padding: "72px 16px", textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Não foi possível carregar. <button className="linkButton" onClick={load}>Tentar novamente</button></td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} style={{ padding: 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "72px 24px", color: "var(--text-muted)", textAlign: "center" }}>
-                  <UsersRound size={38} strokeWidth={1.4} style={{ color: "var(--text-subtle)", opacity: .7 }} />
+              <tr><td colSpan={4} style={{ padding: 0 }}>
+                <div className="tableEmpty">
+                  <UsersRound size={38} strokeWidth={1.4} />
                   <div>
-                    <strong style={{ display: "block", font: "600 16px var(--font-space)", color: "var(--text)", letterSpacing: "-.01em", marginBottom: 6 }}>{pacientes.length === 0 ? "Nenhum paciente cadastrado ainda" : "Nenhum paciente encontrado"}</strong>
-                    <small style={{ display: "block", fontSize: 12, color: "var(--text-muted)", maxWidth: 320 }}>{pacientes.length === 0 ? "Cadastre seus pacientes para acompanhar histórico, contato e agendamentos." : "Ajuste a busca para encontrar outros pacientes."}</small>
+                    <strong>{pacientes.length === 0 ? "Nenhum paciente cadastrado" : "Nenhum paciente encontrado"}</strong>
+                    <small>{pacientes.length === 0 ? "Cadastre seus pacientes para acompanhar histórico e agendamentos." : "Ajuste a busca para encontrar outros pacientes."}</small>
                   </div>
                 </div>
               </td></tr>
             ) : filtered.map(p => {
               const idade = calcIdade(p.data_nascimento);
-              return <tr key={p.id} className="rowClickable" onClick={() => setSelectedPaciente(p)}>
-                <td><div className="patientCell"><div className="tableAvatar">{initials(p.nome)}</div><div><strong>{p.nome}</strong>{p.cpf && <small>CPF {p.cpf}</small>}</div></div></td>
-                <td><strong>{p.telefone ?? "—"}</strong>{p.email && <small>{p.email}</small>}</td>
-                <td>{idade != null ? `${idade} anos` : "—"}</td>
-                <td>{formatDate(p.created_at)}</td>
-                <td><button onClick={(e) => { e.stopPropagation(); toggleStatus(p); }} className={`statusBadge ${p.status === "ativo" ? "statusAtivo" : "statusConcluida"}`} style={{ border: 0, cursor: "pointer" }}>{p.status === "ativo" ? "Ativo" : "Inativo"}</button></td>
-                <td />
-              </tr>;
+              return (
+                <tr key={p.id} className="rowClickable" onClick={() => setSelectedPaciente(p)}>
+                  <td>
+                    <div className="patientCell">
+                      <div className="pacienteAvatar">{initials(p.nome)}</div>
+                      <div>
+                        <strong>{p.nome}</strong>
+                        {idade != null && <small>{idade} anos</small>}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="pacienteContato">
+                      {p.telefone && <span><Phone size={11} />{p.telefone}</span>}
+                      {p.email && <span><Mail size={11} />{p.email}</span>}
+                      {!p.telefone && !p.email && <span style={{ color: "var(--text-subtle)" }}>—</span>}
+                    </div>
+                  </td>
+                  <td>{formatDate(p.created_at)}</td>
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => toggleStatus(p)} className={`statusBadge ${p.status === "ativo" ? "statusAtivo" : "statusConcluida"}`} style={{ border: 0, cursor: "pointer" }}>
+                      {p.status === "ativo" ? "Ativo" : "Inativo"}
+                    </button>
+                  </td>
+                </tr>
+              );
             })}
           </tbody>
         </table>
       </div>
-      <div className="tablePagination"><span>Mostrando {filtered.length} de {pacientes.length} pacientes</span><div><button disabled>←</button><button className="current">1</button><button disabled>→</button></div></div>
     </section>
 
     {selectedPaciente && (

@@ -1,0 +1,1429 @@
+extend type Configuracao {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Configuracao", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Configuracao` table.
+  """
+  _count: Int! @fdc_generated(from: "Configuracao.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `agendaConfig` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  agendaConfig_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.agendaConfig", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `antecedenciaMinimaHoras` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  antecedenciaMinimaHoras_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.antecedenciaMinimaHoras", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `chavePixManual` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  chavePixManual_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.chavePixManual", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `duracaoAtendimentoMin` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  duracaoAtendimentoMin_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.duracaoAtendimentoMin", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `perfilId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  perfilId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.perfilId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `qrCodeManualUrl` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  qrCodeManualUrl_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.qrCodeManualUrl", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `tipoPagamento` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tipoPagamento_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.tipoPagamento", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `valorAtendimento` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  valorAtendimento_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.valorAtendimento", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Configuracao` table where the `valorSinal` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  valorSinal_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Configuracao.valorSinal", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `antecedenciaMinimaHoras` field in the `Configuracao` table.
+  """
+  antecedenciaMinimaHoras_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Configuracao.antecedenciaMinimaHoras", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `duracaoAtendimentoMin` field in the `Configuracao` table.
+  """
+  duracaoAtendimentoMin_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Configuracao.duracaoAtendimentoMin", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `valorAtendimento` field in the `Configuracao` table.
+  """
+  valorAtendimento_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Configuracao.valorAtendimento", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `valorSinal` field in the `Configuracao` table.
+  """
+  valorSinal_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Configuracao.valorSinal", purpose: QUERY_SUM)
+  """
+  ✨ Average the `antecedenciaMinimaHoras` field in the `Configuracao` table.
+  """
+  antecedenciaMinimaHoras_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Configuracao.antecedenciaMinimaHoras", purpose: QUERY_AVG)
+  """
+  ✨ Average the `duracaoAtendimentoMin` field in the `Configuracao` table.
+  """
+  duracaoAtendimentoMin_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Configuracao.duracaoAtendimentoMin", purpose: QUERY_AVG)
+  """
+  ✨ Average the `valorAtendimento` field in the `Configuracao` table.
+  """
+  valorAtendimento_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Configuracao.valorAtendimento", purpose: QUERY_AVG)
+  """
+  ✨ Average the `valorSinal` field in the `Configuracao` table.
+  """
+  valorSinal_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Configuracao.valorSinal", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `agendaConfig` field in the `Configuracao` table.
+  """
+  agendaConfig_min: Any @fdc_generated(from: "Configuracao.agendaConfig", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `antecedenciaMinimaHoras` field in the `Configuracao` table.
+  """
+  antecedenciaMinimaHoras_min: Int @fdc_generated(from: "Configuracao.antecedenciaMinimaHoras", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `duracaoAtendimentoMin` field in the `Configuracao` table.
+  """
+  duracaoAtendimentoMin_min: Int @fdc_generated(from: "Configuracao.duracaoAtendimentoMin", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `valorAtendimento` field in the `Configuracao` table.
+  """
+  valorAtendimento_min: Float @fdc_generated(from: "Configuracao.valorAtendimento", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `valorSinal` field in the `Configuracao` table.
+  """
+  valorSinal_min: Float @fdc_generated(from: "Configuracao.valorSinal", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `agendaConfig` field in the `Configuracao` table.
+  """
+  agendaConfig_max: Any @fdc_generated(from: "Configuracao.agendaConfig", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `antecedenciaMinimaHoras` field in the `Configuracao` table.
+  """
+  antecedenciaMinimaHoras_max: Int @fdc_generated(from: "Configuracao.antecedenciaMinimaHoras", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `duracaoAtendimentoMin` field in the `Configuracao` table.
+  """
+  duracaoAtendimentoMin_max: Int @fdc_generated(from: "Configuracao.duracaoAtendimentoMin", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `valorAtendimento` field in the `Configuracao` table.
+  """
+  valorAtendimento_max: Float @fdc_generated(from: "Configuracao.valorAtendimento", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `valorSinal` field in the `Configuracao` table.
+  """
+  valorSinal_max: Float @fdc_generated(from: "Configuracao.valorSinal", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Configuracao.perfilId", purpose: ENTITY_ID)
+}
+extend type Consulta {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Consulta", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Consulta` table.
+  """
+  _count: Int! @fdc_generated(from: "Consulta.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `dataHora` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  dataHora_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.dataHora", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `duracaoMin` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  duracaoMin_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.duracaoMin", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `metodoPagamento` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  metodoPagamento_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.metodoPagamento", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `observacoes` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  observacoes_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.observacoes", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `origem` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  origem_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.origem", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `pacienteEmail` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  pacienteEmail_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.pacienteEmail", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `pacienteId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  pacienteId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.pacienteId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `pacienteNome` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  pacienteNome_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.pacienteNome", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `pacienteTelefone` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  pacienteTelefone_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.pacienteTelefone", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `perfilId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  perfilId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.perfilId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `pixId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  pixId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.pixId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `profissionalId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  profissionalId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.profissionalId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `profissional` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  profissional_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.profissional", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `servico` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  servico_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.servico", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Consulta` table where the `valor` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  valor_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Consulta.valor", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `duracaoMin` field in the `Consulta` table.
+  """
+  duracaoMin_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Consulta.duracaoMin", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `valor` field in the `Consulta` table.
+  """
+  valor_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Consulta.valor", purpose: QUERY_SUM)
+  """
+  ✨ Average the `duracaoMin` field in the `Consulta` table.
+  """
+  duracaoMin_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Consulta.duracaoMin", purpose: QUERY_AVG)
+  """
+  ✨ Average the `valor` field in the `Consulta` table.
+  """
+  valor_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Consulta.valor", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `Consulta` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "Consulta.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `dataHora` field in the `Consulta` table.
+  """
+  dataHora_min: Timestamp @fdc_generated(from: "Consulta.dataHora", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `duracaoMin` field in the `Consulta` table.
+  """
+  duracaoMin_min: Int @fdc_generated(from: "Consulta.duracaoMin", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `valor` field in the `Consulta` table.
+  """
+  valor_min: Float @fdc_generated(from: "Consulta.valor", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `Consulta` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "Consulta.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `dataHora` field in the `Consulta` table.
+  """
+  dataHora_max: Timestamp @fdc_generated(from: "Consulta.dataHora", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `duracaoMin` field in the `Consulta` table.
+  """
+  duracaoMin_max: Int @fdc_generated(from: "Consulta.duracaoMin", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `valor` field in the `Consulta` table.
+  """
+  valor_max: Float @fdc_generated(from: "Consulta.valor", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Consulta.id", purpose: ENTITY_ID)
+}
+extend type DisponibilidadeSemanal {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "DisponibilidadeSemanal", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `DisponibilidadeSemanal` table.
+  """
+  _count: Int! @fdc_generated(from: "DisponibilidadeSemanal.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `DisponibilidadeSemanal` table where the `diaSemana` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  diaSemana_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal.diaSemana", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `DisponibilidadeSemanal` table where the `horaFim` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  horaFim_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal.horaFim", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `DisponibilidadeSemanal` table where the `horaInicio` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  horaInicio_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal.horaInicio", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `DisponibilidadeSemanal` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `DisponibilidadeSemanal` table where the `perfilId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  perfilId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "DisponibilidadeSemanal.perfilId", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `diaSemana` field in the `DisponibilidadeSemanal` table.
+  """
+  diaSemana_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "DisponibilidadeSemanal.diaSemana", purpose: QUERY_SUM)
+  """
+  ✨ Average the `diaSemana` field in the `DisponibilidadeSemanal` table.
+  """
+  diaSemana_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "DisponibilidadeSemanal.diaSemana", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `diaSemana` field in the `DisponibilidadeSemanal` table.
+  """
+  diaSemana_min: Int @fdc_generated(from: "DisponibilidadeSemanal.diaSemana", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `diaSemana` field in the `DisponibilidadeSemanal` table.
+  """
+  diaSemana_max: Int @fdc_generated(from: "DisponibilidadeSemanal.diaSemana", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "DisponibilidadeSemanal.id", purpose: ENTITY_ID)
+}
+extend type Excecao {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Excecao", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Excecao` table.
+  """
+  _count: Int! @fdc_generated(from: "Excecao.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Excecao` table where the `data` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  data_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao.data", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Excecao` table where the `horaFim` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  horaFim_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao.horaFim", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Excecao` table where the `horaInicio` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  horaInicio_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao.horaInicio", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Excecao` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Excecao` table where the `perfilId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  perfilId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao.perfilId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Excecao` table where the `tipo` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tipo_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Excecao.tipo", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `data` field in the `Excecao` table.
+  """
+  data_min: Date @fdc_generated(from: "Excecao.data", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `data` field in the `Excecao` table.
+  """
+  data_max: Date @fdc_generated(from: "Excecao.data", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Excecao.id", purpose: ENTITY_ID)
+}
+extend type Paciente {
+  """
+  ✨ List `Consulta` objects in a one-to-many relationship (where `Consulta`.`paciente` is this object).
+  """
+  consultas_on_paciente(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Consulta_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Consulta_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Consulta_Having
+  ): [Consulta!]! @fdc_generated(from: "Consulta.paciente", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Paciente", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Paciente` table.
+  """
+  _count: Int! @fdc_generated(from: "Paciente.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `cpf` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cpf_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.cpf", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `dataNascimento` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  dataNascimento_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.dataNascimento", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `email` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  email_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.email", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `nome` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  nome_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.nome", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `observacoes` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  observacoes_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.observacoes", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `perfilId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  perfilId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.perfilId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `status` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  status_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.status", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Paciente` table where the `telefone` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  telefone_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Paciente.telefone", purpose: QUERY_COUNT)
+  """
+  ✨ Minimum of the `createdAt` field in the `Paciente` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "Paciente.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `dataNascimento` field in the `Paciente` table.
+  """
+  dataNascimento_min: Date @fdc_generated(from: "Paciente.dataNascimento", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `Paciente` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "Paciente.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `dataNascimento` field in the `Paciente` table.
+  """
+  dataNascimento_max: Date @fdc_generated(from: "Paciente.dataNascimento", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Paciente.id", purpose: ENTITY_ID)
+}
+extend type Perfil {
+  """
+  ✨ List `Consulta` objects in a one-to-many relationship (where `Consulta`.`perfil` is this object).
+  """
+  consultas_on_perfil(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Consulta_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Consulta_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Consulta_Having
+  ): [Consulta!]! @fdc_generated(from: "Consulta.perfil", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `DisponibilidadeSemanal` objects in a one-to-many relationship (where `DisponibilidadeSemanal`.`perfil` is this object).
+  """
+  disponibilidadesSemanais_on_perfil(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: DisponibilidadeSemanal_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [DisponibilidadeSemanal_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: DisponibilidadeSemanal_Having
+  ): [DisponibilidadeSemanal!]! @fdc_generated(from: "DisponibilidadeSemanal.perfil", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Excecao` objects in a one-to-many relationship (where `Excecao`.`perfil` is this object).
+  """
+  excecoes_on_perfil(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Excecao_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Excecao_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Excecao_Having
+  ): [Excecao!]! @fdc_generated(from: "Excecao.perfil", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Paciente` objects in a one-to-many relationship (where `Paciente`.`perfil` is this object).
+  """
+  pacientes_on_perfil(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Paciente_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Paciente_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Paciente_Having
+  ): [Paciente!]! @fdc_generated(from: "Paciente.perfil", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Profissional` objects in a one-to-many relationship (where `Profissional`.`perfil` is this object).
+  """
+  profissionais_on_perfil(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Profissional_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Profissional_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Profissional_Having
+  ): [Profissional!]! @fdc_generated(from: "Profissional.perfil", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  ✨ List `Configuracao` objects in a one-to-one relationship (where `Configuracao`.`perfil` is this object).
+  """
+  configuracao_on_perfil: Configuracao @fdc_generated(from: "Configuracao.perfil", purpose: QUERY_SINGLE_ONE_TO_ONE)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Perfil", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Perfil` table.
+  """
+  _count: Int! @fdc_generated(from: "Perfil.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `asaasApiKey` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  asaasApiKey_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.asaasApiKey", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `asaasContaId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  asaasContaId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.asaasContaId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `asaasWalletId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  asaasWalletId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.asaasWalletId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `corPrimaria` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  corPrimaria_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.corPrimaria", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `corSecundaria` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  corSecundaria_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.corSecundaria", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `cpfCnpj` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cpfCnpj_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.cpfCnpj", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `emailContato` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  emailContato_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.emailContato", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `enderecoBairro` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enderecoBairro_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.enderecoBairro", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `enderecoCep` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enderecoCep_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.enderecoCep", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `enderecoCidade` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enderecoCidade_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.enderecoCidade", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `enderecoNumero` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enderecoNumero_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.enderecoNumero", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `enderecoRua` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enderecoRua_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.enderecoRua", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `enderecoUf` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  enderecoUf_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.enderecoUf", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `instagram` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  instagram_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.instagram", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `logoUrl` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  logoUrl_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.logoUrl", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `nome` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  nome_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.nome", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `onboardingConcluido` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  onboardingConcluido_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.onboardingConcluido", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `pixChave` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  pixChave_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.pixChave", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `site` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  site_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.site", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `slug` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  slug_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.slug", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `telefone` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  telefone_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.telefone", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `tiktok` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tiktok_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.tiktok", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `tipo` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  tipo_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.tipo", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Perfil` table where the `valorConsulta` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  valorConsulta_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Perfil.valorConsulta", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `valorConsulta` field in the `Perfil` table.
+  """
+  valorConsulta_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Perfil.valorConsulta", purpose: QUERY_SUM)
+  """
+  ✨ Average the `valorConsulta` field in the `Perfil` table.
+  """
+  valorConsulta_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Perfil.valorConsulta", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAt` field in the `Perfil` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "Perfil.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `valorConsulta` field in the `Perfil` table.
+  """
+  valorConsulta_min: Float @fdc_generated(from: "Perfil.valorConsulta", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAt` field in the `Perfil` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "Perfil.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `valorConsulta` field in the `Perfil` table.
+  """
+  valorConsulta_max: Float @fdc_generated(from: "Perfil.valorConsulta", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Perfil.id", purpose: ENTITY_ID)
+}
+extend type Profissional {
+  """
+  ✨ List `Consulta` objects in a one-to-many relationship (where `Consulta`.`profissionalRef` is this object).
+  """
+  consultas_on_profissionalRef(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Consulta_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Consulta_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Consulta_Having
+  ): [Consulta!]! @fdc_generated(from: "Consulta.profissionalRef", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "Profissional", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `Profissional` table.
+  """
+  _count: Int! @fdc_generated(from: "Profissional.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `anosExperiencia` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  anosExperiencia_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.anosExperiencia", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `ativo` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  ativo_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.ativo", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `cpf` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  cpf_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.cpf", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `createdAt` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAt_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.createdAt", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `especialidade` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  especialidade_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.especialidade", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `fotoUrl` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  fotoUrl_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.fotoUrl", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  id_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.id", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `nome` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  nome_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.nome", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `perfilId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  perfilId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.perfilId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `valorConsulta` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  valorConsulta_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.valorConsulta", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Profissional` table where the `whatsapp` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  whatsapp_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Profissional.whatsapp", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `anosExperiencia` field in the `Profissional` table.
+  """
+  anosExperiencia_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Profissional.anosExperiencia", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `valorConsulta` field in the `Profissional` table.
+  """
+  valorConsulta_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Profissional.valorConsulta", purpose: QUERY_SUM)
+  """
+  ✨ Average the `anosExperiencia` field in the `Profissional` table.
+  """
+  anosExperiencia_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Profissional.anosExperiencia", purpose: QUERY_AVG)
+  """
+  ✨ Average the `valorConsulta` field in the `Profissional` table.
+  """
+  valorConsulta_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Profissional.valorConsulta", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `anosExperiencia` field in the `Profissional` table.
+  """
+  anosExperiencia_min: Int @fdc_generated(from: "Profissional.anosExperiencia", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `createdAt` field in the `Profissional` table.
+  """
+  createdAt_min: Timestamp @fdc_generated(from: "Profissional.createdAt", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `valorConsulta` field in the `Profissional` table.
+  """
+  valorConsulta_min: Float @fdc_generated(from: "Profissional.valorConsulta", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `anosExperiencia` field in the `Profissional` table.
+  """
+  anosExperiencia_max: Int @fdc_generated(from: "Profissional.anosExperiencia", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `createdAt` field in the `Profissional` table.
+  """
+  createdAt_max: Timestamp @fdc_generated(from: "Profissional.createdAt", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `valorConsulta` field in the `Profissional` table.
+  """
+  valorConsulta_max: Float @fdc_generated(from: "Profissional.valorConsulta", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "Profissional.id", purpose: ENTITY_ID)
+}

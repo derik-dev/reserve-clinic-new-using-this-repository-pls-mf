@@ -1,0 +1,312 @@
+# Reserve Clinic write operations.
+
+mutation UpsertMeuPerfil(
+  $nome: String!
+  $slug: String!
+  $tipo: String
+  $telefone: String
+  $emailContato: String
+  $logoUrl: String
+  $corPrimaria: String
+  $corSecundaria: String
+  $cpfCnpj: String
+  $enderecoCep: String
+  $enderecoRua: String
+  $enderecoNumero: String
+  $enderecoBairro: String
+  $enderecoCidade: String
+  $enderecoUf: String
+  $pixChave: String
+  $site: String
+  $instagram: String
+  $tiktok: String
+  $valorConsulta: Float
+) @auth(level: USER) {
+  perfil_upsert(data: {
+    id_expr: "auth.uid"
+    nome: $nome
+    slug: $slug
+    tipo: $tipo
+    telefone: $telefone
+    emailContato: $emailContato
+    logoUrl: $logoUrl
+    corPrimaria: $corPrimaria
+    corSecundaria: $corSecundaria
+    cpfCnpj: $cpfCnpj
+    enderecoCep: $enderecoCep
+    enderecoRua: $enderecoRua
+    enderecoNumero: $enderecoNumero
+    enderecoBairro: $enderecoBairro
+    enderecoCidade: $enderecoCidade
+    enderecoUf: $enderecoUf
+    pixChave: $pixChave
+    site: $site
+    instagram: $instagram
+    tiktok: $tiktok
+    valorConsulta: $valorConsulta
+    onboardingConcluido: true
+  })
+}
+
+mutation UpsertMinhaConfiguracao(
+  $agendaConfig: Any!
+  $duracaoAtendimentoMin: Int
+  $tipoPagamento: String
+  $valorAtendimento: Float
+  $valorSinal: Float
+  $antecedenciaMinimaHoras: Int
+  $qrCodeManualUrl: String
+  $chavePixManual: String
+) @auth(level: USER) {
+  configuracao_upsert(data: {
+    perfilId_expr: "auth.uid"
+    agendaConfig: $agendaConfig
+    duracaoAtendimentoMin: $duracaoAtendimentoMin
+    tipoPagamento: $tipoPagamento
+    valorAtendimento: $valorAtendimento
+    valorSinal: $valorSinal
+    antecedenciaMinimaHoras: $antecedenciaMinimaHoras
+    qrCodeManualUrl: $qrCodeManualUrl
+    chavePixManual: $chavePixManual
+  })
+}
+
+mutation CreatePaciente(
+  $nome: String!
+  $telefone: String
+  $email: String
+  $cpf: String
+  $dataNascimento: Date
+  $observacoes: String
+) @auth(level: USER) {
+  paciente_insert(data: {
+    perfilId_expr: "auth.uid"
+    nome: $nome
+    telefone: $telefone
+    email: $email
+    cpf: $cpf
+    dataNascimento: $dataNascimento
+    observacoes: $observacoes
+    status: "ativo"
+  })
+}
+
+mutation UpdatePaciente(
+  $id: UUID!
+  $nome: String!
+  $telefone: String
+  $email: String
+  $cpf: String
+  $dataNascimento: Date
+  $observacoes: String
+) @auth(level: USER) {
+  paciente_update(
+    first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } }
+    data: {
+      nome: $nome
+      telefone: $telefone
+      email: $email
+      cpf: $cpf
+      dataNascimento: $dataNascimento
+      observacoes: $observacoes
+    }
+  )
+}
+
+mutation SetPacienteStatus($id: UUID!, $status: String!) @auth(level: USER) {
+  paciente_update(
+    first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } }
+    data: { status: $status }
+  )
+}
+
+mutation DeletePaciente($id: UUID!) @auth(level: USER) {
+  paciente_delete(first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } })
+}
+
+mutation CreateProfissional(
+  $nome: String!
+  $especialidade: String
+  $whatsapp: String
+  $cpf: String
+  $anosExperiencia: Int
+  $fotoUrl: String
+  $valorConsulta: Float
+) @auth(level: USER) {
+  profissional_insert(data: {
+    perfilId_expr: "auth.uid"
+    nome: $nome
+    especialidade: $especialidade
+    whatsapp: $whatsapp
+    cpf: $cpf
+    anosExperiencia: $anosExperiencia
+    fotoUrl: $fotoUrl
+    valorConsulta: $valorConsulta
+    ativo: true
+  })
+}
+
+mutation UpdateProfissional(
+  $id: UUID!
+  $nome: String!
+  $especialidade: String
+  $whatsapp: String
+  $cpf: String
+  $anosExperiencia: Int
+  $fotoUrl: String
+  $valorConsulta: Float
+  $ativo: Boolean
+) @auth(level: USER) {
+  profissional_update(
+    first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } }
+    data: {
+      nome: $nome
+      especialidade: $especialidade
+      whatsapp: $whatsapp
+      cpf: $cpf
+      anosExperiencia: $anosExperiencia
+      fotoUrl: $fotoUrl
+      valorConsulta: $valorConsulta
+      ativo: $ativo
+    }
+  )
+}
+
+mutation DeleteProfissional($id: UUID!) @auth(level: USER) {
+  profissional_delete(first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } })
+}
+
+mutation CreateConsulta(
+  $pacienteId: UUID
+  $pacienteNome: String!
+  $pacienteTelefone: String
+  $pacienteEmail: String
+  $dataHora: Timestamp!
+  $duracaoMin: Int!
+  $servico: String
+  $profissional: String
+  $profissionalId: UUID
+  $valor: Float
+  $status: String!
+  $pixId: String
+  $metodoPagamento: String
+  $observacoes: String
+) @auth(level: USER) {
+  consulta_insert(data: {
+    perfilId_expr: "auth.uid"
+    pacienteId: $pacienteId
+    pacienteNome: $pacienteNome
+    pacienteTelefone: $pacienteTelefone
+    pacienteEmail: $pacienteEmail
+    dataHora: $dataHora
+    duracaoMin: $duracaoMin
+    servico: $servico
+    profissional: $profissional
+    profissionalId: $profissionalId
+    valor: $valor
+    status: $status
+    pixId: $pixId
+    metodoPagamento: $metodoPagamento
+    observacoes: $observacoes
+    origem: "painel"
+  })
+}
+
+mutation UpdateConsulta(
+  $id: UUID!
+  $pacienteId: UUID
+  $pacienteNome: String!
+  $pacienteTelefone: String
+  $pacienteEmail: String
+  $dataHora: Timestamp!
+  $duracaoMin: Int!
+  $servico: String
+  $profissional: String
+  $profissionalId: UUID
+  $valor: Float
+  $status: String!
+  $pixId: String
+  $metodoPagamento: String
+  $observacoes: String
+) @auth(level: USER) {
+  consulta_update(
+    first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } }
+    data: {
+      pacienteId: $pacienteId
+      pacienteNome: $pacienteNome
+      pacienteTelefone: $pacienteTelefone
+      pacienteEmail: $pacienteEmail
+      dataHora: $dataHora
+      duracaoMin: $duracaoMin
+      servico: $servico
+      profissional: $profissional
+      profissionalId: $profissionalId
+      valor: $valor
+      status: $status
+      pixId: $pixId
+      metodoPagamento: $metodoPagamento
+      observacoes: $observacoes
+    }
+  )
+}
+
+mutation SetConsultaStatus($id: UUID!, $status: String!, $pacienteId: UUID) @auth(level: USER) {
+  consulta_update(
+    first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } }
+    data: { status: $status, pacienteId: $pacienteId }
+  )
+}
+
+mutation DeleteConsulta($id: UUID!) @auth(level: USER) {
+  consulta_delete(first: { where: { id: { eq: $id }, perfilId: { eq_expr: "auth.uid" } } })
+}
+
+mutation CreatePublicConsulta(
+  $perfilId: String!
+  $clienteNome: String!
+  $clienteTelefone: String
+  $clienteEmail: String
+  $dataHora: Timestamp!
+  $duracaoMin: Int!
+  $servico: String
+  $profissional: String
+  $profissionalId: UUID
+  $valor: Float
+  $observacoes: String
+) @auth(level: PUBLIC, insecureReason: "Public patients can request a booking through the public clinic link.") @transaction {
+  query @redact {
+    perfil(key: { id: $perfilId }) @check(expr: "this != null", message: "Clinica nao encontrada.") {
+      id
+    }
+  }
+  consulta_insert(data: {
+    perfilId: $perfilId
+    pacienteNome: $clienteNome
+    pacienteTelefone: $clienteTelefone
+    pacienteEmail: $clienteEmail
+    dataHora: $dataHora
+    duracaoMin: $duracaoMin
+    servico: $servico
+    profissional: $profissional
+    profissionalId: $profissionalId
+    valor: $valor
+    status: "aguardando"
+    metodoPagamento: "pix"
+    observacoes: $observacoes
+    origem: "publico"
+  })
+}
+
+mutation SetConsultaPixId($consultaId: UUID!, $pixId: String!) @auth(level: NO_ACCESS) {
+  consulta_update(id: $consultaId, data: { pixId: $pixId })
+}
+
+mutation ConfirmarConsultaPaga($consultaId: UUID!, $valorPago: Float) @auth(level: NO_ACCESS) @transaction {
+  query @redact {
+    consulta(id: $consultaId) @check(expr: "this != null", message: "Consulta nao encontrada.") {
+      perfilId
+      dataHora
+    }
+  }
+  consulta_update(id: $consultaId, data: { status: "confirmada", valor: $valorPago })
+}
