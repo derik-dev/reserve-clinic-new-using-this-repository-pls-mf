@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Camera, Check, Copy, Link2, Pencil, Phone, Plus, Search, Stethoscope, Trash2, X, BarChart3 } from "lucide-react";
+import { Award, Camera, Check, ChevronDown, Copy, Link2, Pencil, Phone, Plus, Search, Stethoscope, Trash2, X, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -26,11 +26,30 @@ type FormState = {
   especialidade: string;
   whatsapp: string;
   cpf: string;
-  crm: string;
+  orgao: string;
+  registro: string;
   anos_experiencia: string;
 };
 
-const emptyForm: FormState = { nome: "", especialidade: "", whatsapp: "", cpf: "", crm: "", anos_experiencia: "" };
+const ORGAOS_PROFISSIONAIS = [
+  { profissao: "Medicina", federal: "CFM", registro: "CRM" },
+  { profissao: "Psicologia", federal: "CFP", registro: "CRP" },
+  { profissao: "Odontologia", federal: "CFO", registro: "CRO" },
+  { profissao: "Enfermagem", federal: "COFEN", registro: "COREN" },
+  { profissao: "Farmácia", federal: "CFF", registro: "CRF" },
+  { profissao: "Fisioterapia", federal: "COFFITO", registro: "CREFITO" },
+  { profissao: "Terapia Ocupacional", federal: "COFFITO", registro: "CREFITO" },
+  { profissao: "Nutrição", federal: "CFN", registro: "CRN" },
+  { profissao: "Fonoaudiologia", federal: "CFFa", registro: "CREFONO / CRFa" },
+  { profissao: "Biomedicina", federal: "CFBM", registro: "CRBM" },
+  { profissao: "Biologia", federal: "CFBio", registro: "CRBio" },
+  { profissao: "Educação Física", federal: "CONFEF", registro: "CREF" },
+  { profissao: "Medicina Veterinária", federal: "CFMV", registro: "CRMV" },
+  { profissao: "Serviço Social", federal: "CFESS", registro: "CRESS" },
+  { profissao: "Técnico em Radiologia", federal: "CONTER", registro: "CRTR" },
+] as const;
+
+const emptyForm: FormState = { nome: "", especialidade: "", whatsapp: "", cpf: "", orgao: "Medicina|CRM", registro: "", anos_experiencia: "" };
 const SAVE_TIMEOUT_MS = 15000;
 
 async function withTimeout<T>(promise: PromiseLike<T>, message: string): Promise<T> {
@@ -61,7 +80,10 @@ export default function ProfissionaisPage() {
   const [selectedProf, setSelectedProf] = useState<Profissional | null>(null);
   const [perfilSlug, setPerfilSlug] = useState<string | null>(null);
   const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
+  const [councilOpen, setCouncilOpen] = useState(false);
+  const [councilQuery, setCouncilQuery] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const councilSelectRef = useRef<HTMLDivElement>(null);
 
   async function load() {
     setLoading(true);
@@ -85,6 +107,18 @@ export default function ProfissionaisPage() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (!councilOpen) return;
+    function closeOnOutsideClick(event: PointerEvent) {
+      if (!councilSelectRef.current?.contains(event.target as Node)) {
+        setCouncilOpen(false);
+        setCouncilQuery("");
+      }
+    }
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [councilOpen]);
+
   const filtered = useMemo(() => {
     if (!query.trim()) return profissionais;
     const q = query.toLowerCase();
@@ -95,28 +129,45 @@ export default function ProfissionaisPage() {
     );
   }, [profissionais, query]);
 
+  const selectedCouncil = ORGAOS_PROFISSIONAIS.find((option) => `${option.profissao}|${option.registro}` === form.orgao) ?? ORGAOS_PROFISSIONAIS[0];
+  const filteredCouncils = useMemo(() => {
+    const query = councilQuery.trim().toLowerCase();
+    if (!query) return ORGAOS_PROFISSIONAIS;
+    return ORGAOS_PROFISSIONAIS.filter((option) => `${option.profissao} ${option.federal} ${option.registro}`.toLowerCase().includes(query));
+  }, [councilQuery]);
+
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
     setFotoFile(null);
     setFotoPreview(null);
     setError(null);
+    setCouncilOpen(false);
+    setCouncilQuery("");
     setModalOpen(true);
   }
 
   function openEdit(p: Profissional) {
     setEditing(p);
+    const savedCouncil = p.crm?.trim() ?? "";
+    const selectedCouncil = ORGAOS_PROFISSIONAIS.find((option) => savedCouncil.toUpperCase().startsWith(option.registro.toUpperCase())) ?? ORGAOS_PROFISSIONAIS[0];
+    const savedRegistration = savedCouncil
+      ? savedCouncil.slice(selectedCouncil.registro.length).replace(/^[\s-]+/, "")
+      : "";
     setForm({
       nome: p.nome,
       especialidade: p.especialidade ?? "",
       whatsapp: p.whatsapp ?? "",
       cpf: p.cpf ?? "",
-      crm: p.crm ?? "",
+      orgao: `${selectedCouncil.profissao}|${selectedCouncil.registro}`,
+      registro: savedRegistration,
       anos_experiencia: p.anos_experiencia != null ? String(p.anos_experiencia) : "",
     });
     setFotoFile(null);
     setFotoPreview(p.foto_url);
     setError(null);
+    setCouncilOpen(false);
+    setCouncilQuery("");
     setModalOpen(true);
   }
 
@@ -126,6 +177,8 @@ export default function ProfissionaisPage() {
     setFotoFile(null);
     if (fotoPreview && !editing?.foto_url) URL.revokeObjectURL(fotoPreview ?? "");
     setFotoPreview(null);
+    setCouncilOpen(false);
+    setCouncilQuery("");
   }
 
   function handleFoto(file: File | null) {
@@ -160,7 +213,7 @@ export default function ProfissionaisPage() {
         especialidade: form.especialidade || null,
         whatsapp: form.whatsapp || null,
         cpf: form.cpf || null,
-        crm: form.crm.trim() || null,
+        crm: form.registro.trim() ? `${form.orgao.split("|")[1] ?? form.orgao} ${form.registro.trim()}` : null,
         anos_experiencia: form.anos_experiencia ? Number(form.anos_experiencia) : null,
         foto_url,
       };
@@ -195,7 +248,6 @@ export default function ProfissionaisPage() {
     <PageHeader
       title="Profissionais"
       description="Gerencie os profissionais da sua clínica."
-      actions={<button className="primaryButton" onClick={openCreate}><Plus size={17} /> Novo profissional</button>}
     />
 
     <section className="panel dataPanel">
@@ -212,6 +264,7 @@ export default function ProfissionaisPage() {
         <span className="pacientesCount">
           {filtered.length} de {profissionais.length} profissional{profissionais.length !== 1 ? "is" : ""}
         </span>
+        <button className="primaryButton" onClick={openCreate}><Plus size={17} /> Novo profissional</button>
       </div>
 
       {/* Card grid or empty/loading states */}
@@ -232,6 +285,11 @@ export default function ProfissionaisPage() {
           <div>
             <strong>{profissionais.length === 0 ? "Nenhum profissional cadastrado ainda" : "Nenhum profissional encontrado"}</strong>
             <small>{profissionais.length === 0 ? "Cadastre a sua equipe para associar profissionais a horários e consultas." : "Ajuste a busca para encontrar outros profissionais."}</small>
+            {profissionais.length === 0 && (
+              <button className="primaryButton emptyStateAction" onClick={openCreate}>
+                <Plus size={16} /> Cadastrar profissional
+              </button>
+            )}
           </div>
         </div>
       ) : (
@@ -330,15 +388,12 @@ export default function ProfissionaisPage() {
           </header>
           <div className="modalBody">
             <div className="formGroup">
-              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ width: 64, height: 64, borderRadius: 14, background: "#eef0f6", overflow: "hidden", display: "grid", placeItems: "center", fontSize: 18, fontWeight: 700, color: "#858d9f", flexShrink: 0 }}>
+              <div className="professionalPhotoField">
+                <button className="professionalPhotoPicker" type="button" onClick={() => fileRef.current?.click()} aria-label={fotoPreview ? "Trocar foto do profissional" : "Adicionar foto do profissional"}>
                   {fotoPreview ? <img src={fotoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome ? initials(form.nome) : <Camera size={22} />)}
-                </div>
+                </button>
+                <input ref={fileRef} type="file" accept="image/*" className="visuallyHiddenInput" onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
                 <div>
-                  <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
-                  <button className="secondaryButton" type="button" onClick={() => fileRef.current?.click()} style={{ height: 34, fontSize: 12 }}>
-                    <Camera size={14} /> {fotoFile ? "Trocar foto" : "Adicionar foto"}
-                  </button>
                   <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>JPG, PNG ou WebP. Recomendado 400×400.</small>
                 </div>
               </div>
@@ -348,9 +403,35 @@ export default function ProfissionaisPage() {
                 <div className="formRow"><label>WhatsApp</label><input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
                 <div className="formRow"><label>CPF</label><input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" /></div>
               </div>
-              <div className="formRow" style={{ maxWidth: 180 }}>
-                <label>CRM</label>
-                <input type="text" value={form.crm} onChange={(e) => setForm({ ...form, crm: e.target.value })} placeholder="CRM-UF 123456" />
+              <div className="formRow split">
+                <div className="formRow">
+                  <label>Órgão profissional</label>
+                  <div className="councilSelect" ref={councilSelectRef}>
+                    <button type="button" className="councilSelectTrigger" onClick={() => { setCouncilOpen((open) => !open); setCouncilQuery(""); }} onKeyDown={(e) => {
+                      if (e.key === "Escape") { setCouncilOpen(false); setCouncilQuery(""); return; }
+                      if (e.key.length === 1 && /\S/.test(e.key)) { e.preventDefault(); setCouncilOpen(true); setCouncilQuery((query) => query + e.key); }
+                    }} aria-haspopup="listbox" aria-expanded={councilOpen}>
+                      <span><strong>{selectedCouncil.profissao}</strong><small>{selectedCouncil.registro} · {selectedCouncil.federal}</small></span>
+                      <ChevronDown size={17} />
+                    </button>
+                    {councilOpen && <div className="councilSelectMenu" role="listbox" aria-label="Órgão profissional">
+                      <input autoFocus className="councilSearchInput" value={councilQuery} onChange={(e) => setCouncilQuery(e.target.value)} placeholder="Digite profissão, CRM, CRP..." aria-label="Buscar órgão profissional" />
+                      {filteredCouncils.map((option) => {
+                        const value = `${option.profissao}|${option.registro}`;
+                        const selected = value === form.orgao;
+                        return <button key={value} type="button" role="option" aria-selected={selected} className={`councilOption ${selected ? "selected" : ""}`} onClick={() => { setForm({ ...form, orgao: value }); setCouncilOpen(false); }}>
+                          <span><strong>{option.profissao}</strong><small>{option.registro} · Conselho federal {option.federal}</small></span>
+                          {selected && <Check size={16} />}
+                        </button>;
+                      })}
+                      {!filteredCouncils.length && <span className="councilNoResults">Nenhum órgão encontrado.</span>}
+                    </div>}
+                  </div>
+                </div>
+                <div className="formRow">
+                  <label>Número do registro</label>
+                  <input type="text" value={form.registro} onChange={(e) => setForm({ ...form, registro: e.target.value })} placeholder={`Ex.: ${form.orgao.split("|")[1] ?? form.orgao}-SP 123456`} />
+                </div>
               </div>
             </div>
             {error && <div className="onboardingError">{error}</div>}

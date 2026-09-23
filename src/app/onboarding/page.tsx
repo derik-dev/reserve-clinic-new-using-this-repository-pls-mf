@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Building2, Stethoscope, Upload, UserCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Check, ChevronDown, Link2, Mail, Phone, Stethoscope, Upload } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { reportarErroCliente } from "@/lib/reportarErroCliente";
 
@@ -14,6 +14,7 @@ type Form = {
   slug: string;
   telefone: string;
   email_contato: string;
+  valor_consulta: string;
   endereco_cep: string;
   endereco_rua: string;
   endereco_numero: string;
@@ -27,6 +28,7 @@ const initial: Form = {
   slug: "",
   telefone: "",
   email_contato: "",
+  valor_consulta: "",
   endereco_cep: "",
   endereco_rua: "",
   endereco_numero: "",
@@ -103,7 +105,7 @@ export default function OnboardingPage() {
   }
 
   const canAdvance = (() => {
-    if (step === 0) return form.nome.trim() && form.slug.trim() && form.email_contato.trim();
+    if (step === 0) return form.nome.trim() && form.slug.trim() && form.email_contato.trim() && Number(form.valor_consulta.replace(",", ".")) > 0;
     if (step === 1) return form.endereco_cep && form.endereco_rua && form.endereco_cidade && form.endereco_uf;
     return true;
   })();
@@ -131,6 +133,7 @@ export default function OnboardingPage() {
         slug: form.slug.trim(),
         telefone: form.telefone || null,
         email_contato: form.email_contato || null,
+        valor_consulta: Number(form.valor_consulta.replace(",", ".")),
         endereco_cep: form.endereco_cep || null,
         endereco_rua: form.endereco_rua || null,
         endereco_numero: form.endereco_numero || null,
@@ -161,44 +164,67 @@ export default function OnboardingPage() {
   return <main className="onboardingPage">
     <header className="onboardingTop">
       <div className="brand"><span><Stethoscope size={17} /></span>Reserve Clinic</div>
-      <small>{userEmail}</small>
+      <div className="onboardingAccount">
+        <span className="accountAvatar">{(userEmail?.[0] ?? "U").toUpperCase()}</span>
+        <span>{userEmail}</span>
+        <ChevronDown size={17} />
+      </div>
     </header>
     <div className="onboardingWrap">
+      <aside className="onboardingIntro">
+        <span className="introEyebrow">RESERVE CLINIC</span>
+        <h2>Uma clínica mais organizada começa aqui.</h2>
+        <p>Configure o essencial agora e deixe sua equipe pronta para atender com mais tranquilidade.</p>
+        <div className="introChecklist">
+          <span><Check size={15} /> Configuração guiada</span>
+          <span><Check size={15} /> Link de agendamento próprio</span>
+          <span><Check size={15} /> Experiência simples para seus pacientes</span>
+        </div>
+        <div className="introQuote">“Menos tarefas manuais. Mais tempo para cuidar.”</div>
+      </aside>
       <section className="onboardingCard">
-        <div className="onboardingSteps">
-          <div className={step === 0 ? "active" : "done"} />
-          <div className={step === 1 ? "active" : step > 1 ? "done" : ""} />
-          <div className={step === 2 ? "active" : ""} />
+        <div className="onboardingSteps" aria-label={`Etapa ${step + 1} de 3`}>
+          <div className={`onboardingStep ${step === 0 ? "active" : "done"}`}>
+            <span className="stepCircle">1</span>
+            <span><strong>Configuração</strong><small>Seus dados</small></span>
+          </div>
+          <span className={`stepLine ${step > 0 ? "done" : ""}`} />
+          <div className={`onboardingStep ${step === 1 ? "active" : step > 1 ? "done" : ""}`}>
+            <span className="stepCircle">2</span>
+            <span><strong>Personalização</strong><small>Preferências</small></span>
+          </div>
+          <span className={`stepLine ${step > 1 ? "done" : ""}`} />
+          <div className={`onboardingStep ${step === 2 ? "active" : ""}`}>
+            <span className="stepCircle">3</span>
+            <span><strong>Pronto!</strong><small>Comece a usar</small></span>
+          </div>
         </div>
 
+        <div className="onboardingStepContent" key={step}>
         {step === 0 && <>
           <h1>Vamos começar</h1>
-          <p>Como você vai usar o Reserve Clinic? Isso personaliza o sistema para você.</p>
-          <div className="tipoSelect">
-            <button type="button" className={form.tipo === "autonomo" ? "active" : ""} onClick={() => update("tipo", "autonomo")}>
-              <UserCircle2 size={28} />
-              <strong>Profissional autônomo</strong>
-              <span>Você atende sozinho, sem equipe</span>
-            </button>
-            <button type="button" className={form.tipo === "clinica" ? "active" : ""} onClick={() => update("tipo", "clinica")}>
-              <Building2 size={28} />
-              <strong>Clínica / empresa</strong>
-              <span>Você tem uma equipe ou espaço compartilhado</span>
-            </button>
-          </div>
-          <div className="formGrid" style={{ marginTop: 20 }}>
+          <div className="formGrid">
             <div className="formRow">
               <label>{form.tipo === "autonomo" ? "Seu nome" : "Nome da clínica"}</label>
-              <input value={form.nome} onChange={(e) => { update("nome", e.target.value); if (!form.slug) update("slug", slugify(e.target.value)); }} placeholder={form.tipo === "autonomo" ? "Ex.: Dra. Ana Lima" : "Ex.: Clínica Vida Nova"} />
+              <div className="inputWithIcon"><Building2 size={19} /><input value={form.nome} onChange={(e) => { update("nome", e.target.value); if (!form.slug) update("slug", slugify(e.target.value)); }} placeholder={form.tipo === "autonomo" ? "Ex.: Dra. Ana Lima" : "Ex.: Clínica Vida Nova"} /></div>
             </div>
             <div className="formRow">
               <label>Endereço da página de agendamento</label>
-              <input value={form.slug} onChange={(e) => update("slug", slugify(e.target.value))} placeholder={form.tipo === "autonomo" ? "ana-lima" : "vida-nova"} />
-              <small>Esse é o link que você vai compartilhar com seus pacientes: reserveclinic.com/agendamento/{form.slug || (form.tipo === "autonomo" ? "seu-nome" : "sua-clinica")}</small>
+              <div className="slugControl">
+                <Link2 size={19} />
+                <span>reserveclinic.com/agendamento/</span>
+                <input value={form.slug} onChange={(e) => update("slug", slugify(e.target.value))} placeholder="vida-nova" aria-label="Slug da página de agendamento" />
+              </div>
+              <small>Esse é o link que você vai compartilhar com seus pacientes.</small>
             </div>
-            <div className="formRow split">
-              <div className="formRow"><label>{form.tipo === "autonomo" ? "Seu telefone" : "Telefone"}</label><input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div>
-              <div className="formRow"><label>{form.tipo === "autonomo" ? "Seu e-mail" : "E-mail de contato"}</label><input type="email" value={form.email_contato} onChange={(e) => update("email_contato", e.target.value)} placeholder={form.tipo === "autonomo" ? "voce@email.com.br" : "contato@clinica.com.br"} /></div>
+              <div className="formRow split">
+              <div className="formRow"><label>{form.tipo === "autonomo" ? "Seu telefone" : "Telefone"}</label><div className="inputWithIcon"><Phone size={18} /><input value={form.telefone} onChange={(e) => update("telefone", e.target.value)} placeholder="(11) 99999-9999" /></div></div>
+              <div className="formRow"><label>{form.tipo === "autonomo" ? "Seu e-mail" : "E-mail de contato"}</label><div className="inputWithIcon"><Mail size={18} /><input type="email" value={form.email_contato} onChange={(e) => update("email_contato", e.target.value)} placeholder={form.tipo === "autonomo" ? "voce@email.com.br" : "contato@clinica.com.br"} /></div></div>
+            </div>
+            <div className="formRow">
+              <label>Valor padrão da consulta</label>
+              <div className="inputWithIcon"><span className="currencyPrefix">R$</span><input value={form.valor_consulta} onChange={(e) => update("valor_consulta", e.target.value.replace(/[^\d,\.]/g, ""))} placeholder="150,00" inputMode="decimal" /></div>
+              <small>Esse valor será usado como padrão quando o profissional não tiver um valor próprio.</small>
             </div>
           </div>
         </>}
@@ -230,6 +256,7 @@ export default function OnboardingPage() {
             </div>
           </div>
         </>}
+        </div>
 
         {error && <div className="onboardingError">{error}</div>}
 

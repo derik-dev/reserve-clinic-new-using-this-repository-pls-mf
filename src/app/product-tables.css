@@ -24,6 +24,7 @@ td strong.isTodayLabel{color:var(--accent);font-weight:600}
 .tableEmpty>svg{color:var(--text-subtle);opacity:.7}
 .tableEmpty strong{display:block;font:600 16px var(--font-space);color:var(--text);letter-spacing:-.01em;margin-bottom:6px}
 .tableEmpty small{display:block;font-size:12px;color:var(--text-muted);max-width:340px}
+.tableEmpty .emptyStateAction{margin-top:16px}
 td>strong,td>small{display:block}
 td>strong{color:var(--text);font-size:12px;font-weight:500}
 td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
@@ -294,20 +295,20 @@ td>small{color:var(--text-muted);font-size:10px;margin-top:4px}
 .gcalHourLine{border-top:1px solid rgba(255,255,255,.07)}
 .gcalHalfLine{border-top:1px solid rgba(255,255,255,.03)}
 .gcalHalfRow>span{display:block}
-.gcalClosedZone{position:absolute;left:60px;right:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.008) 0,rgba(255,255,255,.008) 6px,rgba(255,255,255,.022) 6px,rgba(255,255,255,.022) 12px);pointer-events:none;z-index:0}
+.gcalClosedZone{position:absolute;left:60px;right:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0,rgba(255,255,255,.012) 6px,rgba(255,255,255,.032) 6px,rgba(255,255,255,.032) 12px);pointer-events:none;z-index:0}
 .gcalClosedFull{left:0;display:flex;align-items:center;justify-content:center;pointer-events:auto}
 .gcalClosedFull>span{font-size:12px;color:var(--text-subtle);background:rgba(0,0,0,.5);border:1px solid var(--border-soft);border-radius:10px;padding:10px 18px}
 .gcalNow{position:absolute;left:0;right:0;display:flex;align-items:center;pointer-events:none;z-index:4}
-.gcalNowDot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-left:55px;flex-shrink:0;box-shadow:0 0 10px var(--accent-glow)}
-.gcalNowBar{flex:1;height:2px;background:var(--accent);box-shadow:0 0 8px rgba(29,78,216,.4);border-radius:2px}
-.gcalEvent{position:absolute;border-radius:8px;padding:8px 10px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;gap:2px;z-index:2;border-left:3px solid;transition:filter .15s var(--ease),transform .15s var(--ease);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.gcalEvent:hover{filter:brightness(1.15);transform:scaleY(.99)}
-.gcalEvent strong{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.gcalEvent span{font-size:9px;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gcalEvent.blue{background:rgba(29,78,216,.25);color:#1d4ed8;border-color:var(--accent)}
-.gcalEvent.mint{background:rgba(52,211,153,.18);color:#a7f3d0;border-color:var(--success)}
-.gcalEvent.amber{background:rgba(251,191,36,.18);color:#fde68a;border-color:var(--warning)}
-.gcalEvent.gray{background:rgba(255,255,255,.06);color:var(--text-muted);border-color:rgba(255,255,255,.2);opacity:.6}
+.gcalNowDot{width:12px;height:12px;border-radius:50%;background:var(--accent);margin-left:54px;flex-shrink:0;box-shadow:0 0 0 3px rgba(29,78,216,.25),0 0 12px var(--accent-glow)}
+.gcalNowBar{flex:1;height:2px;background:linear-gradient(90deg,var(--accent),rgba(29,78,216,.2));box-shadow:0 0 8px rgba(29,78,216,.35);border-radius:2px}
+.gcalEvent{position:absolute;border-radius:10px;padding:9px 11px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;gap:3px;z-index:2;border-left:3px solid;transition:transform .15s var(--ease),box-shadow .15s var(--ease);box-shadow:0 2px 10px -3px rgba(0,0,0,.45)}
+.gcalEvent:hover{transform:translateY(-1px) scale(1.002);box-shadow:0 6px 20px -4px rgba(0,0,0,.55)}
+.gcalEvent strong{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;color:inherit}
+.gcalEvent span{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;opacity:.82}
+.gcalEvent.blue{background:linear-gradient(135deg,rgba(37,99,235,.92),rgba(29,78,216,.88));color:#fff;border-color:#93c5fd;box-shadow:0 3px 14px -4px rgba(29,78,216,.6)}
+.gcalEvent.mint{background:linear-gradient(135deg,rgba(5,150,105,.88),rgba(16,185,129,.84));color:#fff;border-color:#6ee7b7;box-shadow:0 3px 14px -4px rgba(16,185,129,.45)}
+.gcalEvent.amber{background:linear-gradient(135deg,rgba(180,83,9,.85),rgba(217,119,6,.82));color:#fff;border-color:#fbbf24;border-left-style:dashed;box-shadow:0 3px 12px -4px rgba(217,119,6,.45)}
+.gcalEvent.gray{background:rgba(71,85,105,.45);color:var(--text-muted);border-color:rgba(148,163,184,.3);box-shadow:none;opacity:.6}
 .gcalLoading{height:2px;flex-shrink:0;overflow:hidden;background:rgba(255,255,255,.04)}
 .gcalLoading>span{display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:agendaLoadingSlide 1.2s var(--ease) infinite}
 @media(max-width:900px){.gcalWrap{grid-template-columns:1fr}.gcalSide{border-right:0;border-bottom:1px solid var(--border-soft);flex-direction:row;flex-wrap:wrap}.gcalSide>*{flex:1;min-width:200px}.gcalScroll{max-height:calc(100vh - 340px)}}

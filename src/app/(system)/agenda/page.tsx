@@ -167,7 +167,6 @@ export default function AgendaPage() {
     supabase.from("consultas").select("*")
       .gte("data_hora", from.toISOString())
       .lte("data_hora", to.toISOString())
-      .neq("status", "aguardando")
       .order("data_hora")
       .then(({ data }) => {
         if (cancelled) return;

@@ -14,6 +14,240 @@
   --radius-sm: 10px;
   --ease: cubic-bezier(.4,0,.2,1);
 }
+
+/* Premium journey section */
+.landingStepsLegacy { display: none !important; }
+.landingJourney {
+  position: relative;
+  overflow: hidden;
+  padding: 112px clamp(24px,5vw,88px) 92px;
+  border-top: 1px solid #e5edf9;
+  border-bottom: 1px solid #e5edf9;
+  background: #f8fbff;
+  isolation: isolate;
+}
+.landingJourney::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(37,99,235,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, #000, transparent 88%);
+}
+.landingJourney::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 620px;
+  height: 320px;
+  left: 50%;
+  bottom: -190px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(147,197,253,.18);
+  filter: blur(38px);
+}
+.journeyHeader { max-width: 760px; margin: 0 auto; text-align: center; }
+.journeyEyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid #c8dcff;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+}
+.journeyHeader h2 { margin: 20px 0 10px; font-size: clamp(30px,3.6vw,48px); line-height: 1.06; letter-spacing: -.05em; }
+.journeyHeader p { margin: 0; color: #64748b; font-size: 17px; line-height: 1.55; }
+.journeyCanvas { position: relative; max-width: 1240px; margin: 56px auto 0; padding: 22px 0 8px; }
+.journeyPath { position: absolute; pointer-events: none; overflow: visible; }
+.journeyPathDesktop { inset: 12px 1% auto; width: 98%; height: 220px; }
+.journeyPathMobile { display: none; }
+.journeyPathBase, .journeyPathGlow { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.journeyPathBase { stroke: #d5e4fb; stroke-width: 3; }
+.journeyPathGlow { stroke: #4d84ef; stroke-width: 2.5; stroke-dasharray: 1400; stroke-dashoffset: 1400; filter: drop-shadow(0 3px 5px rgba(37,99,235,.18)); }
+.landingJourney.isVisible .journeyPathGlow { animation: journeyDraw 2.1s cubic-bezier(.65,0,.25,1) .35s forwards; }
+.journeyCards { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 20px; align-items: start; }
+.journeyCard {
+  position: relative;
+  min-height: 252px;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 25px 24px;
+  border: 1px solid #dce7f7;
+  border-radius: 20px;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 16px 36px rgba(30,64,175,.07), inset 0 1px 0 rgba(255,255,255,.9);
+  opacity: 0;
+  transform: translateY(22px) scale(.975);
+  transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
+}
+.journeyCard:nth-child(2), .journeyCard:nth-child(4) { margin-top: 18px; }
+.landingJourney.isVisible .journeyCard { animation: journeyCardIn .55s cubic-bezier(.22,.8,.3,1) calc(.6s + var(--step-delay)) forwards; }
+.journeyCard.isFeatured { border-color: #a9c7fb; background: linear-gradient(145deg, #fff 0%, #f2f7ff 100%); box-shadow: 0 20px 44px rgba(37,99,235,.12), inset 0 1px 0 #fff; }
+.journeyCard:hover { transform: translateY(-5px); border-color: #75a3f4; box-shadow: 0 24px 48px rgba(37,99,235,.15); }
+.journeyCardTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 27px; }
+.journeyNumber { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid #c5dbff; border-radius: 50%; background: #eff5ff; color: #1d4ed8; font: 700 17px var(--font-space); }
+.journeyCard.isFeatured .journeyNumber { background: #dceaff; border-color: #a7c9ff; }
+.journeyIcon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; background: #f0f5ff; color: #2563eb; }
+.journeyCard.isFeatured .journeyIcon { background: #e3efff; }
+.landingJourney.isVisible .journeyCard:nth-child(1) .journeyNumber,
+.landingJourney.isVisible .journeyCard:nth-child(2) .journeyNumber,
+.landingJourney.isVisible .journeyCard:nth-child(3) .journeyNumber,
+.landingJourney.isVisible .journeyCard:nth-child(4) .journeyNumber { animation: journeyPulse .5s ease calc(1.05s + var(--step-delay)) both; }
+.journeyCard h3 { margin: 0 0 10px; color: #111d38; font-size: 18px; line-height: 1.25; letter-spacing: -.025em; }
+.journeyCard p { flex: 1; margin: 0; color: #5d6f8e; font-size: 14px; line-height: 1.6; }
+.journeyProgress { display: block; width: 100%; height: 7px; margin-top: 22px; overflow: hidden; border-radius: 999px; background: #e7effc; }
+.journeyProgress::after { content: ""; display: block; width: 42%; height: 100%; border-radius: inherit; background: #c0d6fb; transform: scaleX(0); transform-origin: left; }
+.journeyCard:nth-child(2) .journeyProgress::after { width: 68%; background: #8db5fa; }
+.journeyCard:nth-child(3) .journeyProgress::after { width: 54%; }
+.journeyCard:nth-child(4) .journeyProgress::after { width: 84%; background: #69a0f5; }
+.landingJourney.isVisible .journeyProgress::after { animation: journeyProgress .55s ease calc(1.15s + var(--step-delay)) forwards; }
+.journeyNotes { display: flex; justify-content: center; max-width: 860px; margin: 42px auto 0; }
+.journeyNotes > div { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 0 30px; color: #2563eb; }
+.journeyNotes > div + div { border-left: 1px solid #d6e3f7; }
+.journeyNotes > div > span { display: grid; gap: 3px; }
+.journeyNotes strong { color: #415b87; font-size: 13px; font-weight: 600; }
+.journeyNotes small { color: #8192ad; font-size: 11px; }
+.landingJourney:not(.isVisible) .journeyNotes { opacity: 0; transform: translateY(12px); }
+.landingJourney.isVisible .journeyNotes { animation: journeyNotesIn .55s ease 1.8s both; }
+@keyframes journeyDraw { to { stroke-dashoffset: 0; } }
+@keyframes journeyCardIn { to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes journeyPulse { 50% { transform: scale(1.08); box-shadow: 0 0 0 7px rgba(37,99,235,.1); } }
+@keyframes journeyProgress { to { transform: scaleX(1); } }
+@keyframes journeyNotesIn { to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .landingJourney .journeyCard, .landingJourney .journeyNotes { opacity: 1; transform: none; animation: none !important; }
+  .landingJourney .journeyPathGlow { stroke-dashoffset: 0; animation: none !important; }
+  .landingJourney .journeyProgress::after { transform: scaleX(1); animation: none !important; }
+}
+@media (max-width: 900px) {
+  .landingJourney { padding: 88px 24px 76px; }
+  .journeyCards { gap: 12px; }
+  .journeyCard { padding: 22px 18px; }
+  .journeyCard h3 { font-size: 16px; }
+  .journeyCard p { font-size: 13px; }
+  .journeyNotes > div { padding: 0 16px; }
+}
+@media (max-width: 650px) {
+  .landingJourney { padding: 76px 20px 70px; }
+  .journeyHeader p { font-size: 16px; }
+  .journeyDesktopBreak { display: none; }
+  .journeyCanvas { margin-top: 38px; padding: 0 0 0 28px; }
+  .journeyPathDesktop { display: none; }
+  .journeyPathMobile { display: block; top: 16px; bottom: 16px; left: 8px; width: 26px; height: calc(100% - 32px); }
+  .journeyCards { grid-template-columns: 1fr; gap: 14px; }
+  .journeyCard, .journeyCard:nth-child(2), .journeyCard:nth-child(4) { min-height: 0; margin-top: 0; padding: 22px; }
+  .journeyCardTop { margin-bottom: 20px; }
+  .journeyNotes { flex-direction: column; gap: 16px; align-items: flex-start; margin-top: 32px; padding-left: 28px; }
+  .journeyNotes > div, .journeyNotes > div + div { padding: 0; border-left: 0; }
+}
+
+/* Refined landing hero */
+.site nav {
+  background: rgba(255,255,255,.74);
+  border-bottom: 1px solid rgba(148,163,184,.14);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.site .hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 900px;
+  padding: 176px clamp(24px,7vw,128px) 104px;
+  background-position: center center;
+}
+.site .hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.08) 39%, rgba(255,255,255,0) 66%);
+}
+.site .heroLeft {
+  position: relative;
+  z-index: 1;
+  max-width: 590px;
+}
+.site .heroLeft > p:not(.heroDescriptionShort) { display: none; }
+.site .heroDescriptionShort {
+  max-width: 510px;
+  margin: 0 0 28px;
+  color: #334155;
+  font-size: 17px;
+  line-height: 1.62;
+}
+.site .hero .pill {
+  margin-bottom: 24px;
+  padding: 7px 13px;
+  background: rgba(239,246,255,.82);
+  border-color: rgba(37,99,235,.18);
+  font-size: 12px;
+}
+.site .hero h1 {
+  max-width: 610px;
+  margin-bottom: 20px;
+  font-size: clamp(42px,4.3vw,64px);
+  line-height: 1.01;
+  letter-spacing: -.055em;
+}
+.site .heroActions { gap: 10px; margin-bottom: 14px; }
+.site .heroActions .button { min-height: 50px; padding: 0 22px; }
+.site .heroActions .button.primary { box-shadow: 0 12px 30px rgba(29,78,216,.25); }
+.site .heroActions .button.ghost { background: rgba(255,255,255,.72); border-color: rgba(100,116,139,.32); }
+.site .ctaAssurance { margin-bottom: 18px; color: #64748b; font-size: 12px; }
+.site .trust { color: #64748b; font-size: 12px; }
+.site .heroBenefits {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 0;
+  max-width: 600px;
+  margin-top: 34px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(148,163,184,.28);
+}
+.site .heroBenefit {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding-right: 14px;
+}
+.site .heroBenefit + .heroBenefit { padding-left: 14px; border-left: 1px solid rgba(148,163,184,.24); }
+.site .heroBenefit > span {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #c7dafb;
+  border-radius: 9px;
+  background: #eef5ff;
+  color: #1d4ed8;
+}
+.site .heroBenefit strong { font-size: 12px; line-height: 1.25; color: #172554; }
+.site .heroBenefit small { margin-top: 3px; color: #64748b; font-size: 11px; line-height: 1.25; }
+@media(max-width:900px) {
+  .site .hero { min-height: 820px; padding-top: 136px; background-position: 64% center; }
+  .site .hero::before { background: linear-gradient(90deg, rgba(255,255,255,.88) 0%, rgba(255,255,255,.7) 46%, rgba(255,255,255,.06) 82%); }
+}
+@media(max-width:650px) {
+  .site nav { background: rgba(255,255,255,.9); }
+  .site .hero { min-height: 760px; padding: 112px 22px 54px; background-position: 68% center; }
+  .site .hero::before { background: linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.86) 55%, rgba(255,255,255,.2) 100%); }
+  .site .hero h1 { font-size: clamp(38px,10vw,48px); }
+  .site .heroDescriptionShort { font-size: 16px; }
+  .site .heroBenefits { grid-template-columns: 1fr; gap: 12px; max-width: 330px; margin-top: 28px; }
+  .site .heroBenefit, .site .heroBenefit + .heroBenefit { padding: 0; border-left: 0; }
+}
 * { box-sizing: border-box }
 html { scroll-behavior: smooth }
 body { margin: 0; background: #fff; color: var(--text); font-family: var(--font-plex), sans-serif }
@@ -944,4 +1178,124 @@ footer {
   .site .faqItem summary { min-height: 70px; padding: 18px; }
   .site .faqItem p { padding: 0 18px 20px; }
   .site .finalCta { padding: 78px 20px 84px; }
+}
+
+/* Interactive dashboard showcase */
+.site .landingDashboard {
+  position: relative;
+  overflow: hidden;
+  padding: 112px clamp(24px, 5vw, 88px) 132px;
+  background: #f8fbff;
+}
+.site .landingDashboard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .42;
+  background-image: linear-gradient(rgba(42, 91, 180, .055) 1px, transparent 1px), linear-gradient(90deg, rgba(42, 91, 180, .055) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .72) 55%, transparent 100%);
+}
+.site .landingDashboard .dashboardTitle,
+.site .landingDashboard .dashboardInteractive { position: relative; z-index: 1; }
+.site .dashboardInteractive {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --spot-x: 50%;
+  --spot-y: 50%;
+  --pix-x: 0px;
+  --pix-y: 0px;
+  --whatsapp-x: 0px;
+  --whatsapp-y: 0px;
+  min-height: 580px;
+  max-width: 1320px;
+  margin: 48px auto 0;
+  padding: 54px clamp(24px, 5vw, 72px) 20px;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+.site .dashboardInteractive .browser {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(1140px, 100%);
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 16px;
+  opacity: 0;
+  translate: 0 38px;
+  scale: .96;
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  will-change: transform, opacity;
+  transition: filter .35s ease;
+}
+.site .landingDashboard.isVisible .browser {
+  animation: dashboardReveal .8s cubic-bezier(.22, .8, .3, 1) .35s forwards;
+}
+.site .dashboardInteractive:hover .browser { filter: drop-shadow(0 28px 34px rgba(24, 55, 110, .2)); }
+.site .dashboardSpotlight {
+  position: absolute;
+  inset: 18px 5% 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(420px 260px at var(--spot-x) var(--spot-y), rgba(59, 130, 246, .15), transparent 72%);
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+.site .dashboardInteractive:hover .dashboardSpotlight { opacity: 1; }
+.site .landingDashboard .floatCard {
+  z-index: 2;
+  opacity: 0;
+  scale: .97;
+  will-change: translate, opacity;
+  transition: translate .25s cubic-bezier(.22, .8, .3, 1), box-shadow .25s ease;
+}
+.site .landingDashboard.isVisible .floatCard { animation: dashboardCardReveal .55s cubic-bezier(.22, .8, .3, 1) forwards; }
+.site .landingDashboard .pix {
+  top: 26px;
+  left: 2%;
+  translate: var(--pix-x) var(--pix-y);
+  animation-delay: .95s;
+}
+.site .landingDashboard .whatsapp {
+  right: 2%;
+  bottom: 44px;
+  translate: var(--whatsapp-x) var(--whatsapp-y);
+  animation-delay: 1.12s;
+}
+.site .landingDashboard .floatCard:hover { box-shadow: 0 20px 42px rgba(39, 77, 145, .18); }
+.site .landingDashboardLegacy { display: none !important; }
+
+@keyframes dashboardReveal {
+  from { opacity: 0; translate: 0 38px; scale: .96; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes dashboardCardReveal {
+  from { opacity: 0; scale: .97; }
+  to { opacity: 1; scale: 1; }
+}
+
+@media (max-width: 900px) {
+  .site .landingDashboard { padding-left: 20px; padding-right: 20px; }
+  .site .dashboardInteractive { min-height: 470px; padding-left: 8px; padding-right: 8px; }
+  .site .landingDashboard .pix { left: 0; }
+  .site .landingDashboard .whatsapp { right: 0; }
+}
+@media (max-width: 650px) {
+  .site .landingDashboard { padding-top: 78px; padding-bottom: 92px; }
+  .site .dashboardInteractive { min-height: 360px; margin-top: 28px; padding: 48px 0 8px; perspective: none; }
+  .site .dashboardInteractive .browser { border-radius: 11px; transform: none; }
+  .site .landingDashboard .floatCard { max-width: 188px; }
+  .site .landingDashboard .pix { top: 8px; left: 4px; }
+  .site .landingDashboard .whatsapp { right: 4px; bottom: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site .dashboardInteractive { perspective: none; }
+  .site .dashboardInteractive .browser { transform: none; }
+  .site .landingDashboard .browser,
+  .site .landingDashboard .floatCard { animation: none !important; opacity: 1; translate: 0; scale: 1; }
+  .site .dashboardSpotlight { display: none; }
 }

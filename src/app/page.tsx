@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { ArrowRight, BellRing, CalendarDays, CalendarPlus, Check, Link2, ShieldCheck, Sparkles, UserRoundCheck } from "lucide-react";
+import { LandingSteps } from "@/components/LandingSteps";
+import { LandingDashboardShowcase } from "@/components/LandingDashboardShowcase";
 
 const features = [
   {
@@ -146,6 +148,7 @@ export default function Home() {
           <p>
             Cada consulta perdida é uma cadeira vazia que sua clínica não vai faturar. O Reserve Clinic cobra o sinal via Pix na hora da marcação, envia lembretes automáticos e transforma horário reservado em faturamento previsto.
           </p>
+          <p className="heroDescriptionShort">Receba o sinal via Pix, confirme automaticamente e mantenha sua agenda previsivel, sem perder tempo com cobrancas e ligacoes.</p>
           <div className="heroActions">
             <a className="button primary" href="/registro">
               Começar teste grátis <ArrowRight size={15} />
@@ -159,12 +162,18 @@ export default function Home() {
             <span className="trustDot" />
             Em uso hoje por uma clínica de audiologia no Rio de Janeiro
           </div>
+          <div className="heroBenefits" aria-label="BenefÃ­cios principais">
+            <div className="heroBenefit"><span><CalendarDays size={17} /></span><strong>Sinal antes</strong><small>Menos faltas no dia</small></div>
+            <div className="heroBenefit"><span><BellRing size={17} /></span><strong>Lembretes automÃ¡ticos</strong><small>ConfirmaÃ§Ã£o sem ligaÃ§Ãµes</small></div>
+            <div className="heroBenefit"><span><ShieldCheck size={17} /></span><strong>Agenda em uma tela</strong><small>Equipe sempre alinhada</small></div>
+          </div>
         </div>
 
       </section>
 
       {/* STEPS */}
-      <section className="steps">
+      <LandingSteps />
+      <section className="steps landingStepsLegacy">
         <div className="sectionTitle">
           <small>COMO FUNCIONA</small>
           <h2>Agendamento simples do jeito certo</h2>
@@ -187,7 +196,8 @@ export default function Home() {
       </section>
 
       {/* DASHBOARD VISUAL */}
-      <section className="dashboardShowcase">
+      <LandingDashboardShowcase />
+      <section className="dashboardShowcase landingDashboardLegacy">
         <div className="sectionTitle dashboardTitle">
           <small>VISÃO DA CLÍNICA</small>
           <h2>Uma operação inteira, em uma tela só</h2>

@@ -61,34 +61,17 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [{ data: profissionais }, { data: pacientes }, { data: consultasAguardando }, { data: configuracao }] = await Promise.all([
-        supabase.from("profissionais").select("id").eq("ativo", true),
-        supabase.from("pacientes").select("id"),
-        supabase.from("consultas").select("id, created_at").eq("status", "aguardando"),
-        supabase.from("configuracoes").select("agenda_config").eq("perfil_id", perfil.id).maybeSingle(),
+      const [{ data: profissionais }, { data: perfilConfig }] = await Promise.all([
+        supabase.from("profissionais").select("id, valor_consulta").eq("ativo", true),
+        supabase.from("perfis").select("valor_consulta").eq("id", perfil.id).maybeSingle(),
       ]);
 
       if (cancelled) return;
       const profissionaisCount = profissionais?.length ?? 0;
-      const agendaConfig = configuracao?.agenda_config;
-      const hasAvailability = Boolean(
-        agendaConfig &&
-        typeof agendaConfig === "object" &&
-        ("dias" in agendaConfig || "disponibilidade" in agendaConfig),
-      );
-      let seenAt: Date | null = null;
-      try {
-        const raw = localStorage.getItem("consultas-seen-at");
-        if (raw) seenAt = new Date(raw);
-      } catch {}
-      const hasNewConsultas = (consultasAguardando ?? []).some(
-        (c: { created_at: string }) => !seenAt || new Date(c.created_at) > seenAt
-      );
+      const hasConsultationValue = Number(perfilConfig?.valor_consulta) > 0 || (profissionais ?? []).some((professional: { valor_consulta: number | null }) => Number(professional.valor_consulta) > 0);
       setNavAlerts({
-        "/agenda": profissionaisCount === 0 || !hasAvailability,
-        "/consultas": hasNewConsultas,
-        "/pacientes": (pacientes?.length ?? 0) === 0,
         "/profissionais": profissionaisCount === 0,
+        "/configuracoes": profissionaisCount > 0 && !hasConsultationValue,
       });
     })();
 
@@ -125,7 +108,7 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
           <span className="navGroupLabel">GESTÃO</span>
           {navigation.map(({ href, label, icon: Icon }) => <Link className={pathname === href || (href !== "/dashboard" && pathname.startsWith(href)) ? "active" : ""} href={href} key={href} onClick={() => setMenuOpen(false)}><Icon size={18} /><span>{label}</span>{href === "/navi" && <span className="navBeta">Beta</span>}{navAlerts[href] && <CircleAlert className="navAlert" size={15} aria-label={`${label}: configuração pendente`} />}</Link>)}
           <span className="navGroupLabel navGroupSettings">CONTA</span>
-          <Link className={pathname === "/configuracoes" ? "active" : ""} href="/configuracoes" onClick={() => setMenuOpen(false)}><Settings size={18} /><span>Configurações</span></Link>
+          <Link className={pathname === "/configuracoes" ? "active" : ""} href="/configuracoes" onClick={() => setMenuOpen(false)}><Settings size={18} /><span>Configurações</span>{navAlerts["/configuracoes"] && <CircleAlert className="navAlert" size={15} aria-label="Configurações: configuração pendente" />}</Link>
         </nav>
         <div className="sidebarUser"><span className="userAvatar">{userInitials}</span><div><strong>{perfil.email ?? "Usuário"}</strong><small>Administrador</small></div><button onClick={handleLogout} aria-label="Sair" style={{ background: "transparent", border: 0, cursor: "pointer", color: "inherit", padding: 0 }}><LogOut size={17} /></button></div>
       </aside>
@@ -143,7 +126,7 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
         ))}
         <Link href="/configuracoes" className={pathname === "/configuracoes" ? "active" : ""} onClick={() => setMenuOpen(false)}>
           <Settings size={20} strokeWidth={pathname === "/configuracoes" ? 2.2 : 1.8} />
-          <span>Config</span>
+          <span>Config</span>{navAlerts["/configuracoes"] && <CircleAlert className="navAlert" size={14} aria-label="Configurações: configuração pendente" />}
         </Link>
       </nav>
       <ProductTour slug={perfil.slug} userId={perfil.id} accountCreatedAt={perfil.created_at} />

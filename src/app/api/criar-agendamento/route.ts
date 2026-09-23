@@ -58,6 +58,35 @@ export async function POST(req: NextRequest) {
     ]);
     const valorConsulta = profResult.data?.valor_consulta ?? perfilResult.data?.valor_consulta ?? null;
 
+    // Upsert paciente: se já existe pelo telefone, não duplica
+    if (clienteTelefone) {
+      const { data: existing } = await admin
+        .from("pacientes")
+        .select("id")
+        .eq("perfil_id", perfilId)
+        .eq("telefone", clienteTelefone)
+        .maybeSingle();
+
+      if (!existing) {
+        await admin.from("pacientes").insert({
+          perfil_id: perfilId,
+          nome: clienteNome,
+          telefone: clienteTelefone,
+          email: clienteEmail || null,
+          status: "ativo",
+        });
+      }
+    } else {
+      // Sem telefone: insere sempre (sem como deduplicar com segurança)
+      await admin.from("pacientes").insert({
+        perfil_id: perfilId,
+        nome: clienteNome,
+        telefone: null,
+        email: clienteEmail || null,
+        status: "ativo",
+      });
+    }
+
     const [agendamentoResult, consultaResult] = await Promise.all([
       admin.from("agendamentos").insert({
         id: agendamentoId,

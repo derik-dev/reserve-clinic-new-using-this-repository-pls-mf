@@ -58,10 +58,6 @@ function mergeConfig(raw: unknown): AgendaConfig {
   };
 }
 
-function hasOpenDay(dias: Partial<Record<DayKey, DayConfig>> | undefined) {
-  return DAY_ORDER.some((day) => dias?.[day]?.aberto === true);
-}
-
 function monthGrid(view: Date) {
   const first = startOfMonth(view);
   const start = addDays(first, -first.getDay());
@@ -156,10 +152,10 @@ function AreaChart({ data }: { data: { day: number; value: number }[] }) {
 export default function DashboardPage() {
   const [perfilNome, setPerfilNome] = useState("");
   const [perfilSlug, setPerfilSlug] = useState<string | null>(null);
+  const [valorConsultaPadrao, setValorConsultaPadrao] = useState<number | null>(null);
   const [perfilCreatedAt, setPerfilCreatedAt] = useState<string | null>(null);
   const [perfilTipo, setPerfilTipo] = useState<"autonomo" | "clinica">("clinica");
   const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
-  const [agendaConfigurada, setAgendaConfigurada] = useState(false);
   const [profissionaisSetup, setProfissionaisSetup] = useState<ProfessionalSetup[]>([]);
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
@@ -175,29 +171,29 @@ export default function DashboardPage() {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user) return;
       const [{ data: p, error: pErr }, { data: conf }, { data: ps }, { data: profs }] = await Promise.all([
-        supabase.from("perfis").select("nome, slug, tipo, created_at").eq("id", session.user.id).maybeSingle(),
+        supabase.from("perfis").select("nome, slug, tipo, created_at, valor_consulta").eq("id", session.user.id).maybeSingle(),
         supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
         supabase.from("pacientes").select("*"),
         supabase.from("profissionais").select("id, valor_consulta, ativo").eq("ativo", true),
       ]);
       if (p) {
-        const pp = p as { nome: string; slug: string; tipo: string; created_at: string | null };
+        const pp = p as { nome: string; slug: string; tipo: string; created_at: string | null; valor_consulta: number | null };
         setPerfilNome(pp.nome ?? "");
         setPerfilSlug(pp.slug ?? null);
+        setValorConsultaPadrao(pp.valor_consulta != null ? Number(pp.valor_consulta) : null);
         setPerfilCreatedAt(pp.created_at ?? null);
         setPerfilTipo(pp.tipo === "autonomo" ? "autonomo" : "clinica");
       } else if (pErr) {
         // coluna `tipo` pode não existir ainda — busca sem ela para não perder slug e nome
-        const { data: pFallback } = await supabase.from("perfis").select("nome, slug").eq("id", session.user.id).maybeSingle();
+        const { data: pFallback } = await supabase.from("perfis").select("nome, slug, valor_consulta").eq("id", session.user.id).maybeSingle();
         if (pFallback) {
-          const pf = pFallback as { nome: string; slug: string };
+          const pf = pFallback as { nome: string; slug: string; valor_consulta: number | null };
           setPerfilNome(pf.nome ?? "");
           setPerfilSlug(pf.slug ?? null);
+          setValorConsultaPadrao(pf.valor_consulta != null ? Number(pf.valor_consulta) : null);
         }
       }
       setConfig(mergeConfig(conf?.agenda_config));
-      const rawConfig = conf?.agenda_config as { dias?: unknown; disponibilidade?: unknown } | null;
-      setAgendaConfigurada(Boolean(rawConfig && (rawConfig.dias || rawConfig.disponibilidade)));
       setProfissionaisSetup((profs as ProfessionalSetup[] | null) ?? []);
       setPacientes((ps as Paciente[] | null) ?? []);
       } catch (e) {
@@ -242,18 +238,16 @@ export default function DashboardPage() {
   const linkFaltando = useMemo(() => {
     const itens: string[] = [];
     if (profissionaisSetup.length === 0) itens.push("Cadastre pelo menos 1 profissional");
-    else if (!profissionaisSetup.some(p => p.valor_consulta != null)) itens.push("Defina o valor da consulta do profissional");
-    if (!agendaConfigurada) itens.push("Configure a disponibilidade em Configurações");
+    else if (!profissionaisSetup.some(p => Number(p.valor_consulta ?? valorConsultaPadrao) > 0)) itens.push("Defina o valor da consulta em Configurações");
     return itens;
-  }, [profissionaisSetup, agendaConfigurada]);
+  }, [profissionaisSetup, valorConsultaPadrao]);
 
   const linkLiberado = useMemo(() => {
-    if (!agendaConfigurada || profissionaisSetup.length === 0) return false;
+    if (profissionaisSetup.length === 0) return false;
     return profissionaisSetup.some((professional) => {
-      const individualDays = config.disponibilidade[professional.id]?.dias;
-      return Number(professional.valor_consulta) > 0 && hasOpenDay(individualDays ?? config.dias);
+      return Number(professional.valor_consulta ?? valorConsultaPadrao) > 0;
     });
-  }, [agendaConfigurada, profissionaisSetup, config]);
+  }, [profissionaisSetup, valorConsultaPadrao]);
 
   const faturamentoMes = useMemo(() => {
     const from = startOfMonth(viewMonth).getTime();

@@ -52,3 +52,243 @@
 .formGrid{gap:20px}.formRow{gap:9px}.formRow label{font-size:14px;color:#182033}.formRow input,.formRow select{height:54px;padding:0 16px;font-size:16px;color:#182033;background:#fff}.formRow small,.colorPicker small{color:#34445d;font-size:13px;line-height:1.5}.tipoSelect{gap:16px}.tipoSelect button{min-height:148px;padding:26px 20px;gap:11px}.tipoSelect button svg{color:#52627d}.tipoSelect button strong{font-size:16px;color:#182033}.tipoSelect button span{font-size:14px;color:#34445d}.logoUpload .preview{color:#34445d;font-size:14px}.logoUpload button{font-size:14px;color:#182033}.onboardingNav{margin-top:34px}.onboardingNav button{height:54px;font-size:16px}.onboardingPage p[style]{color:#34445d!important}
 @media(max-width:800px){.onboardingCard{padding:34px 28px}.onboardingCard h1{font-size:28px}.onboardingCard>p{font-size:16px}.tipoSelect button{min-height:92px;padding:18px 20px}.formRow label{font-size:14px}.formRow small{font-size:13px}}
 @media(max-width:480px){.onboardingCard{padding:30px 20px}.onboardingCard h1{font-size:26px}.onboardingCard>p{font-size:15px;line-height:1.55}.onboardingTop .brand{font-size:16px}.onboardingNav button{font-size:16px}}
+
+/* Refined onboarding layout */
+.onboardingPage {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #eef5ff 0%, #fbfdff 48%, #edf4ff 100%);
+}
+.onboardingPage::before,
+.onboardingPage::after {
+  content: "";
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgba(76,111,255,.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.onboardingPage::before { top: 120px; right: -290px; box-shadow: 0 0 0 70px rgba(76,111,255,.025), 0 0 0 140px rgba(76,111,255,.02); }
+.onboardingPage::after { bottom: -390px; left: -260px; box-shadow: 0 0 0 80px rgba(76,111,255,.025); }
+.onboardingTop {
+  position: relative;
+  z-index: 1;
+  height: 70px;
+  padding: 0 clamp(24px,4vw,64px);
+  border-bottom: 1px solid #dfe8f6;
+  background: rgba(255,255,255,.88);
+}
+.onboardingTop .brand { font-size: 18px; }
+.onboardingTop .brand span { width: 38px; height: 38px; border-radius: 10px; background: #2f66ee; box-shadow: 0 5px 12px rgba(47,102,238,.2); }
+.onboardingAccount { display: flex; align-items: center; gap: 12px; color: #243553; font-size: 14px; }
+.accountAvatar { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #e7eefb; color: #182b50; font-weight: 700; }
+.onboardingWrap { position: relative; z-index: 1; padding: 20px; align-items: start; }
+.onboardingCard {
+  width: min(1080px,100%);
+  margin: 0 auto;
+  padding: 34px 48px 24px;
+  border: 1px solid #d9e4f4;
+  border-radius: 16px;
+  box-shadow: 0 18px 52px rgba(35,73,135,.1);
+}
+.onboardingSteps { display: flex; align-items: center; gap: 18px; margin-bottom: 64px; }
+.onboardingStep { display: flex; align-items: center; gap: 14px; flex: 1 1 0; min-width: 0; color: #8395b6; }
+.onboardingStep > span:last-child { display: grid; gap: 3px; }
+.onboardingStep strong { color: #1b2d50; font: 700 16px var(--font-space); white-space: nowrap; }
+.onboardingStep small { color: #8194b7; font-size: 14px; white-space: nowrap; }
+.stepCircle { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border: 1px solid #d6e1f2; border-radius: 50%; background: #f0f4fb; color: #31476f; font: 700 17px var(--font-space); transition: background .28s var(--ease), border-color .28s var(--ease), color .28s var(--ease), box-shadow .28s var(--ease); }
+.onboardingStep.active .stepCircle,
+.onboardingStep.done .stepCircle { border-color: #3b70f3; background: #3b70f3; color: #fff; box-shadow: 0 7px 16px rgba(59,112,243,.2); }
+.onboardingStep.active strong { color: #13264a; }
+.stepLine { flex: .7 1 40px; min-width: 28px; height: 4px; border-radius: 99px; background: #dce5f3; transition: background .35s var(--ease); }
+.stepLine.done { background: #9dbcf7; }
+.onboardingCard h1 { font-size: 38px; line-height: 1.15; margin-bottom: 8px; }
+.onboardingCard > p { max-width: 760px; margin-bottom: 25px; font-size: 20px; line-height: 1.5; color: #596d92; }
+.tipoSelect { gap: 24px; margin-bottom: 22px; }
+.tipoSelect button {
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 22px;
+  min-height: 142px;
+  padding: 24px 28px;
+  border: 1.5px solid #d5dfef;
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: 0 2px 0 rgba(255,255,255,.8) inset;
+}
+.tipoSelect button:hover { border-color: #8eaff2; background: #f7faff; }
+.tipoSelect button.active { border-color: #3b70f3; background: #f0f5ff; box-shadow: 0 0 0 1px rgba(59,112,243,.2) inset; }
+.tipoSelect button svg { grid-column: 1; grid-row: 1 / span 2; width: 58px; height: 58px; padding: 14px; border-radius: 50%; background: #edf2fa; color: #506487; }
+.tipoSelect button.active svg { background: #dce8ff; color: #3970f2; }
+.tipoSelect button strong { grid-column: 2; font-size: 18px; line-height: 1.3; }
+.tipoSelect button span { grid-column: 2; font-size: 15px; color: #65799e; }
+.tipoSelect button.active::after { content: "✓"; position: absolute; top: 16px; right: 17px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #3b70f3; color: #fff; font-size: 17px; font-weight: 700; }
+.formGrid { gap: 18px; }
+.formRow { gap: 8px; }
+.formRow label { font-size: 15px; color: #1c2c4b; }
+.formRow input, .formRow select { height: 54px; border-color: #cedaeb; border-radius: 10px; font-size: 16px; background: #fff; }
+.formRow input:focus, .formRow select:focus { border-color: #3b70f3; box-shadow: 0 0 0 3px rgba(59,112,243,.1); }
+.inputWithIcon { display: flex; align-items: center; gap: 11px; min-height: 54px; padding: 0 15px; border: 1px solid #cedaeb; border-radius: 10px; background: #fff; color: #6f84a8; transition: border-color .15s, box-shadow .15s, background .15s; }
+.inputWithIcon:focus-within { border-color: #3b70f3; background: #fbfdff; box-shadow: 0 0 0 3px rgba(59,112,243,.1); }
+.inputWithIcon input { flex: 1; min-width: 0; height: 52px !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+.currencyPrefix { flex: 0 0 auto; color: #5e7398; font-size: 14px; font-weight: 700; }
+.onboardingNav { align-items: center; margin-top: 28px; padding-top: 18px; border-top: 1px solid #e0e7f1; }
+.onboardingNav button { height: 58px; border-radius: 10px; padding: 0 28px; font-size: 16px; }
+.onboardingNav .next { background: #3b70f3; box-shadow: 0 9px 22px rgba(59,112,243,.22); }
+.onboardingNav .back { color: #526889; border-color: transparent; background: transparent; }
+.onboardingNav .back:hover { color: #2f66ee; background: #f2f6fd; }
+.slugControl {
+  display: flex;
+  align-items: center;
+  min-height: 54px;
+  overflow: hidden;
+  border: 1px solid #cedaeb;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.slugControl:focus-within { border-color: #3b70f3; box-shadow: 0 0 0 3px rgba(59,112,243,.1); }
+.slugControl > span {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  border-right: 1px solid #dce5f1;
+  background: #f3f6fb;
+  color: #7185a8;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.slugControl > svg { flex: 0 0 auto; margin-left: 15px; color: #6f84a8; }
+.slugControl:focus-within > svg { color: #3b70f3; }
+.slugControl input { min-width: 0; height: 52px !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+
+@media(max-width:800px) {
+  .onboardingTop { height: 64px; padding: 0 18px; }
+  .onboardingAccount > span:not(.accountAvatar) { display: none; }
+  .onboardingCard { padding: 28px 24px 22px; }
+  .onboardingSteps { gap: 14px; margin-bottom: 46px; }
+  .onboardingStep { gap: 8px; }
+  .onboardingStep strong { font-size: 13px; }
+  .onboardingStep small { font-size: 11px; }
+  .stepCircle { width: 36px; height: 36px; flex-basis: 36px; font-size: 14px; }
+  .onboardingCard h1 { font-size: 30px; }
+  .onboardingCard > p { font-size: 17px; }
+  .tipoSelect { gap: 12px; }
+  .tipoSelect button { grid-template-columns: 58px 1fr; min-height: 104px; padding: 18px; column-gap: 14px; }
+  .tipoSelect button svg { width: 46px; height: 46px; padding: 11px; }
+  .tipoSelect button strong { font-size: 15px; }
+  .tipoSelect button span { font-size: 13px; }
+  .slugControl > span { padding: 0 10px; font-size: 12px; }
+}
+@media(max-width:560px) {
+  .onboardingWrap { padding: 12px; }
+  .onboardingCard { padding: 22px 18px 18px; }
+  .onboardingSteps { align-items: flex-start; gap: 7px; margin-bottom: 38px; }
+  .onboardingStep { display: grid; justify-items: center; text-align: center; gap: 5px; }
+  .onboardingStep > span:last-child { display: none; }
+  .stepLine { margin-top: 17px; min-width: 16px; height: 3px; }
+  .onboardingCard h1 { font-size: 27px; }
+  .onboardingCard > p { font-size: 16px; }
+  .formRow.split { grid-template-columns: 1fr; }
+  .onboardingNav { flex-direction: row; }
+  .onboardingNav button { width: auto; flex: 1; justify-content: center; }
+  .slugControl { display: block; }
+  .slugControl > span { min-height: 38px; padding: 0 14px; border-right: 0; border-bottom: 1px solid #dce5f1; }
+  .slugControl input { width: 100%; }
+}
+
+/* Alternative onboarding composition: context on the left, action on the right. */
+.onboardingPage {
+  background: #eef3fa;
+}
+.onboardingPage::before,
+.onboardingPage::after { display: none; }
+.onboardingWrap {
+  width: min(1320px, 100%);
+  display: grid;
+  grid-template-columns: minmax(280px, .72fr) minmax(620px, 1.7fr);
+  gap: 0;
+  align-items: stretch;
+  margin: 0 auto;
+  padding: 32px 38px 44px;
+}
+.onboardingIntro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 670px;
+  padding: 58px 46px;
+  overflow: hidden;
+  border-radius: 18px 0 0 18px;
+  background: linear-gradient(155deg, #0e2860 0%, #1647a6 54%, #2873e9 100%);
+  color: #fff;
+  box-shadow: 0 22px 48px rgba(20,56,125,.18);
+}
+.onboardingIntro::after {
+  content: "";
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  right: -190px;
+  bottom: -145px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 50%;
+  box-shadow: 0 0 0 42px rgba(255,255,255,.04), 0 0 0 84px rgba(255,255,255,.035);
+}
+.introEyebrow { position: relative; z-index: 1; color: #b9d1ff; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+.onboardingIntro h2 { position: relative; z-index: 1; max-width: 320px; margin: 22px 0 16px; color: #fff; font: 700 clamp(30px,3vw,44px)/1.08 var(--font-space); letter-spacing: -.04em; }
+.onboardingIntro > p { position: relative; z-index: 1; max-width: 330px; margin: 0; color: #d6e3ff; font-size: 16px; line-height: 1.7; }
+.introChecklist { position: relative; z-index: 1; display: grid; gap: 15px; margin-top: 40px; color: #f3f7ff; font-size: 14px; }
+.introChecklist span { display: flex; align-items: center; gap: 10px; }
+.introChecklist svg { display: grid; place-items: center; padding: 3px; border-radius: 50%; background: rgba(255,255,255,.16); color: #fff; }
+.introQuote { position: relative; z-index: 1; margin-top: auto; padding-top: 54px; color: #bcd2fb; font-size: 13px; font-style: italic; }
+.onboardingWrap > .onboardingCard {
+  width: 100%;
+  min-height: 670px;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 42px 54px 28px;
+  border: 1px solid #d7e0ed;
+  border-left: 0;
+  border-radius: 0 18px 18px 0;
+  box-shadow: 0 22px 48px rgba(21,50,93,.1);
+}
+.onboardingWrap > .onboardingCard .onboardingSteps { margin-bottom: 58px; }
+.onboardingStepContent { flex: 1; animation: onboardingStepIn .38s cubic-bezier(.22,.8,.3,1) both; }
+.onboardingWrap > .onboardingCard h1 { font-size: 40px; }
+.onboardingWrap > .onboardingCard .formGrid { max-width: 840px; }
+.onboardingWrap > .onboardingCard .onboardingNav { margin-top: auto; }
+
+@media(max-width:900px) {
+  .onboardingWrap { grid-template-columns: 1fr; max-width: 720px; padding: 22px 18px 36px; }
+  .onboardingIntro { min-height: 290px; padding: 34px 32px; border-radius: 18px 18px 0 0; }
+  .onboardingIntro h2 { max-width: 500px; margin: 14px 0 10px; font-size: 32px; }
+  .onboardingIntro > p { max-width: 560px; font-size: 15px; }
+  .introChecklist { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; font-size: 12px; }
+  .introQuote { display: none; }
+  .onboardingWrap > .onboardingCard { min-height: 0; border-left: 1px solid #d7e0ed; border-top: 0; border-radius: 0 0 18px 18px; padding: 36px 34px 28px; }
+  .onboardingWrap > .onboardingCard .onboardingSteps { margin-bottom: 46px; }
+}
+@media(max-width:560px) {
+  .onboardingWrap { padding: 12px 12px 28px; }
+  .onboardingIntro { min-height: 250px; padding: 28px 24px; }
+  .onboardingIntro h2 { font-size: 28px; }
+  .introChecklist { grid-template-columns: 1fr; gap: 9px; margin-top: 20px; }
+  .onboardingWrap > .onboardingCard { padding: 28px 18px 22px; }
+  .onboardingWrap > .onboardingCard h1 { font-size: 28px; }
+}
+@keyframes onboardingStepIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media(prefers-reduced-motion: reduce) {
+  .onboardingStepContent { animation: none; }
+}
