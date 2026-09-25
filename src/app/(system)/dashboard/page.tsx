@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Copy, ExternalLink, Plus, Check } from "lucide-react";
+import { ArrowUpRight, BarChart3, CalendarDays, Check, ChevronRight, Clock3, Copy, DollarSign, ExternalLink, Plus, TrendingUp, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
@@ -378,177 +378,198 @@ export default function DashboardPage() {
     : `Olá, equipe ${perfilNome}`;
 
   return <>
-    <section className="dashHero">
-      <div>
-        <h1>{greeting}</h1>
+    {/* Hero */}
+    <section className="dashHero2">
+      <div className="dashHero2Left">
+        <span className="dashHero2Greeting">Bom dia,</span>
+        <h1>Equipe {perfilNome || "Reserve Clinic"}</h1>
         <p>{perfilTipo === "autonomo" ? "Gerencie sua agenda e acompanhe seus pacientes." : "Gerencie os horários e acompanhe os pacientes da equipe."}</p>
       </div>
+      <div className="dashHero2Img">
+        <img src="/dashboard-clinic-banner.png" alt="" />
+      </div>
       {perfilSlug && (
-        <div className={`dashLinkCard${!linkLiberado ? " isBlocked" : ""}`}>
-          <div className="dashLinkLabel">Seu link de agendamento</div>
-          <div className="dashLinkRow">
-            <code className={!linkLiberado ? "isBlocked" : ""}>{linkPublico}</code>
-            <button className="secondaryButton" onClick={handleCopy} disabled={!linkLiberado} title={!linkLiberado ? "Termine a configuração para liberar seu link" : undefined}>{copied ? <><Check size={15} /> Copiado</> : <><Copy size={15} /> Copiar</>}</button>
-            {linkLiberado ? <a className="iconButton" href={linkPublico} target="_blank" rel="noreferrer" aria-label="Abrir link"><ExternalLink size={15} /></a> : <button className="iconButton" disabled aria-label="Link bloqueado" title="Termine a configuração para liberar seu link"><ExternalLink size={15} /></button>}
+        <div className="dashHero2LinkWrap">
+          <div className="dashHero2LinkLabel">
+            <CalendarDays size={14} />
+            Seu link de agendamento
+          </div>
+          <div className="dashHero2LinkRow">
+            <code>{linkPublico}</code>
+            <button className="primaryButton" style={{ height: 34, fontSize: 12, flexShrink: 0 }} onClick={handleCopy} disabled={!linkLiberado}>
+              {copied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+            </button>
           </div>
           {!linkLiberado && linkFaltando.length > 0 && (
-            <div className="dashLinkBlockedHint">
-              <span>Para liberar o link, complete:</span>
-              <ul>{linkFaltando.map(item => <li key={item}>{item}</li>)}</ul>
+            <div className="dashLinkBlockedHint" style={{ marginTop: 8 }}>
+              <span>Para liberar: {linkFaltando[0]}</span>
             </div>
           )}
         </div>
       )}
     </section>
 
-    <div className="dashKpiRow">
-      <div className="dashKpi dashKpiFeatured">
-        <span>Consultas hoje</span>
-        <strong>{consultasHoje.length}</strong>
-        <small>{consultasHojeRestantes > 0 ? `${consultasHojeRestantes} ainda por vir` : consultasHoje.length > 0 ? "Todas realizadas" : "Nenhuma marcada"}</small>
-      </div>
-      <div className="dashKpi dashKpiFeatured">
-        <span>Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</span>
-        <strong>{formatCurrency(faturamentoMes)}</strong>
-        <small>{statusCounts.confirmada + statusCounts.concluida} consultas contabilizadas</small>
-      </div>
-      <div className={`dashKpi${statusCounts.aguardando > 0 ? " isAlert" : ""}`}>
-        <span>Aguardando confirmação</span>
-        <strong>{statusCounts.aguardando}</strong>
-        <small>{statusCounts.aguardando > 0 ? "Precisam de atenção" : "Nenhuma pendência"}</small>
-      </div>
-      <div className="dashKpi">
-        <span>Pacientes</span>
-        <strong>{pacientes.length}</strong>
-        <small>{pacientesAtivos} ativos</small>
-      </div>
+    {/* KPI Row */}
+    <div className="dashKpiRow2">
+      <Link href="/consultas" className="dashKpi2">
+        <div className="dashKpi2Icon" style={{ background: "rgba(29,78,216,.1)" }}>
+          <CalendarDays size={20} style={{ color: "#1d4ed8" }} />
+        </div>
+        <div className="dashKpi2Body">
+          <span>Consultas hoje</span>
+          <strong>{consultasHoje.length}</strong>
+          <small>{consultasHojeRestantes > 0 ? `${consultasHojeRestantes} ainda por vir` : consultasHoje.length > 0 ? "Todas realizadas" : "Nenhuma marcada"}</small>
+        </div>
+        <ChevronRight size={16} className="dashKpi2Arrow" />
+      </Link>
+      <Link href="/consultas" className="dashKpi2">
+        <div className="dashKpi2Icon" style={{ background: "rgba(5,150,105,.1)" }}>
+          <DollarSign size={20} style={{ color: "#059669" }} />
+        </div>
+        <div className="dashKpi2Body">
+          <span>Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</span>
+          <strong>{formatCurrency(faturamentoMes)}</strong>
+          <small>{statusCounts.confirmada + statusCounts.concluida} consultas contabilizadas</small>
+        </div>
+        <ChevronRight size={16} className="dashKpi2Arrow" />
+      </Link>
+      <Link href="/consultas" className={`dashKpi2${statusCounts.aguardando > 0 ? " isAlert" : ""}`}>
+        <div className="dashKpi2Icon" style={{ background: statusCounts.aguardando > 0 ? "rgba(217,119,6,.12)" : "rgba(0,0,0,.06)" }}>
+          <Clock3 size={20} style={{ color: statusCounts.aguardando > 0 ? "#d97706" : "#94a3b8" }} />
+        </div>
+        <div className="dashKpi2Body">
+          <span>Aguardando confirmação</span>
+          <strong>{statusCounts.aguardando}</strong>
+          <small>{statusCounts.aguardando > 0 ? "Precisam de atenção" : "Nenhuma pendência"}</small>
+        </div>
+        <ChevronRight size={16} className="dashKpi2Arrow" />
+      </Link>
+      <Link href="/pacientes" className="dashKpi2">
+        <div className="dashKpi2Icon" style={{ background: "rgba(124,58,237,.1)" }}>
+          <UsersRound size={20} style={{ color: "#7c3aed" }} />
+        </div>
+        <div className="dashKpi2Body">
+          <span>Pacientes ativos</span>
+          <strong>{pacientesAtivos}</strong>
+          <small>{pacientes.length} cadastrados no total</small>
+        </div>
+        <ChevronRight size={16} className="dashKpi2Arrow" />
+      </Link>
     </div>
 
-    <div className="dashMainGrid">
-      <section className="panel dashDay">
-        <header>
-          <div>
-            <strong>Hoje — {hoje.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</strong>
-            {!slotsDoDia.fechado && <small>{slotsDoDia.slots.filter(s => !s.consulta).length} livres · {slotsDoDia.slots.filter(s => s.consulta).length} ocupados</small>}
+    {/* Main Grid */}
+    <div className="dashGrid2">
+      <div className="dashGrid2Left">
+        {/* Agenda de hoje */}
+        <section className="dashAgenda">
+          <div className="dashAgendaHeader">
+            <CalendarDays size={18} />
+            <strong>Agenda de hoje</strong>
+            <span className="dashAgendaDate">
+              {hoje.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </span>
+            <Link href={`/consultas?nova=1&data=${toIsoDate(hoje)}`} className="primaryButton" style={{ marginLeft: "auto", height: 34, fontSize: 12 }}>
+              <Plus size={15} /> Nova consulta
+            </Link>
           </div>
-          <Link href="/consultas" className="secondaryButton"><Plus size={14} /> Nova</Link>
-        </header>
-        {slotsDoDia.fechado ? (
-          <div className="dashDayEmpty">
-            <p>{slotsDoDia.motivo}</p>
-            {slotsDoDia.ocupadas.length > 0 && (
-              <>
-                <small>Há {slotsDoDia.ocupadas.length} consulta(s) marcada(s) neste dia:</small>
-                <ul className="dashSlotList">
-                  {slotsDoDia.ocupadas.map(c => (
-                    <li key={c.id} className="dashSlot isBooked">
-                      <strong>{new Date(c.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</strong>
-                      <span>{c.paciente_nome}{c.servico ? ` · ${c.servico}` : ""}</span>
-                      <em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-        ) : (
-          <ul className="dashSlotList">
-            {slotsDoDia.slots.length === 0 ? (
-              <li className="dashSlotEmpty">Sem horários dentro do intervalo configurado.</li>
-            ) : slotsDoDia.slots.map(s => (
-              <li key={s.hora} className={`dashSlot ${s.consulta ? "isBooked" : "isFree"}`}>
-                <strong>{s.hora}</strong>
-                {s.consulta ? (
-                  <>
-                    <span>{s.consulta.paciente_nome}{s.consulta.servico ? ` · ${s.consulta.servico}` : ""}</span>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          {slotsDoDia.fechado ? (
+            <div className="dashAgendaEmpty">{slotsDoDia.motivo}</div>
+          ) : slotsDoDia.slots.length === 0 ? (
+            <div className="dashAgendaEmpty">Sem horários dentro do intervalo configurado.</div>
+          ) : (
+            <div className="dashAgendaList">
+              {slotsDoDia.slots.slice(0, 8).map(s => (
+                <div key={s.hora} className="dashAgendaSlot">
+                  <span className={`dashAgendaBullet ${s.consulta ? "isBooked" : "isFree"}`} />
+                  <span className={`dashAgendaTime${!s.consulta ? " isFreeTime" : ""}`}>{s.hora}</span>
+                  {s.consulta ? (
+                    <>
+                      <div className="dashAgendaPatientAvatar">{initials(s.consulta.paciente_nome)}</div>
+                      <span className="dashAgendaName">{s.consulta.paciente_nome}</span>
                       <em className={`statusBadge ${STATUS_CLASS[s.consulta.status]}`}>{STATUS_LABEL[s.consulta.status]}</em>
-                      <Link href={`/agenda?data=${new Date(s.consulta.data_hora).toISOString().slice(0, 10)}`} className="dashSlotAction">Ver na agenda</Link>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span>Livre</span>
-                    <Link href="/consultas" className="dashSlotAction">Marcar</Link>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {loading && <p className="dashLoading">Atualizando…</p>}
-      </section>
+                    </>
+                  ) : (
+                    <>
+                      <span className="dashAgendaFree">Horário livre</span>
+                      <Link href={`/consultas?nova=1&data=${toIsoDate(hoje)}&hora=${s.hora}`} className="dashAgendaMarcar">Marcar</Link>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
-      <section className="dashChartCard">
-        <header>
-          <div>
-            <strong>Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</strong>
-            <small>Evolução diária das consultas confirmadas e concluídas</small>
+        {/* Próximos atendimentos */}
+        <section className="dashProximos">
+          <div className="dashProximosHeader">
+            <div>
+              <CalendarDays size={16} style={{ color: "#1d4ed8" }} />
+              <strong>Próximos atendimentos</strong>
+            </div>
+            <Link href="/agenda" className="dashProximosLink">Ver agenda <ArrowUpRight size={13} /></Link>
           </div>
-          <div className="dashChartTotal">
-            <span>Total do mês</span>
-            <strong>{formatCurrency(faturamentoMes)}</strong>
+          {upcomings.length === 0 ? (
+            <div className="dashProximosEmpty">Nenhum atendimento futuro agendado.</div>
+          ) : upcomings.map(c => {
+            const dt = new Date(c.data_hora);
+            const day = dt.getDate().toString().padStart(2, "0");
+            const month = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
+            const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+            return (
+              <div key={c.id} className="dashProximosItem">
+                <div className="dashProximosDate">
+                  <strong>{day}</strong>
+                  <span>{month}</span>
+                </div>
+                <span className="dashProximosTime">{hora}</span>
+                <div className="dashProximosAvatar">{initials(c.paciente_nome)}</div>
+                <span className="dashProximosName">{c.paciente_nome}</span>
+                <em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em>
+                <ChevronRight size={14} className="dashProximosArrow" />
+              </div>
+            );
+          })}
+        </section>
+      </div>
+
+      <div className="dashGrid2Right">
+        {/* Faturamento */}
+        <section className="dashFatur">
+          <div className="dashFaturHeader">
+            <div>
+              <span><BarChart3 size={14} />Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span>
+              <div className="dashFaturTotal">{formatCurrency(faturamentoMes)}</div>
+              <div className={`dashFaturTrend${faturamentoMes === 0 ? " isNeutral" : ""}`}>
+                {faturamentoMes > 0 ? <TrendingUp size={12} /> : null}
+                {faturamentoMes > 0 ? `${statusCounts.confirmada + statusCounts.concluida} consultas` : "Sem faturamento neste mês"}
+              </div>
+            </div>
           </div>
-        </header>
-        <div className="dashChartBody">
-          <AreaChart data={chartData} />
-          {chartEmpty && <div className="dashChartEmpty">Sem faturamento registrado neste mês ainda. Os valores aparecerão aqui à medida que as consultas forem confirmadas.</div>}
-        </div>
-        <AsaasTransfersPanel compact />
-      </section>
-    </div>
+          <div className="dashFaturChart">
+            <AreaChart data={chartData} />
+          </div>
+          <AsaasTransfersPanel compact />
+        </section>
 
-    <div className="dashSecondaryGrid">
-      <section className="dashUpcomingCard">
-        <div className="dashUpcomingHead">
-          <strong>Próximos atendimentos</strong>
-          <Link href="/agenda" className="dashUpcomingLink">Ver agenda <ArrowUpRight size={12} /></Link>
-        </div>
-        {upcomings.length === 0 ? (
-          <div className="dashUpcomingEmpty">Nenhum atendimento futuro agendado. Novas consultas aparecerão aqui automaticamente.</div>
-        ) : (
-          <table className="dashUpcomingTable">
-            <thead><tr><th>Paciente</th><th>Data</th><th>Horário</th><th>Status</th><th /></tr></thead>
-            <tbody>
-              {upcomings.map((c) => {
-                const dt = new Date(c.data_hora);
-                return (
-                  <tr key={c.id}>
-                    <td>
-                      <div className="dashUpcomingPatient">
-                        <div className="dashUpcomingAvatar">{initials(c.paciente_nome)}</div>
-                        <div><strong>{c.paciente_nome}</strong>{c.paciente_telefone ? <small>{c.paciente_telefone}</small> : null}</div>
-                      </div>
-                    </td>
-                    <td>{dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</td>
-                    <td className="dashUpcomingTime">{dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</td>
-                    <td><em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em></td>
-                    <td className="dashUpcomingAction"><Link href="/consultas" aria-label="Abrir consulta"><ArrowUpRight size={14} /></Link></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </section>
-
-      <section className="dashRingCard">
-        <header>
-          <div>
+        {/* Ocupação da semana */}
+        <section className="dashOcup">
+          <div className="dashOcupHeader">
             <strong>Ocupação da semana</strong>
-            <small>{Math.round(ocupacaoAgenda.pct * 100)}% — {ocupacaoAgenda.ocup} de {ocupacaoAgenda.slots} slots</small>
           </div>
-        </header>
-        <ul className="dashWeekBars">
-          {semanaOcup.map((d) => (
-            <li key={d.label} className={`${d.isToday ? "isToday" : ""} ${d.closed ? "isClosed" : ""}`}>
-              <span className="dashWeekLabel">{d.label}</span>
-              <div className="dashWeekTrack"><div className="dashWeekFill" style={{ width: `${Math.round(d.pct * 100)}%` }} /></div>
-              <span className="dashWeekPct">{d.closed ? "—" : `${Math.round(d.pct * 100)}%`}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+          <div className="dashOcupBars">
+            {semanaOcup.map(d => (
+              <div key={d.label} className={`dashOcupBar${d.isToday ? " isToday" : ""}${d.closed ? " isClosed" : ""}`}>
+                <span className="dashOcupBarPct">{d.closed ? "—" : `${Math.round(d.pct * 100)}%`}</span>
+                <div className="dashOcupBarTrack">
+                  <div className="dashOcupBarFill" style={{ height: d.closed ? "0%" : `${Math.max(4, Math.round(d.pct * 100))}%` }} />
+                </div>
+                <span className="dashOcupBarLabel">{d.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   </>;
 }

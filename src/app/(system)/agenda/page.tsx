@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, BanknoteIcon, Plus, Settings, Stethoscope, User, Users, X, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, Clock, BanknoteIcon, Plus, Settings, User, X, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -47,7 +48,7 @@ const STATUS_TO_COLOR: Record<ConsultaStatus, string> = {
   cancelada: "gray",
 };
 
-const HOUR_PX = 64;
+const HOUR_PX = 80;
 
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
 function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
@@ -130,6 +131,8 @@ export default function AgendaPage() {
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
+  const [profPopupOpen, setProfPopupOpen] = useState(false);
+  const [profSearch, setProfSearch] = useState("");
   const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [fetchMonth, setFetchMonth] = useState<Date>(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [now, setNow] = useState<Date>(() => new Date());
@@ -269,27 +272,25 @@ export default function AgendaPage() {
   }, [diaAberto, gridStart, config.duracao_min, openMin, closeMin, selectedDay, router]);
 
   const monthLabel = selectedDay.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  const proximasConsultas = useMemo(() => consultasFiltradas
+    .filter(c => new Date(c.data_hora) >= new Date() && c.status !== "cancelada")
+    .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime())
+    .slice(0, 5), [consultasFiltradas]);
+  const confirmadasDoDia = consultasDoDia.filter(c => c.status === "confirmada" || c.status === "concluida").length;
+  const pendentesDoDia = consultasDoDia.filter(c => c.status === "aguardando").length;
 
   return <>
     <PageHeader
       title="Agenda"
-      description={monthLabel[0].toUpperCase() + monthLabel.slice(1)}
+      description="Gerencie suas consultas e otimize seu tempo"
       actions={<>
         <button className="secondaryButton" onClick={() => setConfigOpen(true)}><Settings size={16} /> Ajustes</button>
         <button className="primaryButton" onClick={() => router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`)}><Plus size={17} /> Nova consulta</button>
       </>}
     />
 
-    {sqlProfissionais.length > 0 && (
-      <div className="profFiltroBar">
-        <button className={`profFiltroBtn${profFiltro === "todos" ? " active" : ""}`} onClick={() => setProfFiltro("todos")}><Users size={14} /> Todos</button>
-        {sqlProfissionais.map(p => (
-          <button key={p.id} className={`profFiltroBtn${profFiltro === p.id ? " active" : ""}`} onClick={() => setProfFiltro(p.id)}>{p.nome}</button>
-        ))}
-      </div>
-    )}
-
     <div className="gcalWrap">
+      {/* Left sidebar */}
       <aside className="gcalSide">
         <MiniCalendar
           month={calMonth}
@@ -301,20 +302,74 @@ export default function AgendaPage() {
           onNext={() => { const d = new Date(calMonth); d.setMonth(d.getMonth() + 1); setCalMonth(d); }}
           onPick={(d) => setSelectedDay(d)}
         />
+
+        <div className="gcalTodayCard">
+          <CalendarDays size={15} />
+          <div>
+            <strong>Hoje</strong>
+            <span>{today.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}</span>
+          </div>
+        </div>
+
+        {sqlProfissionais.length > 0 && (
+          <div className="gcalSideFilters">
+            <strong>Profissionais</strong>
+            {(() => {
+              const PROF_COLORS = ["#1d4ed8", "#059669", "#7c3aed", "#d97706", "#ef4444"];
+              const MAX = 3;
+              const visible = sqlProfissionais.slice(0, MAX);
+              const extra = sqlProfissionais.length - MAX;
+              return (
+                <>
+                  <button
+                    className={`gcalProfChip ${profFiltro === "todos" ? "isActive" : ""}`}
+                    onClick={() => setProfFiltro("todos")}
+                  >
+                    <span className="gcalSideFilterDot" style={{ background: "#1d4ed8" }} />
+                    Todos
+                  </button>
+                  {visible.map((p, idx) => (
+                    <button
+                      key={p.id}
+                      className={`gcalProfChip ${profFiltro === p.id ? "isActive" : ""}`}
+                      onClick={() => setProfFiltro(profFiltro === p.id ? "todos" : p.id)}
+                    >
+                      <span className="gcalSideFilterDot" style={{ background: PROF_COLORS[idx % PROF_COLORS.length] }} />
+                      {p.nome}
+                    </button>
+                  ))}
+                  {extra > 0 && (
+                    <button className="gcalProfMore" onClick={() => setProfPopupOpen(true)}>
+                      +{extra} mais
+                    </button>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
       </aside>
 
+      <div className="gcalRight">
+      {/* Main calendar */}
       <div className="gcalMain">
-        {/* Day header */}
         <div className="gcalDayHeader">
           <button className="iconButton" onClick={() => goDay(-1)} aria-label="Dia anterior"><ChevronLeft size={18} /></button>
-          <div className="gcalDayNum">
-            <span>{WEEKDAY_SHORT[selectedDay.getDay()].toUpperCase()}</span>
-            <strong className={isToday ? "isToday" : ""}>{selectedDay.getDate()}</strong>
+          <div className="gcalDayPill">
+            <span>{WEEKDAY_SHORT[selectedDay.getDay()].slice(0, 3).toUpperCase()}</span>
+            <strong>{selectedDay.getDate()}</strong>
+          </div>
+          <div className="gcalDayInfo">
+            <strong>{selectedDay.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}</strong>
+            <span>{selectedDay.toLocaleDateString("pt-BR", { weekday: "long" })}</span>
+          </div>
+          <div className="gcalViewTabs">
+            <button className="gcalViewTab isActive">Dia</button>
+            <button className="gcalViewTab">Semana</button>
+            <button className="gcalViewTab">Mês</button>
+            <button className="gcalViewTab" onClick={() => { setSelectedDay(today); setCalMonth(new Date(today.getFullYear(), today.getMonth(), 1)); }}>Hoje</button>
           </div>
           <button className="iconButton" onClick={() => goDay(1)} aria-label="Próximo dia"><ChevronRight size={18} /></button>
-          {!isToday && (
-            <button className="todayButton" onClick={() => { setSelectedDay(today); setCalMonth(new Date(today.getFullYear(), today.getMonth(), 1)); }}>Hoje</button>
-          )}
           <div className="gcalHeaderMeta">
             {isFeriadoDia && <span className="agendaFeriadoBadge">Feriado</span>}
             {!diaAberto && !isFeriadoDia && <span className="agendaFeriadoBadge">Fechado</span>}
@@ -327,14 +382,8 @@ export default function AgendaPage() {
           </div>
         </div>
 
-        {/* Scrollable time grid */}
         <div className="gcalScroll" ref={scrollRef}>
-          <div
-            className="gcalGrid"
-            style={{ height: totalHeight }}
-            onClick={handleGridClick}
-          >
-            {/* Hour + half-hour lines */}
+          <div className="gcalGrid" style={{ height: totalHeight }} onClick={handleGridClick}>
             {Array.from({ length: numHours }, (_, i) => {
               const h = gridStart + i;
               return (
@@ -351,7 +400,6 @@ export default function AgendaPage() {
               );
             })}
 
-            {/* Closed zones (before open and after close) */}
             {diaAberto && openMin > gridStart * 60 && (
               <div className="gcalClosedZone" style={{ top: 0, height: ((openMin - gridStart * 60) / 60) * HOUR_PX }} />
             )}
@@ -364,7 +412,6 @@ export default function AgendaPage() {
               </div>
             )}
 
-            {/* Current time indicator */}
             {nowInRange && (
               <div className="gcalNow" style={{ top: nowTop }}>
                 <span className="gcalNowDot" />
@@ -372,12 +419,24 @@ export default function AgendaPage() {
               </div>
             )}
 
-            {/* Events */}
+            {diaAberto && !loading && consultasDoDia.length === 0 && (
+              <div className="gcalEmptyDay">
+                <CalendarDays size={34} />
+                <strong>Nenhuma consulta agendada</strong>
+                <button className="gcalEmptyDayBtn" onClick={(e) => { e.stopPropagation(); router.push(`/consultas?nova=1&data=${toIsoDate(selectedDay)}`); }}>
+                  + Agendar consulta
+                </button>
+              </div>
+            )}
+
             {placed.map(({ c, start, col, cols }) => {
               const top = ((start - gridStart * 60) / 60) * HOUR_PX;
-              const height = Math.max(28, (c.duracao_min / 60) * HOUR_PX - 4);
+              const height = Math.max(36, (c.duracao_min / 60) * HOUR_PX - 4);
               const cor = STATUS_TO_COLOR[c.status] ?? "blue";
-              const hora = new Date(c.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+              const dt = new Date(c.data_hora);
+              const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+              const fimDt = new Date(dt.getTime() + c.duracao_min * 60000);
+              const horaFim = fimDt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
               return (
                 <div
                   key={c.id}
@@ -390,8 +449,15 @@ export default function AgendaPage() {
                   }}
                   onClick={(e) => { e.stopPropagation(); setSelectedConsulta(c); }}
                 >
-                  <strong>{c.paciente_nome}</strong>
-                  {height > 36 && <span>{hora} · {c.duracao_min}min{c.servico ? ` · ${c.servico}` : ""}</span>}
+                  <div className="gcalEventInner">
+                    <span className="gcalEventTimeRange">{hora} – {horaFim}</span>
+                    <User size={11} className="gcalEventUserIcon" />
+                    <strong className="gcalEventPatient">{c.paciente_nome}</strong>
+                    <em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em>
+                  </div>
+                  {height > 52 && (c.servico || c.profissional) && (
+                    <div className="gcalEventMeta">{[c.servico, c.profissional].filter(Boolean).join(" · ")}</div>
+                  )}
                 </div>
               );
             })}
@@ -400,7 +466,96 @@ export default function AgendaPage() {
 
         {loading && <div className="gcalLoading"><span /></div>}
       </div>
+
+      {/* Right summary */}
+      <aside className="agendaSummary">
+        <section className="agendaSummaryCard agendaDaySummary">
+          <header><BarChart3 size={18} /><strong>Resumo do dia</strong></header>
+          <div className="agendaSummaryCount">
+            <strong>{confirmadasDoDia}</strong> de <span>{consultasDoDia.length}</span> consultas
+          </div>
+          <div className="agendaProgress">
+            <span style={{ width: `${consultasDoDia.length ? Math.round((confirmadasDoDia / consultasDoDia.length) * 100) : 0}%` }} />
+          </div>
+          <div className="agendaSummaryPct">{consultasDoDia.length ? Math.round((confirmadasDoDia / consultasDoDia.length) * 100) : 0}%</div>
+          <div className="agendaSummaryDots">
+            <div><span className="agendaDot dotGreen" /><strong>{confirmadasDoDia}</strong><small>Confirmadas</small></div>
+            <div><span className="agendaDot dotBlue" /><strong>{consultasDoDia.filter(c => c.status === "concluida").length}</strong><small>Em atend.</small></div>
+            <div><span className="agendaDot dotGray" /><strong>{pendentesDoDia}</strong><small>Pendentes</small></div>
+          </div>
+        </section>
+
+        <section className="agendaSummaryCard agendaNextSummary">
+          <header>
+            <strong>Próximas consultas</strong>
+            <Link href="/consultas" className="agendaVerTodas">Ver todas</Link>
+          </header>
+          {proximasConsultas.length === 0 ? (
+            <p className="agendaSummaryEmpty">Nenhuma consulta futura.</p>
+          ) : (
+            <ul>
+              {proximasConsultas.map(c => {
+                const date = new Date(c.data_hora);
+                const NEXT_DOTS: Record<ConsultaStatus, string> = { confirmada: "dotGreen", aguardando: "dotGray", concluida: "dotBlue", cancelada: "dotRed" };
+                return (
+                  <li key={c.id} onClick={() => { setSelectedConsulta(c); setSelectedDay(new Date(date.getFullYear(), date.getMonth(), date.getDate())); }}>
+                    <time>{date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
+                    <span className={`agendaDot ${NEXT_DOTS[c.status]}`} />
+                    <div className="agendaNextInfo">
+                      <strong>{c.paciente_nome}</strong>
+                      <small>{c.servico || "Consulta"}{c.profissional ? ` · ${c.profissional}` : ""}</small>
+                    </div>
+                    <ChevronRight size={14} className="agendaNextArrow" />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </aside>
+      </div>{/* end gcalRight */}
     </div>
+
+    {profPopupOpen && (
+      <div className="modalBackdrop" onClick={() => { setProfPopupOpen(false); setProfSearch(""); }}>
+        <div className="profPickerModal" onClick={e => e.stopPropagation()}>
+          <div className="profPickerHeader">
+            <strong>Selecionar profissional</strong>
+            <button className="iconButton" onClick={() => { setProfPopupOpen(false); setProfSearch(""); }}><X size={18} /></button>
+          </div>
+          <div className="profPickerSearch">
+            <input
+              autoFocus
+              type="text"
+              placeholder="Pesquisar profissional…"
+              value={profSearch}
+              onChange={e => setProfSearch(e.target.value)}
+            />
+          </div>
+          <ul className="profPickerList">
+            {[{ id: "todos", nome: "Todos os profissionais" }, ...sqlProfissionais]
+              .filter(p => p.nome.toLowerCase().includes(profSearch.toLowerCase()))
+              .map((p, idx) => {
+                const PROF_COLORS = ["#1d4ed8", "#1d4ed8", "#059669", "#7c3aed", "#d97706", "#ef4444"];
+                const color = PROF_COLORS[idx % PROF_COLORS.length];
+                const isActive = profFiltro === p.id;
+                return (
+                  <li key={p.id}>
+                    <button
+                      className={`profPickerItem ${isActive ? "isActive" : ""}`}
+                      onClick={() => { setProfFiltro(p.id); setProfPopupOpen(false); setProfSearch(""); }}
+                    >
+                      <span className="profPickerDot" style={{ background: color }} />
+                      <span>{p.nome}</span>
+                      {isActive && <span className="profPickerCheck">✓</span>}
+                    </button>
+                  </li>
+                );
+              })}
+          </ul>
+        </div>
+      </div>
+    )}
 
     {configOpen && (
       <AjustesModal

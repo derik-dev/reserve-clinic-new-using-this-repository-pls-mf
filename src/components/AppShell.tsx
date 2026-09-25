@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  CalendarDays, ChevronDown, ClipboardList, LayoutDashboard,
+  ArrowRight, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard,
   Bot, CircleAlert, LogOut, Menu, Moon, Search, Settings, Sun, UserRoundCheck, Users, X,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -110,6 +110,15 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
           <span className="navGroupLabel navGroupSettings">CONTA</span>
           <Link className={pathname === "/configuracoes" ? "active" : ""} href="/configuracoes" onClick={() => setMenuOpen(false)}><Settings size={18} /><span>Configurações</span>{navAlerts["/configuracoes"] && <CircleAlert className="navAlert" size={15} aria-label="Configurações: configuração pendente" />}</Link>
         </nav>
+        <div className="sidebarNaviCard">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <strong>Navi IA</strong>
+            <p>Seu assistente inteligente para uma clínica mais produtiva.</p>
+          </div>
+          <Link href="/navi" className="sidebarNaviBtn" onClick={() => setMenuOpen(false)}>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
         <div className="sidebarUser"><span className="userAvatar">{userInitials}</span><div><strong>{perfil.email ?? "Usuário"}</strong><small>Administrador</small></div><button onClick={handleLogout} aria-label="Sair" style={{ background: "transparent", border: 0, cursor: "pointer", color: "inherit", padding: 0 }}><LogOut size={17} /></button></div>
       </aside>
       {menuOpen && <button className="sidebarBackdrop" aria-label="Fechar menu" onClick={() => setMenuOpen(false)} />}
