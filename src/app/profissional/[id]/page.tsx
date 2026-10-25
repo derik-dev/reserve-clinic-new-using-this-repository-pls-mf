@@ -299,7 +299,7 @@ export default async function PublicProfissionalPage({
         {/* Footer branding */}
         <p style={{ textAlign: "center", fontSize: 11, color: textSubtle, marginTop: 36 }}>
           Agendamento gerenciado por{" "}
-          <a href="/" style={{ color: accent, textDecoration: "none", fontWeight: 500 }}>Reserve Clinic</a>
+          <Link href="/" style={{ color: accent, textDecoration: "none", fontWeight: 500 }}>Reserve Clinic</Link>
         </p>
       </main>
     </div>

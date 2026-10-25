@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
@@ -16,7 +17,7 @@ function adminSupabase() {
 
 async function validarAssinatura(req: NextRequest, rawBody: string): Promise<boolean> {
   const secret = process.env.MP_WEBHOOK_SECRET;
-  if (!secret) return true; // sem secret configurado, aceita tudo
+  if (!secret) return false; // sem secret configurado, recusa (o webhook ficaria aberto)
 
   const xSignature = req.headers.get("x-signature");
   const xRequestId = req.headers.get("x-request-id");
@@ -44,19 +45,26 @@ async function validarAssinatura(req: NextRequest, rawBody: string): Promise<boo
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return hex === v1;
+  const a = Buffer.from(hex);
+  const b = Buffer.from(v1);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const rawBody = await req.text();
-    const body = JSON.parse(rawBody) as { type?: string; data?: { id?: string } };
+    if (!process.env.MP_WEBHOOK_SECRET) {
+      console.error("[webhook-mp] MP_WEBHOOK_SECRET não configurado — webhook desativado");
+      return NextResponse.json({ ok: false }, { status: 503 });
+    }
 
+    const rawBody = await req.text();
     const valido = await validarAssinatura(req, rawBody);
     if (!valido) {
       console.warn("[webhook-mp] assinatura inválida");
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: false }, { status: 401 });
     }
+
+    const body = JSON.parse(rawBody) as { type?: string; data?: { id?: string } };
 
     if (body.type !== "payment" || !body.data?.id) {
       return NextResponse.json({ ok: true });
@@ -84,8 +92,9 @@ export async function POST(req: NextRequest) {
     console.error("[webhook-mp]", e);
     const msg = e instanceof Error ? e.message : String(e);
     await notificarDiscord(`🔴 Erro em /api/webhook-mp às ${horaAgora()}: ${msg}`, "critico");
+    // 500 para o MP reenviar (a confirmação é idempotente)
+    return NextResponse.json({ ok: false }, { status: 500 });
   }
 
-  // Sempre 200 — MP reenvia em loop se não receber 200
   return NextResponse.json({ ok: true });
 }

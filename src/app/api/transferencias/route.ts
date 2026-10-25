@@ -1,34 +1,42 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { adminSupabase, authenticateRequest } from "@/lib/apiAuth";
+import { findPerfil } from "@/lib/saldoClinica";
 
-const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
+// Status internos do saque, na nomenclatura de status de transferência usada pelo painel.
+const STATUS: Record<string, string> = { pendente: "PENDING", processando: "IN_BANK_PROCESSING", concluido: "DONE", falhou: "FAILED" };
 
-async function authenticated(req: NextRequest) {
-  const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/, "").trim();
-  if (!token) return false;
-  const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } });
-  const { data, error } = await client.auth.getUser(token);
-  return !error && Boolean(data.user);
-}
-
+// Histórico de saques da clínica logada (nunca as transferências de toda a conta Asaas).
 export async function GET(req: NextRequest) {
   try {
-    if (!await authenticated(req)) return NextResponse.json({ error: "Sessão expirada. Entre novamente." }, { status: 401 });
-    if (!process.env.ASAAS_API_KEY) return NextResponse.json({ error: "A integração financeira ainda não está configurada no servidor." }, { status: 503 });
+    const user = await authenticateRequest(req);
+    if (!user) return NextResponse.json({ error: "Sessão expirada. Entre novamente." }, { status: 401 });
 
-    const params = new URLSearchParams({ limit: "20", offset: "0" });
-    const limit = Number(req.nextUrl.searchParams.get("limit"));
-    if (Number.isInteger(limit) && limit > 0 && limit <= 100) params.set("limit", String(limit));
-    const offset = Number(req.nextUrl.searchParams.get("offset"));
-    if (Number.isInteger(offset) && offset >= 0) params.set("offset", String(offset));
+    const db = adminSupabase();
+    const perfil = await findPerfil(db, user.id);
+    if (!perfil) return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
 
-    const response = await fetch(`${ASAAS_BASE}/transfers?${params}`, { headers: { access_token: process.env.ASAAS_API_KEY }, cache: "no-store" });
-    const payload = await response.json().catch(() => ({})) as { data?: { id: string; value: number; status: string; dateCreated?: string; transferDate?: string; description?: string }[]; hasMore?: boolean; errors?: { description?: string }[] };
-    if (!response.ok) return NextResponse.json({ error: payload.errors?.[0]?.description ?? "Não foi possível consultar as transferências na Asaas." }, { status: 502 });
+    let limit = 20;
+    const requestedLimit = Number(req.nextUrl.searchParams.get("limit"));
+    if (Number.isInteger(requestedLimit) && requestedLimit > 0 && requestedLimit <= 100) limit = requestedLimit;
+    let offset = 0;
+    const requestedOffset = Number(req.nextUrl.searchParams.get("offset"));
+    if (Number.isInteger(requestedOffset) && requestedOffset >= 0) offset = requestedOffset;
 
+    const { data, error } = await db
+      .from("saques")
+      .select("id, valor, status, created_at")
+      .eq("perfil_id", perfil.id)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit);
+    if (error) {
+      console.error("[api/transferencias] erro ao consultar saques", error);
+      return NextResponse.json({ error: "Não foi possível carregar o histórico de saques agora." }, { status: 500 });
+    }
+
+    const rows = data ?? [];
     return NextResponse.json({
-      transfers: (payload.data ?? []).map((item) => ({ id: item.id, value: item.value, status: item.status, date: item.transferDate ?? item.dateCreated ?? null, description: item.description ?? null })),
-      hasMore: Boolean(payload.hasMore),
+      transfers: rows.slice(0, limit).map((item) => ({ id: item.id, value: Number(item.valor), status: STATUS[item.status as string] ?? "PENDING", date: item.created_at ?? null })),
+      hasMore: rows.length > limit,
     });
   } catch (error) {
     console.error("[api/transferencias] erro ao consultar histórico", error);

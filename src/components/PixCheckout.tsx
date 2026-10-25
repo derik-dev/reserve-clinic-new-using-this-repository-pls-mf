@@ -391,8 +391,8 @@ export function PixCheckout({
                   </p>
                 </div>
 
-                {/* Botão de simulação para testes */}
-                <button
+                {/* Botão de simulação para testes (some em produção) */}
+                {process.env.NODE_ENV !== "production" && <button
                   onClick={simularPagamento}
                   disabled={simulando}
                   style={{
@@ -412,7 +412,7 @@ export function PixCheckout({
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.28)"; (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
                 >
                   {simulando ? "Simulando…" : "🧪 Simular pagamento confirmado"}
-                </button>
+                </button>}
               </>
             ) : null}
           </div>

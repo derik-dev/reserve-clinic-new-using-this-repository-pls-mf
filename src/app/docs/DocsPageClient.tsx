@@ -278,7 +278,7 @@ const integrations = [
       "O código usa `ASAAS_BASE_URL ?? https://api.asaas.com/v3`; em desenvolvimento, defina sandbox explicitamente.",
       "O QR Code pode demorar; a rota tenta buscar 6 vezes com intervalo de 3 segundos.",
       "A rota de pagamento atual usa a chave global `ASAAS_API_KEY`, mesmo existindo subconta salva no perfil.",
-      "Saques usam `POST /api/sacar`, com destino Pix exclusivamente configurado no servidor; o browser nunca recebe a chave Asaas.",
+      "Saques usam `POST /api/sacar`: o saldo é calculado por clínica, o destino Pix precisa ser o CPF/CNPJ, e-mail ou telefone do perfil, e o browser nunca recebe a chave Asaas.",
       "O mecanismo de validação de saque via webhook ainda deve ser ativado e testado separadamente na conta Asaas; transferências do tipo `TRANSFER` são recusadas pelo webhook enquanto não houver registro local da operação.",
     ],
   },

@@ -244,9 +244,16 @@ function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; o
     setSending(true);
     setSendResult(null);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        setSendResult({ ok: false, msg: "Sessão expirada. Entre novamente." });
+        setSending(false);
+        return;
+      }
       const res = await fetch("/api/zapi-send", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ phone: p.telefone, message: msg }),
       });
       const data = await res.json().catch(() => ({}));

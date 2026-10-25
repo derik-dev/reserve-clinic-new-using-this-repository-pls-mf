@@ -1,6 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { adminSupabase } from "@/lib/apiAuth";
 import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
+import { rateLimited } from "@/lib/rateLimit";
 
 function horaAgora() {
   return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
@@ -8,26 +9,22 @@ function horaAgora() {
 
 const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
 
-function adminSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
-}
-
 export async function POST(req: NextRequest) {
+  if (rateLimited(req, "criar-pagamento", 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." }, { status: 429 });
+  }
+
   try {
-    const { agendamentoId, clienteNome, clienteCpf, clienteEmail, valor } =
+    const { agendamentoId, clienteNome, clienteCpf, clienteEmail } =
       (await req.json()) as {
         agendamentoId: string;
         clienteNome: string;
         clienteCpf?: string;
         clienteEmail?: string;
-        valor: number;
+        valor?: number; // ignorado: o valor cobrado vem sempre do banco
       };
 
-    if (!agendamentoId || !clienteNome || !valor) {
+    if (!agendamentoId || !clienteNome) {
       return NextResponse.json({ error: "Parâmetros obrigatórios ausentes." }, { status: 400 });
     }
     if (!clienteEmail?.trim()) {
@@ -35,6 +32,33 @@ export async function POST(req: NextRequest) {
     }
     if (!clienteCpf?.trim()) {
       return NextResponse.json({ error: "CPF do paciente é obrigatório para pagamento PIX." }, { status: 400 });
+    }
+
+    const cpfDigits = clienteCpf.replace(/\D/g, "");
+    if (cpfDigits.length !== 11 && cpfDigits.length !== 14) {
+      return NextResponse.json({ error: "CPF/CNPJ do paciente inválido." }, { status: 400 });
+    }
+    if (clienteNome.length > 120 || clienteEmail.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clienteEmail.trim())) {
+      return NextResponse.json({ error: "Nome ou e-mail do paciente inválido." }, { status: 400 });
+    }
+
+    // O valor cobrado é o da consulta gravada no banco — nunca o enviado pelo navegador.
+    const admin = adminSupabase();
+    const { data: agendamento } = throwIfSupabaseError(
+      await admin.from("agendamentos").select("status, perfil_id, data, hora").eq("id", agendamentoId).maybeSingle(),
+      "criar-pagamento.select agendamento"
+    );
+    if (!agendamento) return NextResponse.json({ error: "Agendamento não encontrado." }, { status: 404 });
+    if (agendamento.status === "confirmado") return NextResponse.json({ error: "Este agendamento já foi pago." }, { status: 409 });
+
+    const dataHoraIso = new Date(`${agendamento.data}T${(agendamento.hora as string).slice(0, 5)}:00`).toISOString();
+    const { data: consulta } = throwIfSupabaseError(
+      await admin.from("consultas").select("valor").eq("perfil_id", agendamento.perfil_id).eq("data_hora", dataHoraIso).maybeSingle(),
+      "criar-pagamento.select consulta"
+    );
+    const valor = Number(consulta?.valor ?? 0);
+    if (!Number.isFinite(valor) || valor <= 0) {
+      return NextResponse.json({ error: "Esta consulta não tem valor definido para pagamento." }, { status: 400 });
     }
 
     const asaasKey = process.env.ASAAS_API_KEY ?? "";
@@ -45,7 +69,6 @@ export async function POST(req: NextRequest) {
     };
 
     // 1. Criar ou recuperar cliente na Asaas pelo CPF
-    const cpfDigits = clienteCpf.replace(/\D/g, "");
     const customerRes = await fetch(`${ASAAS_BASE}/customers`, {
       method: "POST",
       headers,
@@ -105,7 +128,7 @@ export async function POST(req: NextRequest) {
     }
 
     throwIfSupabaseError(
-      await adminSupabase()
+      await admin
         .from("agendamentos")
         .update({ pix_id: payment.id })
         .eq("id", agendamentoId),
@@ -116,6 +139,6 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro interno ao gerar PIX.";
     await notificarDiscord(`🔴 Erro em /api/criar-pagamento às ${horaAgora()}: ${msg}`, "critico");
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "Não foi possível gerar o PIX agora. Tente novamente em instantes." }, { status: 500 });
   }
 }

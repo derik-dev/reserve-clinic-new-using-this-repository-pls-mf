@@ -1,16 +1,16 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { adminSupabase } from "@/lib/apiAuth";
 
-function adminSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
+// Só para desenvolvimento/teste: confirma um agendamento sem pagamento real.
+// Em produção fica desligada, a menos que ENABLE_PAYMENT_SIMULATION=true.
+function simulationEnabled() {
+  return process.env.NODE_ENV !== "production" || process.env.ENABLE_PAYMENT_SIMULATION === "true";
 }
 
 export async function POST(req: NextRequest) {
-  const { agendamentoId } = (await req.json()) as { agendamentoId: string };
+  if (!simulationEnabled()) return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
+
+  const { agendamentoId } = (await req.json().catch(() => ({}))) as { agendamentoId?: string };
   if (!agendamentoId) return NextResponse.json({ error: "agendamentoId obrigatório." }, { status: 400 });
 
   const admin = adminSupabase();

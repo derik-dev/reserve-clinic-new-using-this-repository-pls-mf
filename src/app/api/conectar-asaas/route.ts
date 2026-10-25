@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser(token);
     if (authErr || !user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 
+    // Sem token o webhook da sub-conta ficaria aberto a qualquer um: não cria a conta.
+    if (!process.env.ASAAS_WEBHOOK_TOKEN) {
+      return NextResponse.json({ error: "A integração financeira ainda não está configurada no servidor." }, { status: 503 });
+    }
+
     // 2. Buscar dados do perfil
     const admin = adminSupabase();
     const { data: perfil } = throwIfSupabaseError(

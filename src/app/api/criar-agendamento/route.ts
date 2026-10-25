@@ -1,20 +1,20 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { adminSupabase } from "@/lib/apiAuth";
 import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
+import { rateLimited } from "@/lib/rateLimit";
 
 function horaAgora() {
   return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 }
 
-function adminSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
-}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMAIL = /^[^s@]+@[^s@]+.[^s@]+$/;
 
 export async function POST(req: NextRequest) {
+  if (rateLimited(req, "criar-agendamento", 10, 10 * 60 * 1000)) {
+    return NextResponse.json({ error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." }, { status: 429 });
+  }
+
   try {
     const {
       perfilId,
@@ -46,6 +46,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Parâmetros obrigatórios ausentes." }, { status: 400 });
     }
 
+    const invalido =
+      !UUID.test(perfilId) ||
+      !/^d{4}-d{2}-d{2}$/.test(data) ||
+      !/^d{2}:d{2}$/.test(hora) ||
+      Number.isNaN(new Date(`${data}T${hora}:00`).getTime()) ||
+      clienteNome.length > 120 ||
+      (clienteTelefone?.length ?? 0) > 30 ||
+      (clienteEmail ? clienteEmail.length > 160 || !EMAIL.test(clienteEmail) : false) ||
+      (servico?.length ?? 0) > 120 ||
+      (profissional?.length ?? 0) > 120 ||
+      (profissionalId ? !UUID.test(profissionalId) : false) ||
+      (observacoes?.length ?? 0) > 1000 ||
+      (duracaoMin !== undefined && (!Number.isInteger(duracaoMin) || duracaoMin < 5 || duracaoMin > 480));
+    if (invalido) {
+      return NextResponse.json({ error: "Dados do agendamento inválidos." }, { status: 400 });
+    }
+
     const admin = adminSupabase();
     const agendamentoId = crypto.randomUUID();
     const dataHoraIso = new Date(`${data}T${hora}:00`).toISOString();
@@ -56,6 +73,9 @@ export async function POST(req: NextRequest) {
         ? admin.from("profissionais").select("valor_consulta").eq("id", profissionalId).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
+    if (!perfilResult.data) {
+      return NextResponse.json({ error: "Clínica não encontrada." }, { status: 404 });
+    }
     const valorConsulta = profResult.data?.valor_consulta ?? perfilResult.data?.valor_consulta ?? null;
 
     // Upsert paciente: se já existe pelo telefone, não duplica
@@ -120,6 +140,6 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro interno.";
     await notificarDiscord(`🔴 Erro em /api/criar-agendamento às ${horaAgora()}: ${msg}`, "critico");
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "Não foi possível criar o agendamento agora. Tente novamente." }, { status: 500 });
   }
 }

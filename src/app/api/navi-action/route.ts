@@ -17,9 +17,10 @@ const writableFields: Record<Entity, string[]> = {
   configuracao: ["agenda_config"],
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function scopedQuery(client: any, action: Action, userId: string) {
   const table = tableByEntity[action.entity];
-  let query = client.from(table).select("*");
+  const query = client.from(table).select("*");
   if (action.entity === "clinica") return query.eq("id", userId);
   if (action.entity === "configuracao") return query.eq("perfil_id", userId);
   return query.eq("perfil_id", userId);
