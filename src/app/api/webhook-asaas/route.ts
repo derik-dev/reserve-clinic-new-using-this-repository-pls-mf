@@ -16,6 +16,11 @@ function tokenValido(recebido: string | null, esperado: string) {
 }
 
 const EVENTOS_CONFIRMACAO = new Set(["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"]);
+const STATUS_SAQUE_POR_EVENTO: Record<string, string> = {
+  TRANSFER_DONE: "concluido",
+  TRANSFER_FAILED: "falhou",
+  TRANSFER_CANCELLED: "falhou",
+};
 
 type TransferBody = { type?: string; transfer?: { id?: string; value?: number } };
 
@@ -74,6 +79,7 @@ export async function POST(req: NextRequest) {
   let body: {
     event: string;
     payment?: { id: string; externalReference?: string; value?: number };
+    transfer?: { id?: string };
   };
   try {
     body = await req.json();
@@ -84,6 +90,19 @@ export async function POST(req: NextRequest) {
   console.log("[webhook-asaas] evento recebido:", body.event);
 
   try {
+    // Resultado do saque: falhou/cancelou volta o valor para o saldo da clínica
+    const statusSaque = STATUS_SAQUE_POR_EVENTO[body.event];
+    if (statusSaque && body.transfer?.id) {
+      const atualizacao = await adminSupabase()
+        .from("saques")
+        .update({ status: statusSaque, ...(statusSaque === "falhou" ? { error_message: `Asaas: ${body.event}` } : {}) })
+        .eq("asaas_transfer_id", body.transfer.id)
+        .in("status", ["pendente", "processando"]);
+      throwIfSupabaseError(atualizacao, "webhook-asaas.update saque");
+      console.log(`[webhook-asaas] saque ${body.transfer.id} → ${statusSaque}`);
+      return NextResponse.json({ received: true });
+    }
+
     if (EVENTOS_CONFIRMACAO.has(body.event) && body.payment?.externalReference) {
       const agendamentoId = body.payment.externalReference;
       const admin = adminSupabase();
