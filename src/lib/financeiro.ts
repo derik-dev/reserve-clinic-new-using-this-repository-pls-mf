@@ -139,5 +139,5 @@ export async function authHeaders(): Promise<Record<string, string> | null> {
   return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : null;
 }
 
-/** Chave Pix de saque salva no perfil (cadastrada em Configurações). */
-export type PerfilPix = { chave_pix: string | null; tipo_chave_pix: string | null; chave_pix_alterada_em: string | null };
+/** Chave Pix de saque salva no perfil, como a rota /api/chave-pix devolve (a chave inteira nunca vai ao navegador). */
+export type PerfilPix = { temChave: boolean; tipo: string | null; mascara: string; alteradaEm: string | null };

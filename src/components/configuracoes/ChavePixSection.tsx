@@ -2,13 +2,10 @@
 
 import { Check, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { authHeaders } from "@/lib/financeiro";
+import { authHeaders, type PerfilPix } from "@/lib/financeiro";
 import {
-  PIX_GRACE_HOURS, PIX_KEY_TYPES, emCarencia, formatLiberacao, isPixKeyType, liberadaEm, maskPixKeyValue, pixKeyFormatError, type PixKeyType,
+  PIX_GRACE_HOURS, PIX_KEY_TYPES, emCarencia, formatLiberacao, liberadaEm, pixKeyFormatError, type PixKeyType,
 } from "@/lib/pixKey";
-import { supabase } from "@/lib/supabase";
-
-type Salva = { chave_pix: string | null; tipo_chave_pix: string | null; chave_pix_alterada_em: string | null };
 
 const PLACEHOLDER: Record<PixKeyType, string> = {
   CPF: "000.000.000-00",
@@ -19,7 +16,7 @@ const PLACEHOLDER: Record<PixKeyType, string> = {
 };
 
 export function ChavePixSection() {
-  const [salva, setSalva] = useState<Salva | null>(null);
+  const [salva, setSalva] = useState<PerfilPix | null>(null);
   const [loading, setLoading] = useState(true);
   const [tipo, setTipo] = useState<PixKeyType>("CPF");
   const [chave, setChave] = useState("");
@@ -29,18 +26,21 @@ export function ChavePixSection() {
   const [ok, setOk] = useState(false);
 
   const load = useCallback(async () => {
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) { setLoading(false); return; }
-    const { data } = await supabase.from("perfis").select("chave_pix, tipo_chave_pix, chave_pix_alterada_em").eq("id", auth.user.id).maybeSingle();
-    setSalva((data as Salva | null) ?? null);
+    try {
+      const headers = await authHeaders();
+      if (headers) {
+        const res = await fetch("/api/chave-pix", { headers, cache: "no-store" });
+        if (res.ok) setSalva(await res.json() as PerfilPix);
+      }
+    } catch { /* mostra o formulário de cadastro */ }
     setLoading(false);
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  const temChave = !!salva?.chave_pix && isPixKeyType(salva.tipo_chave_pix);
-  const libera = liberadaEm(salva?.chave_pix_alterada_em);
-  const carencia = temChave && emCarencia(salva?.chave_pix_alterada_em);
-  const tipoSalvo = PIX_KEY_TYPES.find((t) => t.value === salva?.tipo_chave_pix)?.label;
+  const temChave = !!salva?.temChave;
+  const libera = liberadaEm(salva?.alteradaEm);
+  const carencia = temChave && emCarencia(salva?.alteradaEm);
+  const tipoSalvo = PIX_KEY_TYPES.find((t) => t.value === salva?.tipo)?.label;
 
   async function salvar() {
     setError(""); setOk(false);
@@ -78,7 +78,7 @@ export function ChavePixSection() {
         <>
           {temChave ? (
             <div className="dxNote" role="status">
-              <strong>{tipoSalvo}: {maskPixKeyValue(salva?.tipo_chave_pix, salva?.chave_pix)}</strong>
+              <strong>{tipoSalvo}: {salva?.mascara}</strong>
               <br />
               {carencia && libera
                 ? <>Liberada para saque em <strong>{formatLiberacao(libera)}</strong>. Até lá, o saque fica bloqueado.</>

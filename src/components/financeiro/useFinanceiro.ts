@@ -87,10 +87,14 @@ export function useFinanceiro(month: Date) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: session } = await supabase.auth.getUser();
-      if (!session.user || cancelled) return;
-      const { data } = await supabase.from("perfis").select("chave_pix, tipo_chave_pix, chave_pix_alterada_em").eq("id", session.user.id).maybeSingle();
-      if (!cancelled) setPerfil((data as PerfilPix | null) ?? null);
+      try {
+        const headers = await authHeaders();
+        if (!headers || cancelled) return;
+        const res = await fetch("/api/chave-pix", { headers, cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json() as PerfilPix;
+        if (!cancelled) setPerfil(data);
+      } catch { /* sem a chave a tela de saque só orienta a cadastrar */ }
     })();
     return () => { cancelled = true; };
   }, []);

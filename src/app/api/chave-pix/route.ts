@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { adminSupabase, authenticateRequest } from "@/lib/apiAuth";
 import { avisarTrocaChavePix } from "@/lib/avisos";
-import { isPixKeyType, liberadaEm, normalizePixKey, onlyDigits, pixKeyFormatError, titularConfere } from "@/lib/pixKey";
+import { isPixKeyType, liberadaEm, maskPixKeyValue, normalizePixKey, onlyDigits, pixKeyFormatError, titularConfere } from "@/lib/pixKey";
 import { rateLimited } from "@/lib/rateLimit";
 
 const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
@@ -20,6 +20,26 @@ async function consultarTitular(apiKey: string, type: string, key: string): Prom
   } catch {
     return { ok: false, status: 0 };
   }
+}
+
+// Dados da chave salva para a tela (só o necessário: a chave sai mascarada).
+export async function GET(req: NextRequest) {
+  const user = await authenticateRequest(req);
+  if (!user) return NextResponse.json({ error: "Sessão expirada. Entre novamente." }, { status: 401 });
+  const { data, error } = await adminSupabase().from("perfis")
+    .select("chave_pix, tipo_chave_pix, chave_pix_alterada_em").eq("id", user.id).maybeSingle();
+  if (error) {
+    console.error("[api/chave-pix] erro ao ler a chave", error.message);
+    return NextResponse.json({ error: "Não foi possível carregar a chave Pix." }, { status: 500 });
+  }
+  const chave = (data?.chave_pix as string | null | undefined) ?? null;
+  const tipo = (data?.tipo_chave_pix as string | null | undefined) ?? null;
+  return NextResponse.json({
+    temChave: !!chave && isPixKeyType(tipo),
+    tipo,
+    mascara: maskPixKeyValue(tipo, chave),
+    alteradaEm: (data?.chave_pix_alterada_em as string | null | undefined) ?? null,
+  });
 }
 
 export async function POST(req: NextRequest) {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { authHeaders, money, type PerfilPix } from "@/lib/financeiro";
-import { PIX_KEY_TYPES, emCarencia, formatLiberacao, liberadaEm, maskPixKeyValue } from "@/lib/pixKey";
+import { PIX_KEY_TYPES, emCarencia, formatLiberacao, liberadaEm } from "@/lib/pixKey";
 
 type Props = {
   /** Saldo disponível; null quando não foi possível consultar. */
@@ -33,10 +33,10 @@ export function WithdrawDialog({ available, chave, onClose, onDone }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, submitting]);
 
-  const temChave = !!chave?.chave_pix && !!chave.tipo_chave_pix;
-  const libera = liberadaEm(chave?.chave_pix_alterada_em);
-  const bloqueada = temChave && emCarencia(chave?.chave_pix_alterada_em);
-  const tipoLabel = PIX_KEY_TYPES.find(t => t.value === chave?.tipo_chave_pix)?.label ?? "Chave";
+  const temChave = !!chave?.temChave;
+  const libera = liberadaEm(chave?.alteradaEm);
+  const bloqueada = temChave && emCarencia(chave?.alteradaEm);
+  const tipoLabel = PIX_KEY_TYPES.find(t => t.value === chave?.tipo)?.label ?? "Chave";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -91,7 +91,7 @@ export function WithdrawDialog({ available, chave, onClose, onDone }: Props) {
             <div className="dxField">
               <span>Chave Pix de destino</span>
               <p className="dxNote" style={{ margin: 0 }}>
-                <strong>{tipoLabel}: {maskPixKeyValue(chave?.tipo_chave_pix, chave?.chave_pix)}</strong>
+                <strong>{tipoLabel}: {chave?.mascara}</strong>
                 {bloqueada && libera
                   ? <><br />Chave nova: liberada para saque em <strong>{formatLiberacao(libera)}</strong>.</>
                   : <><br />Para trocar a chave, vá em <Link href="/configuracoes">Configurações &gt; Chave Pix</Link>.</>}
