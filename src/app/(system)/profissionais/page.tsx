@@ -441,11 +441,10 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
 
         {/* Footer */}
         <div className="profpopupFooter">
-          <button className="secondaryButton" onClick={onClose}>Fechar</button>
           <Link href={`/profissionais/${p.id}`} className="secondaryButton" style={{ textDecoration: "none" }} onClick={onClose}>
             <BarChart3 size={14} /> Relatório
           </Link>
-          <button className="primaryButton" onClick={onEdit}>Editar profissional</button>
+          <button className="primaryButton" style={{ flex: 1 }} onClick={onEdit}>Editar profissional</button>
         </div>
     </AdminDialog>
   );

@@ -317,7 +317,7 @@ function PacientePopup({ paciente: p, onClose, onEdit }: { paciente: Paciente; o
           <div className="ppopupFooter">
             {p.telefone && (
               <button className="ppopupFollowUpBtn" onClick={() => setFollowUp(true)}>
-                <WhatsAppIcon /> Follow-up
+                <WhatsAppIcon /> Reativar Paciente
               </button>
             )}
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>

@@ -7,6 +7,8 @@ const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
 /** Só cancela reservas com mais de 2h sem pagamento (bem depois dos 30 min em que o horário já fica livre). */
 const CANCEL_AFTER_MS = 2 * 3600_000;
 const BATCH = 200;
+/** Consulta que continua "aguardando" 48h depois do horário marcado é excluída. */
+const DELETE_AFTER_PAST_MS = 48 * 3600_000;
 
 function authorized(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -55,5 +57,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ analisadas: pendentes?.length ?? 0, canceladas, ignoradas });
+  // Atendimento que já passou há mais de 48h e nunca foi confirmado/pago: exclui.
+  const passou = new Date(Date.now() - DELETE_AFTER_PAST_MS).toISOString();
+  const { data: excluidas, error: delError } = await admin.from("consultas")
+    .delete()
+    .eq("status", "aguardando")
+    .lt("data_hora", passou)
+    .select("id");
+  if (delError) console.error("[limpar-reservas] falha ao excluir consultas vencidas:", delError.message);
+
+  return NextResponse.json({ analisadas: pendentes?.length ?? 0, canceladas, ignoradas, excluidas: excluidas?.length ?? 0 });
 }

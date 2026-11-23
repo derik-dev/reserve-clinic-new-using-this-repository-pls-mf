@@ -4,42 +4,106 @@
 :global(.appShell.rc.rc.rc) .page :global(.dxActions) { gap: 12px; }
 :global(.appShell.rc.rc.rc) .page :global(.dxKpi),
 :global(.appShell.rc.rc.rc) .page :global(.dxCard) { border-color: #e2e8f0; box-shadow: none; }
-.metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.mainGrid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(340px, 1fr); align-items: start; gap: 24px; margin-top: 24px; }
-:global(.appShell.rc.rc.rc) .page :global(.dxCardHead) { min-height: 76px; padding: 16px 20px; gap: 12px; }
-:global(.appShell.rc.rc.rc) .page :global(.dxCardHead h2) { font-size: 18px; }
-:global(.appShell.rc.rc.rc) .page :global(.dxCardLink) { flex: none; white-space: nowrap; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+/* Escala maior (leitura confortável): blocos, números e textos */
+.metrics { gap: 24px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxKpi) { padding: 28px 32px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxKpiLabel) { font-size: 19px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxKpiValue) { margin: 16px 0 12px; font-size: 60px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxKpiHint) { font-size: 17px; line-height: 1.4; }
+:global(.appShell.rc.rc.rc) .page .moneyKpi { font-size: clamp(34px, 3.1vw, 52px); }
+.metricsBelow { margin-top: 28px; }
+/* Situação da clínica: barra única e compacta, com cor semântica por estado */
+.statusBar { margin-top: 28px; border: 1px solid #e2e8f0; border-radius: 10px; background: var(--surface); }
+:global(.appShell.rc.rc.rc) .statusTitle { margin: 0; padding: 14px 24px 12px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; letter-spacing: .02em; color: var(--text-muted); }
+.statusItems { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+:global(.appShell.rc.rc.rc) .statusItem { --tone: var(--text); --tone-soft: #f1f5f9; display: flex; align-items: center; gap: 14px; min-width: 0; padding: 18px 24px; color: var(--text); text-decoration: none; }
+:global(.appShell.rc.rc.rc) .statusItem + .statusItem { border-left: 1px solid var(--border); }
+:global(.appShell.rc.rc.rc) .statusItem:hover { background: var(--surface-hover); }
+:global(.appShell.rc.rc.rc) .statusItem[data-tone="green"] { --tone: var(--text); --tone-soft: #f1f5f9; }
+:global(.appShell.rc.rc.rc) .statusItem[data-tone="amber"] { --tone: #b45309; --tone-soft: #fff4e0; }
+:global(.appShell.rc.rc.rc) .statusItem[data-tone="red"] { --tone: #c62828; --tone-soft: #fdecec; }
+.statusIcon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 10px; background: var(--tone-soft); color: var(--tone); }
+.statusText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+:global(.appShell.rc.rc.rc) .statusText small { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+:global(.appShell.rc.rc.rc) .statusText strong { font-size: 17px; font-weight: 600; line-height: 1.3; color: var(--tone); overflow-wrap: anywhere; }
+:global(.appShell.rc.rc.rc) .statusText em { font-style: normal; font-size: 14px; line-height: 1.35; color: var(--text-muted); }
+:global(.appShell.rc.rc.rc.theme-dark) .statusBar { border-color: var(--border); }
+:global(.appShell.rc.rc.rc.theme-dark) .statusItem[data-tone="green"] { --tone: var(--text); --tone-soft: var(--surface-hover); }
+:global(.appShell.rc.rc.rc.theme-dark) .statusItem[data-tone="amber"] { --tone: #fbbf24; --tone-soft: #2a2012; }
+:global(.appShell.rc.rc.rc.theme-dark) .statusItem[data-tone="red"] { --tone: #f87171; --tone-soft: #2a1414; }
+:global(.appShell.rc.rc.rc.theme-dark) .statusItem[data-tone="blue"] { --tone: var(--text); --tone-soft: var(--surface-hover); }
+@media (max-width: 1100px) { .statusItems { grid-template-columns: repeat(2, minmax(0, 1fr)); } .statusItem:nth-child(3) { border-left: 0; } .statusItem:nth-child(n + 3) { border-top: 1px solid var(--border); } }
+@media (max-width: 560px) { .statusItems { grid-template-columns: minmax(0, 1fr); } .statusItem + .statusItem { border-left: 0; border-top: 1px solid var(--border); } :global(.appShell.rc.rc.rc) .statusItem { padding: 16px 20px; } }
+.trendUp, .trendDown { display: inline-flex; align-items: center; gap: 4px; margin-right: 6px; font-weight: 600; font-variant-numeric: tabular-nums; vertical-align: middle; }
+.trendUp { color: var(--text-muted); }
+.trendDown { color: #c62828; }
+:global(.appShell.rc.rc.rc.theme-dark) .trendUp { color: var(--text-muted); }
+:global(.appShell.rc.rc.rc.theme-dark) .trendDown { color: #f87171; }
+.mainGrid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(340px, 1fr); align-items: stretch; gap: 28px; margin-top: 28px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxCardHead) { min-height: 92px; padding: 22px 28px; gap: 12px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxCardHead h2) { font-size: 24px; }
+:global(.appShell.rc.rc.rc) .page :global(.dxCardLink) { flex: none; font-size: 17px; white-space: nowrap; }
 :global(.appShell.rc.rc.rc) .notice,
 :global(.appShell.rc.rc.rc) .setupHint { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 20px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-muted); font-size: 16px; line-height: 1.5; }
 :global(.appShell.rc.rc.rc) .notice[role="alert"] { color: var(--danger); }
 :global(.appShell.rc.rc.rc) .setupHint { border-left: 3px solid var(--warning); }
 .appointments { list-style: none; padding: 0; margin: 0; }
 .appointments > li + li { border-top: 1px solid var(--border); }
-:global(.appShell.rc.rc.rc) .appointment { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto 18px; align-items: center; gap: 14px; min-height: 100px; padding: 18px 20px; background: var(--surface); color: var(--text); text-decoration: none; transition: background .12s ease; }
+.miniAgendaScroll { overflow-x: auto; padding: 0 16px 16px; }
+.miniAgenda { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; min-width: 520px; }
+.miniAgendaDay { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.miniAgendaDayHead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 3px 8px; padding: 12px; border-bottom: 1px solid var(--border); color: var(--text); text-decoration: none; }
+.miniAgendaDayHead:hover { background: var(--surface-hover); }
+:global(.appShell.rc.rc.rc) .miniAgendaDayHead > span { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; text-transform: capitalize; white-space: nowrap; }
+:global(.appShell.rc.rc.rc) .miniAgendaDayHead > strong { font-size: 14px; font-variant-numeric: tabular-nums; }
+:global(.appShell.rc.rc.rc) .miniAgendaDayHead > small { grid-column: 1 / -1; color: var(--text-muted); font-size: 13px; }
+.miniAgendaEvents { display: flex; flex-direction: column; gap: 8px; min-height: 126px; list-style: none; margin: 0; padding: 10px; }
+.miniAgendaEvent { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 7px; padding: 8px; border-left: 2px solid var(--accent); border-radius: 4px; background: var(--accent-soft); color: var(--text); text-decoration: none; }
+.miniAgendaEvent:hover { background: var(--surface-hover); }
+:global(.appShell.rc.rc.rc) .miniAgendaEvent > time { color: var(--accent-text); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+:global(.appShell.rc.rc.rc) .miniAgendaEvent > strong { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+:global(.appShell.rc.rc.rc) .miniAgendaEvent > small { grid-column: 1 / -1; overflow: hidden; color: var(--text-muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.miniAgendaEvent :global(.statusBadge) { grid-column: 1 / -1; justify-self: start; font-size: 12px !important; }
+.miniAgendaEmpty { padding: 10px 4px; color: var(--text-muted); font-size: 14px; }
+.miniAgendaMore { display: block; margin: -4px 10px 12px; font-size: 13px; }
+:global(.appShell.rc.rc.rc) .appointment { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto 20px; align-items: center; gap: 20px; min-height: 124px; padding: 26px 28px; background: var(--surface); color: var(--text); text-decoration: none; transition: background .12s ease; }
 :global(.appShell.rc.rc.rc) .appointment:hover { background: var(--surface-hover); }
-:global(.appShell.rc.rc.rc) .pendingSection .appointment { grid-template-columns: 72px minmax(0, 1fr) 18px; }
+:global(.appShell.rc.rc.rc) .pendingSection .appointment { grid-template-columns: 96px minmax(0, 1fr) 20px; }
 .when, .identity { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-:global(.appShell.rc.rc.rc) .when strong { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
-:global(.appShell.rc.rc.rc) .when > span { font-size: 14px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-:global(.appShell.rc.rc.rc) .identity strong { font-size: 16px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
-:global(.appShell.rc.rc.rc) .identity > span { font-size: 14px; line-height: 1.5; color: var(--text-muted); overflow-wrap: anywhere; }
+:global(.appShell.rc.rc.rc) .when strong { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+:global(.appShell.rc.rc.rc) .when > span { font-size: 16px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+:global(.appShell.rc.rc.rc) .identity strong { font-size: 21px; font-weight: 500; color: var(--text); overflow-wrap: anywhere; }
+:global(.appShell.rc.rc.rc) .identity > span { font-size: 17px; line-height: 1.5; color: var(--text-muted); overflow-wrap: anywhere; }
 :global(.appShell.rc.rc.rc) .identity > .pastDue { color: var(--warning); }
 .rowArrow { color: var(--text-subtle); }
-:global(.appShell.rc.rc.rc) .page :global(.statusBadge) { font-size: 14px; border-radius: 6px; white-space: nowrap; }
-.weekSection { margin-top: 24px; }
+:global(.appShell.rc.rc.rc) .page :global(.statusBadge) { font-size: 16px; padding: 4px 12px; border-radius: 6px; white-space: nowrap; }
+.professionalsCard { height: 0; min-height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.professionals { flex: 1 1 0; min-height: 0; list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.professionals > li + li { border-top: 1px solid var(--border); }
+:global(.appShell.rc.rc.rc) .professionalRow { display: grid; grid-template-columns: auto minmax(0, 1fr) 20px; align-items: center; gap: 16px; padding: 14px 28px; color: var(--text); text-decoration: none; }
+:global(.appShell.rc.rc.rc) .professionalRow:hover { background: var(--surface-hover); }
+:global(.appShell.rc.rc.rc) .professionalRow :global(.adminAvatar) { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 50%; overflow: hidden; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); display: grid; place-items: center; text-align: center; line-height: 1; font-size: 17px; font-weight: 600; background: var(--accent-soft); color: var(--accent-text); }
+:global(.appShell.rc.rc.rc) .professionalRow :global(.adminAvatar) img { width: 100%; height: 100%; object-fit: cover; }
+.professionalName { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+:global(.appShell.rc.rc.rc) .professionalName strong { font-size: 19px; font-weight: 500; overflow-wrap: anywhere; }
+:global(.appShell.rc.rc.rc) .professionalName small { font-size: 16px; color: var(--text-muted); overflow-wrap: anywhere; }
+.professionalsEmpty { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 28px; }
+:global(.appShell.rc.rc.rc) .professionalsEmpty p { margin: 0; font-size: 18px; color: var(--text-muted); }
+.weekSection { margin-top: 28px; }
 .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-:global(.appShell.rc.rc.rc) .weekDay { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; padding: 20px; color: var(--text); text-decoration: none; }
+:global(.appShell.rc.rc.rc) .weekDay { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 28px 24px; color: var(--text); text-decoration: none; }
 .weekDay + .weekDay { border-left: 1px solid var(--border); }
 :global(.appShell.rc.rc.rc) .weekDay:hover { background: var(--surface-hover); }
-.weekDate { display: flex; flex-direction: column; gap: 2px; font-size: 16px; text-transform: capitalize; }
-.weekDate > span { font-size: 14px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-:global(.appShell.rc.rc.rc) .weekDay > strong { margin-top: 12px; font: 600 28px/1.2 var(--font-space); font-variant-numeric: tabular-nums; color: var(--text); }
-.weekCount, .weekCancelled { font-size: 14px; color: var(--text-muted); }
+.weekDate { display: flex; flex-direction: column; gap: 2px; font-size: 20px; text-transform: capitalize; }
+.weekDate > span { color: var(--text-muted); font-size: 17px; font-variant-numeric: tabular-nums; }
+:global(.appShell.rc.rc.rc) .weekDay > strong { margin-top: 12px; color: var(--text); font: 600 44px/1.2 var(--font-space); font-variant-numeric: tabular-nums; }
+.weekCount, .weekCancelled { color: var(--text-muted); font-size: 17px; }
 .weekCancelled { margin-top: 8px; }
 :global(.appShell.rc.rc.rc.theme-dark) .page :global(.dxKpi),
 :global(.appShell.rc.rc.rc.theme-dark) .page :global(.dxCard) { border-color: var(--border); }
 :global(.appShell.rc.rc.rc.theme-dark) .page { --accent: #3b6df0; --accent-text: #7ea3ff; --accent-soft: #172033; }
-@media (max-width: 1200px) { .mainGrid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1200px) { .mainGrid { grid-template-columns: minmax(0, 1fr); } .professionalsCard { height: auto; min-height: 0; } .professionals { flex: none; max-height: 300px; } .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 1000px) {
   .metrics { gap: 16px; }
   :global(.appShell.rc.rc.rc) .page :global(.dxKpi) { padding: 20px; }

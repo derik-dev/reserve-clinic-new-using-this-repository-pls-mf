@@ -29,12 +29,25 @@ type FormState = {
 const emptyForm: FormState = { paciente_id: "", paciente_nome: "", data: "", hora: "", duracao_min: "30", servico: "", profissional_id: "", profissional: "", valor: "", status: "aguardando", observacoes: "" };
 
 
-type Periodo = "todos" | "hoje" | "semana" | "mes";
-const PERIODO_LABEL: Record<Periodo, string> = { todos: "Todos os períodos", hoje: "Hoje", semana: "Esta semana", mes: "Este mês" };
+type Periodo = "todos" | "hoje" | "semana" | "mes" | `mes:${string}`;
+const PERIODO_LABEL: Record<"todos" | "hoje" | "semana" | "mes", string> = { todos: "Todos os períodos", hoje: "Hoje", semana: "Esta semana", mes: "Este mês" };
 const STATUS_TABS: { value: ConsultaStatus | "todos"; label: string }[] = [
   { value: "todos", label: "Todas" }, { value: "aguardando", label: "Aguardando" },
   { value: "confirmada", label: "Confirmadas" }, { value: "concluida", label: "Concluídas" }, { value: "cancelada", label: "Canceladas" },
 ];
+
+/** Meses desde a criação da conta (mais recente primeiro), incluindo o mês atual e os 2 seguintes para consultas futuras. */
+function mesesDesde(inicio: Date | null) {
+  const hoje = new Date();
+  const first = inicio ?? new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 1);
+  const lista: { value: string; label: string }[] = [];
+  for (let d = new Date(first.getFullYear(), first.getMonth(), 1); d <= fim; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+    const label = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    lista.push({ value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: label.charAt(0).toUpperCase() + label.slice(1) });
+  }
+  return lista.reverse();
+}
 
 function consultaQuery(query: string, periodo: Periodo, head = false) {
   let request = supabase.from("consultas").select(head ? "id" : "*", { count: "exact", head });
@@ -42,7 +55,10 @@ function consultaQuery(query: string, periodo: Periodo, head = false) {
   if (periodo !== "todos") {
     const from = new Date(); from.setHours(0, 0, 0, 0);
     const to = new Date(from);
-    if (periodo === "semana") {
+    if (periodo.startsWith("mes:")) {
+      const [ano, mes] = periodo.slice(4).split("-").map(Number);
+      from.setFullYear(ano, mes - 1, 1); to.setFullYear(ano, mes, 1);
+    } else if (periodo === "semana") {
       from.setDate(from.getDate() - ((from.getDay() + 6) % 7));
       to.setTime(from.getTime()); to.setDate(to.getDate() + 7);
     } else if (periodo === "mes") {
@@ -53,12 +69,17 @@ function consultaQuery(query: string, periodo: Periodo, head = false) {
   return request;
 }
 
+function profissionalNameKey(name: string) {
+  return name.trim().toLocaleLowerCase("pt-BR");
+}
+
 export default function ConsultasPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
+  const [profissionalEspecialidades, setProfissionalEspecialidades] = useState<Record<string, string | null>>({});
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
@@ -114,8 +135,41 @@ export default function ConsultasPage() {
     } finally { if (id === requestId.current) setLoading(false); }
   }, [search, periodo, statusFiltro, sortOrder, page]);
 
+  const [contaDesde, setContaDesde] = useState<Date | null>(null);
+  useEffect(() => {
+    void (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const { data } = await supabase.from("perfis").select("created_at").eq("id", auth.user.id).maybeSingle();
+      const criado = data?.created_at ?? auth.user.created_at;
+      if (criado) setContaDesde(new Date(criado));
+    })();
+  }, []);
+  const meses = useMemo(() => mesesDesde(contaDesde), [contaDesde]);
   useEffect(() => { void load(); return () => { requestId.current++; }; }, [load]);
   useEffect(() => { try { localStorage.setItem("consultas-seen-at", new Date().toISOString()); } catch {} }, []);
+
+  useEffect(() => {
+    const ids = Array.from(new Set(consultas.map((consulta) => consulta.profissional_id).filter((id): id is string => Boolean(id) && !(`id:${id}` in profissionalEspecialidades))));
+    const names = Array.from(new Set(consultas.map((consulta) => consulta.profissional?.trim()).filter((name): name is string => !!name && !(`nome:${profissionalNameKey(name)}` in profissionalEspecialidades))));
+    if (ids.length === 0 && names.length === 0) return;
+    let active = true;
+    Promise.all([
+      ids.length ? supabase.from("profissionais").select("id, nome, especialidade").in("id", ids).abortSignal(AbortSignal.timeout(10000)) : Promise.resolve({ data: [], error: null }),
+      names.length ? supabase.from("profissionais").select("id, nome, especialidade").in("nome", names).abortSignal(AbortSignal.timeout(10000)) : Promise.resolve({ data: [], error: null }),
+    ]).then(([byId, byName]) => {
+      if (!active) return;
+      setProfissionalEspecialidades((current) => {
+        const next = { ...current, ...Object.fromEntries(ids.map((id) => [`id:${id}`, null])), ...Object.fromEntries(names.map((name) => [`nome:${profissionalNameKey(name)}`, null])) };
+        for (const profissional of [...(byId.data ?? []), ...(byName.data ?? [])]) {
+          if (profissional.id) next[`id:${profissional.id}`] = profissional.especialidade;
+          if (profissional.nome) next[`nome:${profissionalNameKey(profissional.nome)}`] = profissional.especialidade;
+        }
+        return next;
+      });
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [consultas, profissionalEspecialidades]);
 
   useEffect(() => {
     if (!modalOpen) return;
@@ -158,7 +212,7 @@ export default function ConsultasPage() {
       paciente_nome: c.paciente_nome,
       data, hora,
       duracao_min: String(c.duracao_min),
-      servico: c.servico ?? "",
+      servico: serviceFor(c),
       profissional_id: c.profissional_id ?? "",
       profissional: c.profissional ?? "",
       valor: c.valor != null ? String(c.valor).replace(".", ",") : "",
@@ -168,6 +222,12 @@ export default function ConsultasPage() {
     setEditingId(c.id);
     setError(null);
     setModalOpen(true);
+  }
+
+  function serviceFor(c: Consulta) {
+    const byId = c.profissional_id ? profissionalEspecialidades[`id:${c.profissional_id}`] : null;
+    const byName = c.profissional ? profissionalEspecialidades[`nome:${profissionalNameKey(c.profissional)}`] : null;
+    return c.servico?.trim() || byId?.trim() || byName?.trim() || "";
   }
 
   function closeModal() {
@@ -291,7 +351,8 @@ export default function ConsultasPage() {
       <TableToolbar tabs={STATUS_TABS.map(tab => <button key={tab.value} aria-pressed={statusFiltro === tab.value} className={statusFiltro === tab.value ? "isSelected" : ""} onClick={() => { setStatusFiltro(tab.value); setPage(1); }}>{tab.label}<span>{loading ? "—" : tabCounts[tab.value] ?? 0}</span></button>)}>
         <SearchInput value={query} onChange={setQuery} placeholder="Buscar paciente, serviço ou profissional" />
         <select aria-label="Ordenar consultas" value={sortOrder} onChange={(e) => { setSortOrder(e.target.value as "asc" | "desc"); setPage(1); }}><option value="desc">Cadastro: mais recente</option><option value="asc">Cadastro: mais antigo</option></select>
-        <select aria-label="Filtrar por período" value={periodo} onChange={(e) => { setPeriodo(e.target.value as Periodo); setPage(1); }}>{Object.entries(PERIODO_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
+        <select aria-label="Filtrar por período" value={periodo.startsWith("mes:") ? "custom" : periodo} onChange={(e) => { setPeriodo(e.target.value as Periodo); setPage(1); }}>{Object.entries(PERIODO_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}{periodo.startsWith("mes:") && <option value="custom" hidden>Mês escolhido</option>}</select>
+        <select aria-label="Filtrar por mês" value={periodo.startsWith("mes:") ? periodo.slice(4) : ""} onChange={(e) => { setPeriodo(e.target.value ? `mes:${e.target.value}` as Periodo : "todos"); setPage(1); }}><option value="">Escolher mês</option>{meses.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}</select>
         <button className="secondaryButton adminExport" disabled={exporting || loading || loadError || total === 0} onClick={exportCSV}><Download size={16} />{exporting ? "Exportando…" : "Exportar"}</button>
       </TableToolbar>
       <div className="tableScroll adminTableScroll" tabIndex={0} role="region" aria-label="Tabela de consultas. Role horizontalmente para ver todas as colunas." aria-busy={loading}>
@@ -300,7 +361,7 @@ export default function ConsultasPage() {
           <tbody>{loading || loadError || consultas.length === 0 ? <TableState columns={7} loading={loading} error={loadError} empty={hasFilters ? "Nenhuma consulta encontrada." : "Nenhuma consulta registrada."} onRetry={load} onClear={hasFilters ? clearFilters : undefined} /> : consultas.map(c => <tr key={c.id} onClick={() => setSelectedConsulta(c)} className="rowClickable">
             <td className="adminDate"><strong>{new Date(c.data_hora).toLocaleDateString("pt-BR") === today ? "Hoje" : formatDate(c.data_hora)} · {formatTime(c.data_hora)}</strong><small>{c.duracao_min} min</small></td>
             <td><div className="patientCell"><RecordAvatar name={c.paciente_nome} /><button className="adminName" onClick={(e) => { e.stopPropagation(); setSelectedConsulta(c); }}>{c.paciente_nome}</button></div></td>
-            <td>{c.servico ?? "—"}</td><td>{c.profissional ?? "—"}</td><td className="adminNumeric">{formatCurrency(c.valor)}</td>
+            <td>{serviceFor(c) || "—"}</td><td>{c.profissional ?? "—"}</td><td className="adminNumeric">{formatCurrency(c.valor)}</td>
             <td><StatusBadge status={c.status === "aguardando" ? "Aguardando confirmação" : STATUS_LABEL[c.status]} /></td>
             <td onClick={(e) => e.stopPropagation()}><div className="adminRowActions">{c.status === "aguardando" && <button className="adminQuickAction" disabled={busy} onClick={() => requestStatus(c, "confirmada")}>Confirmar</button>}<RowActions name={c.paciente_nome} disabled={busy} actions={[
               { label: "Ver detalhes", onClick: () => setSelectedConsulta(c) }, { label: "Editar consulta", onClick: () => openEdit(c) },
@@ -313,7 +374,7 @@ export default function ConsultasPage() {
       {!loadError && <Pagination page={page} total={total} onChange={setPage} disabled={loading} />}
     </section>
     {confirmation && <ConfirmDialog confirmation={confirmation} busy={busy} onClose={() => setConfirmation(null)} />}
-    {selectedConsulta && <ConsultaDetalhePopup consulta={selectedConsulta} onClose={() => setSelectedConsulta(null)} onEdit={() => { openEdit(selectedConsulta); setSelectedConsulta(null); }} onStatusChange={(s) => requestStatus(selectedConsulta, s)} onDelete={() => requestDelete(selectedConsulta)} />}
+    {selectedConsulta && <ConsultaDetalhePopup consulta={{ ...selectedConsulta, servico: serviceFor(selectedConsulta) || null }} onClose={() => setSelectedConsulta(null)} onEdit={() => { openEdit(selectedConsulta); setSelectedConsulta(null); }} onStatusChange={(s) => requestStatus(selectedConsulta, s)} onDelete={() => requestDelete(selectedConsulta)} />}
 
     {modalOpen && (
       <AdminDialog title={editingId ? "Editar consulta" : "Nova consulta"} onClose={closeModal} busy={saving}>
@@ -346,7 +407,18 @@ export default function ConsultasPage() {
                 <div className="formRow"><label htmlFor="admin-servico">Serviço</label><input id="admin-servico" value={form.servico} onChange={(e) => setForm({ ...form, servico: e.target.value })} placeholder="Consulta clínica" /></div>
                 <div className="formRow"><label>Profissional</label>
                   {profissionais.length > 0 ? (
-                    <select value={form.profissional_id} onChange={(e) => setForm({ ...form, profissional_id: e.target.value })}>
+                    <select value={form.profissional_id} onChange={(e) => {
+                      const profissionalId = e.target.value;
+                      const selecionado = profissionais.find((p) => p.id === profissionalId);
+                      const anterior = profissionais.find((p) => p.id === form.profissional_id);
+                      const servicoEraEspecialidade = !form.servico.trim() || Boolean(anterior?.especialidade && form.servico.trim() === anterior.especialidade.trim());
+                      setForm({
+                        ...form,
+                        profissional_id: profissionalId,
+                        profissional: selecionado?.nome ?? "",
+                        servico: servicoEraEspecialidade ? selecionado?.especialidade ?? "" : form.servico,
+                      });
+                    }}>
                       <option value="">— Selecionar —</option>
                       {profissionais.map(p => <option key={p.id} value={p.id}>{p.nome}{p.especialidade ? ` — ${p.especialidade}` : ""}</option>)}
                     </select>

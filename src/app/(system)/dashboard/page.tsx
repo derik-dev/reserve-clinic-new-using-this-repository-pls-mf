@@ -1,25 +1,28 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, Copy, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { CalendarCheck, CalendarRange, Check, ChevronRight, CircleAlert, CircleCheck, Copy, Hourglass, Plus, TrendingDown, TrendingUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { StatusBadge } from "@/components/StatusBadge";
+import { RecordAvatar } from "@/components/AdminTable";
 import { STATUS_LABEL, type Consulta } from "@/lib/db";
-import { addDays, isSameDay, startOfDay, toIsoDate } from "@/lib/agenda";
+import { addDays, isSameDay, startOfDay, startOfMonth, toIsoDate } from "@/lib/agenda";
+import { ASAAS_FEE, money, percentChange, summarize } from "@/lib/financeiro";
+import { useFinanceiro } from "@/components/financeiro/useFinanceiro";
 import styles from "./dashboard.module.css";
 
 type Appointment = Pick<Consulta, "id" | "paciente_nome" | "data_hora" | "duracao_min" | "servico" | "profissional" | "status">;
-type WeekAppointment = Pick<Consulta, "data_hora" | "status">;
+type WeekAppointment = Appointment;
 type Overview = {
   now: Date;
-  today: WeekAppointment[];
-  upcoming: Appointment[];
+  today: Appointment[];
   pending: Appointment[];
   pendingCount: number;
   pastPendingCount: number;
   week: WeekAppointment[];
 };
+type ProfessionalItem = { id: string; nome: string; especialidade: string | null; foto_url: string | null };
 type BookingSetup = { slug: string | null; ready: boolean; issue: string | null; href: string };
 
 const APPOINTMENT_FIELDS = "id, paciente_nome, data_hora, duracao_min, servico, profissional, status";
@@ -35,7 +38,7 @@ function dayLabel(iso: string, now: Date) {
 async function loadWeek(from: Date, to: Date): Promise<WeekAppointment[]> {
   const records: WeekAppointment[] = [];
   for (let offset = 0; ; offset += 500) {
-    const { data, error } = await supabase.from("consultas").select("data_hora, status")
+    const { data, error } = await supabase.from("consultas").select(APPOINTMENT_FIELDS)
       .gte("data_hora", from.toISOString()).lt("data_hora", to.toISOString())
       .order("data_hora").order("id").range(offset, offset + 499)
       .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT));
@@ -71,6 +74,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [setup, setSetup] = useState<BookingSetup | null>(null);
   const [setupError, setSetupError] = useState(false);
+  const [professionalList, setProfessionalList] = useState<ProfessionalItem[] | null>(null);
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
   const [initialDay] = useState(() => startOfDay(new Date()));
@@ -84,10 +88,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [upcomingResult, pendingResult, pastPending, week] = await Promise.all([
-        supabase.from("consultas").select(APPOINTMENT_FIELDS)
-          .in("status", ["aguardando", "confirmada"]).gte("data_hora", now.toISOString())
-          .order("data_hora").order("id").limit(6).abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
+      const [pendingResult, pastPending, week] = await Promise.all([
         supabase.from("consultas").select(APPOINTMENT_FIELDS, { count: "exact" })
           .eq("status", "aguardando").order("data_hora").order("id").limit(5)
           .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
@@ -96,12 +97,11 @@ export default function DashboardPage() {
           .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
         loadWeek(today, addDays(today, 7)),
       ]);
-      for (const result of [upcomingResult, pendingResult, pastPending]) if (result.error) throw result.error;
+      for (const result of [pendingResult, pastPending]) if (result.error) throw result.error;
       if (sequence !== requestSequence.current) return;
       setOverview({
         now,
         today: week.filter(appointment => isSameDay(new Date(appointment.data_hora), now)),
-        upcoming: (upcomingResult.data ?? []) as Appointment[],
         pending: (pendingResult.data ?? []) as Appointment[],
         pendingCount: pendingResult.count ?? 0,
         pastPendingCount: pastPending.count ?? 0,
@@ -122,11 +122,12 @@ export default function DashboardPage() {
       const [profile, professionals] = await Promise.all([
         supabase.from("perfis").select("slug, valor_consulta").eq("id", session.user.id)
           .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)).maybeSingle(),
-        supabase.from("profissionais").select("id, valor_consulta").eq("ativo", true)
+        supabase.from("profissionais").select("id, nome, especialidade, foto_url, valor_consulta").eq("ativo", true).order("nome")
           .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
       ]);
       if (profile.error || professionals.error || !profile.data) throw new Error("Configuração indisponível");
       const profileData = profile.data;
+      setProfessionalList((professionals.data ?? []).map(({ id, nome, especialidade, foto_url }) => ({ id, nome, especialidade, foto_url })));
       const hasProfessionals = (professionals.data?.length ?? 0) > 0;
       const hasValue = (professionals.data ?? []).some(professional => Number(professional.valor_consulta ?? profileData.valor_consulta) > 0);
       setSetup({
@@ -168,12 +169,23 @@ export default function DashboardPage() {
   const now = overview?.now ?? initialDay;
   const today = startOfDay(now);
   const dayISO = toIsoDate(today);
+  const [financeMonth] = useState<Date>(() => startOfMonth(new Date()));
+  const finance = useFinanceiro(financeMonth);
+  const financeSummary = useMemo(() => summarize(finance.atual), [finance.atual]);
+  const financePrevious = useMemo(() => summarize(finance.anterior), [finance.anterior]);
+  const financeReady = !finance.revenueLoading && !finance.revenueFailed;
+  const netChange = percentChange(financeSummary.liquido, financePrevious.liquido);
   const available = !!overview && !error;
   const activeToday = overview?.today.filter(appointment => appointment.status !== "cancelada") ?? [];
   const completedToday = activeToday.filter(appointment => appointment.status === "concluida").length;
   const pendingToday = activeToday.filter(appointment => appointment.status === "aguardando").length;
   const nextSeven = overview?.week.filter(appointment => new Date(appointment.data_hora) >= now && (appointment.status === "aguardando" || appointment.status === "confirmada")).length ?? 0;
-  const days = Array.from({ length: 7 }, (_, i) => {
+  const miniAgendaDays = Array.from({ length: 3 }, (_, i) => {
+    const date = addDays(today, i);
+    const records = overview?.week.filter(appointment => isSameDay(new Date(appointment.data_hora), date)) ?? [];
+    return { date, records, activeCount: records.filter(appointment => appointment.status !== "cancelada").length };
+  });
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(today, i);
     const records = overview?.week.filter(appointment => isSameDay(new Date(appointment.data_hora), date)) ?? [];
     return { date, active: records.filter(appointment => appointment.status !== "cancelada").length, cancelled: records.filter(appointment => appointment.status === "cancelada").length };
@@ -196,41 +208,108 @@ export default function DashboardPage() {
     {setupError ? <div className={styles.setupHint} role="alert"><span>Não foi possível carregar o link de agendamento.</span><button className="dxCardLink" onClick={loadSetup}>Tentar novamente</button></div> : setup?.issue && <div className={styles.setupHint}><span>{setup.issue}</span><Link href={setup.href} className="dxCardLink">Concluir configuração</Link></div>}
     {error && <div className="dxError" role="alert"><span>{error}</span><button className="secondaryButton" onClick={loadOverview}>Tentar novamente</button></div>}
 
-    <section className={styles.metrics} aria-label="Resumo operacional" aria-busy={loading}>
-      <Link href={"/agenda?data=" + dayISO} className="dxKpi" data-metric="today">
-        <span className="dxKpiLabel">Consultas hoje</span><strong className="dxKpiValue">{available ? activeToday.length : "—"}</strong>
-        <span className="dxKpiHint">{available ? completedToday + (completedToday === 1 ? " concluída · " : " concluídas · ") + pendingToday + " a confirmar" : "Agenda do dia"}</span>
+    <section className={styles.metrics} aria-label="Resumo financeiro do mês" aria-busy={finance.revenueLoading}>
+      <Link href="/financeiro" className="dxKpi" data-metric="gross">
+        <span className="dxKpiLabel">Valor bruto</span><strong className={"dxKpiValue " + styles.moneyKpi}>{financeReady ? money(financeSummary.bruto) : "—"}</strong>
+        <span className="dxKpiHint">{financeReady ? financeSummary.transacoes + (financeSummary.transacoes === 1 ? " transação" : " transações") + " neste mês" : "Pago pelos pacientes"}</span>
       </Link>
-      <Link href="/consultas" className={"dxKpi" + (available && overview.pendingCount > 0 ? " isAlert" : "")} data-metric="pending">
-        <span className="dxKpiLabel">Aguardando confirmação</span><strong className="dxKpiValue">{available ? overview.pendingCount : "—"}</strong>
-        <span className="dxKpiHint">{available ? overview.pastPendingCount > 0 ? overview.pastPendingCount + " com horário já passado" : "Nenhum horário passado pendente" : "Pendências de todas as datas"}</span>
+      <Link href="/financeiro" className="dxKpi" data-metric="fee">
+        <span className="dxKpiLabel">Taxa da Asaas</span><strong className={"dxKpiValue " + styles.moneyKpi}>{financeReady ? money(financeSummary.taxa) : "—"}</strong>
+        <span className="dxKpiHint">{money(ASAAS_FEE)} em cada transação</span>
       </Link>
-      <Link href={"/agenda?data=" + dayISO} className="dxKpi" data-metric="upcoming">
-        <span className="dxKpiLabel">Próximos 7 dias</span><strong className="dxKpiValue">{available ? nextSeven : "—"}</strong>
-        <span className="dxKpiHint">Por vir, de hoje a {addDays(today, 6).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).replace(".", "")}</span>
+      <Link href="/financeiro" className="dxKpi" data-metric="net">
+        <span className="dxKpiLabel">Valor líquido</span><strong className={"dxKpiValue " + styles.moneyKpi}>{financeReady ? money(financeSummary.liquido) : "—"}</strong>
+        <span className="dxKpiHint">{financeReady && netChange !== null ? <><span className={netChange >= 0 ? styles.trendUp : styles.trendDown}>{netChange >= 0 ? <TrendingUp size={15} aria-hidden="true" /> : <TrendingDown size={15} aria-hidden="true" />}{Math.abs(Math.round(netChange))}%</span> em relação ao mês anterior</> : "O que fica para o consultório"}</span>
+      </Link>
+      <Link href="/financeiro" className="dxKpi" data-metric="available">
+        <span className="dxKpiLabel">Disponível para sacar</span><strong className={"dxKpiValue " + styles.moneyKpi}>{!finance.walletLoading && finance.wallet.balance !== null ? money(finance.wallet.balance) : "—"}</strong>
+        <span className="dxKpiHint">Já descontados os saques feitos</span>
       </Link>
     </section>
 
     <div className={styles.mainGrid}>
       <section className="dxCard" aria-labelledby="dashboard-upcoming">
-        <div className="dxCardHead"><h2 id="dashboard-upcoming">Próximos atendimentos</h2><Link href={"/agenda?data=" + dayISO} className="dxCardLink">Ver agenda</Link></div>
-        {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Consultas indisponíveis</strong><p>Tente atualizar os dados acima.</p></div> : overview.upcoming.length === 0 ? <div className="dxEmpty"><strong>Nenhum atendimento por vir</strong><p>As próximas consultas aparecerão aqui.</p><Link href={newAppointmentHref} className="dxCardLink">Nova consulta</Link></div> : <ul className={styles.appointments}>{overview.upcoming.map(appointment => <AppointmentRow key={appointment.id} appointment={appointment} now={now} />)}</ul>}
+        <div className="dxCardHead"><h2 id="dashboard-upcoming">Agenda · próximos três dias</h2><Link href={"/agenda?data=" + dayISO} className="dxCardLink">Ver agenda</Link></div>
+        {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Agenda indisponível</strong><p>Tente atualizar os dados acima.</p></div> : <div className={styles.miniAgendaScroll} role="region" tabIndex={0} aria-label="Prévia da agenda dos próximos três dias. Role horizontalmente para ver todas as datas.">
+          <div className={styles.miniAgenda}>
+            {miniAgendaDays.map(({ date, records, activeCount }, index) => <section className={styles.miniAgendaDay} key={toIsoDate(date)} aria-label={date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}>
+              <Link className={styles.miniAgendaDayHead} href={"/agenda?data=" + toIsoDate(date)}>
+                <span>{index === 0 ? "Hoje" : date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}</span>
+                <strong>{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</strong>
+                <small>{activeCount} {activeCount === 1 ? "consulta" : "consultas"}</small>
+              </Link>
+              <ul className={styles.miniAgendaEvents}>
+                {records.length === 0 ? <li className={styles.miniAgendaEmpty}>Sem consultas</li> : records.slice(0, 3).map(appointment => <li key={appointment.id}>
+                  <Link className={styles.miniAgendaEvent} href={"/consultas?editar=" + appointment.id}>
+                    <time dateTime={appointment.data_hora}>{new Date(appointment.data_hora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
+                    <strong>{appointment.paciente_nome}</strong>
+                    <small>{[appointment.servico, appointment.profissional].filter(Boolean).join(" · ") || "Profissional e serviço não informados"}</small>
+                    <StatusBadge status={STATUS_LABEL[appointment.status]} />
+                  </Link>
+                </li>)}
+              </ul>
+              {records.length > 3 && <Link className={styles.miniAgendaMore} href={"/agenda?data=" + toIsoDate(date)}>+{records.length - 3} mais</Link>}
+            </section>)}
+          </div>
+        </div>}
       </section>
-      <section className={"dxCard " + styles.pendingSection} aria-labelledby="dashboard-pending">
-        <div className="dxCardHead"><h2 id="dashboard-pending">Aguardando confirmação</h2><Link href="/consultas" className="dxCardLink">Ver todas</Link></div>
-        {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Pendências indisponíveis</strong><p>Tente atualizar os dados acima.</p></div> : overview.pending.length === 0 ? <div className="dxEmpty"><strong>Nenhuma confirmação pendente</strong><p>Você está em dia com as confirmações.</p></div> : <ul className={styles.appointments}>{overview.pending.map(appointment => <AppointmentRow key={appointment.id} appointment={appointment} now={now} pending />)}</ul>}
+      <section className={"dxCard " + styles.professionalsCard} aria-labelledby="dashboard-professionals">
+        <div className="dxCardHead"><h2 id="dashboard-professionals">Profissionais</h2>{professionalList && professionalList.length > 0 && <Link href="/profissionais" className="dxCardLink">Ver todos</Link>}</div>
+        {professionalList === null ? (setupError ? <div className="dxEmpty"><strong>Profissionais indisponíveis</strong><p>Tente atualizar a página.</p></div> : <LoadingRows />) : professionalList.length === 0 ? (
+          <div className={styles.professionalsEmpty}>
+            <p>Você ainda não tem profissionais cadastrados.</p>
+            <Link href="/profissionais" className="primaryButton"><Plus size={17} /> Adicionar profissional</Link>
+          </div>
+        ) : (
+          <ul className={styles.professionals}>
+            {professionalList.map(professional => <li key={professional.id}>
+              <Link href="/profissionais" className={styles.professionalRow}>
+                <RecordAvatar name={professional.nome} src={professional.foto_url} />
+                <span className={styles.professionalName}><strong>{professional.nome}</strong><small>{professional.especialidade || "Especialidade não informada"}</small></span>
+                <ChevronRight className={styles.rowArrow} size={18} aria-hidden="true" />
+              </Link>
+            </li>)}
+          </ul>
+        )}
       </section>
     </div>
 
-    <section className={"dxCard " + styles.weekSection} aria-labelledby="dashboard-week">
-      <div className="dxCardHead"><h2 id="dashboard-week">Agenda dos próximos dias</h2><Link href="/agenda" className="dxCardLink">Abrir agenda</Link></div>
-      {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Agenda indisponível</strong><p>Tente atualizar os dados acima.</p></div> : <div className={styles.week}>
-        {days.map(({ date, active, cancelled }, index) => <Link key={toIsoDate(date)} href={"/agenda?data=" + toIsoDate(date)} className={styles.weekDay} aria-label={date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }) + ": " + active + " consultas, " + cancelled + " canceladas"}>
-          <span className={styles.weekDate}>{index === 0 ? "Hoje" : date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}<span>{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span></span>
-          <strong>{active}</strong><span className={styles.weekCount}>{active === 1 ? "consulta" : "consultas"}</span>
-          {cancelled > 0 && <span className={styles.weekCancelled}>{cancelled} {cancelled === 1 ? "cancelada" : "canceladas"}</span>}
-        </Link>)}
-      </div>}
+    <section className={styles.statusBar} aria-label="Situação da clínica" aria-busy={loading}>
+      <h2 className={styles.statusTitle}>Situação da clínica</h2>
+      <div className={styles.statusItems}>
+        <Link href={"/agenda?data=" + dayISO} className={styles.statusItem} data-tone="blue" data-metric="today">
+          <span className={styles.statusIcon}><CalendarCheck size={20} aria-hidden="true" /></span>
+          <span className={styles.statusText}>
+            <small>Consultas hoje</small>
+            <strong>{available ? activeToday.length + (activeToday.length === 1 ? " consulta" : " consultas") : "—"}</strong>
+            <em>{available ? completedToday + (completedToday === 1 ? " concluída · " : " concluídas · ") + pendingToday + " a confirmar" : "Agenda do dia"}</em>
+          </span>
+        </Link>
+        <Link href="/consultas" className={styles.statusItem} data-tone={available && overview.pendingCount > 0 ? "amber" : "green"} data-metric="pending">
+          <span className={styles.statusIcon}>{available && overview.pendingCount > 0 ? <Hourglass size={20} aria-hidden="true" /> : <CircleCheck size={20} aria-hidden="true" />}</span>
+          <span className={styles.statusText}>
+            <small>Confirmações</small>
+            <strong>{available ? overview.pendingCount > 0 ? overview.pendingCount + (overview.pendingCount === 1 ? " pendente" : " pendentes") : "Confirmações em dia" : "—"}</strong>
+            <em>{available ? overview.pendingCount > 0 ? "Toque para revisar" : "Nada aguardando você" : "Pendências de todas as datas"}</em>
+          </span>
+        </Link>
+        <Link href={"/agenda?data=" + dayISO} className={styles.statusItem} data-tone="blue" data-metric="upcoming">
+          <span className={styles.statusIcon}><CalendarRange size={20} aria-hidden="true" /></span>
+          <span className={styles.statusText}>
+            <small>Próximos 7 dias</small>
+            <strong>{available ? nextSeven + (nextSeven === 1 ? " consulta" : " consultas") : "—"}</strong>
+            <em>Por vir, de hoje a {addDays(today, 6).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).replace(".", "")}</em>
+          </span>
+        </Link>
+        <Link href="/consultas" className={styles.statusItem} data-tone={available && overview.pastPendingCount > 0 ? "red" : "green"} data-metric="past-due">
+          <span className={styles.statusIcon}>{available && overview.pastPendingCount > 0 ? <CircleAlert size={20} aria-hidden="true" /> : <CircleCheck size={20} aria-hidden="true" />}</span>
+          <span className={styles.statusText}>
+            <small>Horários atrasados</small>
+            <strong>{available ? overview.pastPendingCount > 0 ? overview.pastPendingCount + (overview.pastPendingCount === 1 ? " atrasado" : " atrasados") : "Sem pendências atrasadas" : "—"}</strong>
+            <em>{available ? overview.pastPendingCount > 0 ? "Confirme ou cancele" : "Nenhum horário vencido" : "Pendências atrasadas"}</em>
+          </span>
+        </Link>
+      </div>
     </section>
   </div>;
 }
