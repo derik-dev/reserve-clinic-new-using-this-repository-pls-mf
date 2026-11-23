@@ -89,7 +89,7 @@ export function useFinanceiro(month: Date) {
     (async () => {
       const { data: session } = await supabase.auth.getUser();
       if (!session.user || cancelled) return;
-      const { data } = await supabase.from("perfis").select("cpf_cnpj, email_contato, telefone").eq("id", session.user.id).maybeSingle();
+      const { data } = await supabase.from("perfis").select("chave_pix, tipo_chave_pix, chave_pix_alterada_em").eq("id", session.user.id).maybeSingle();
       if (!cancelled) setPerfil((data as PerfilPix | null) ?? null);
     })();
     return () => { cancelled = true; };

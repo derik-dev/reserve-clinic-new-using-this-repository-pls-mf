@@ -1,7 +1,8 @@
 "use client";
 
-import { Building2, Camera, Check, Image, MapPin, Plus, Trash2, Users } from "lucide-react";
+import { Building2, Camera, Check, Image, KeyRound, MapPin, Plus, Trash2, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { ChavePixSection } from "@/components/configuracoes/ChavePixSection";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/lib/supabase";
 
@@ -84,13 +85,14 @@ function mergeAgendaConfig(raw: unknown): AgendaConfig {
   };
 }
 
-type Tab = "empresa" | "visual" | "endereco" | "disponibilidade";
+type Tab = "empresa" | "visual" | "endereco" | "disponibilidade" | "pix";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "empresa",        label: "Empresa",        icon: <Building2 size={15} /> },
   { id: "visual",         label: "Visual",          icon: <Image size={15} /> },
   { id: "endereco",       label: "Endereço",        icon: <MapPin size={15} /> },
   { id: "disponibilidade",label: "Disponibilidade", icon: <Users size={15} /> },
+  { id: "pix",             label: "Chave Pix",       icon: <KeyRound size={15} /> },
 ];
 
 export default function ConfiguracoesPage() {
@@ -426,6 +428,8 @@ export default function ConfiguracoesPage() {
             </div>
           </div>
         )}
+
+        {tab === "pix" && <ChavePixSection />}
 
         {tab === "disponibilidade" && (
           <div className="cfgSection">

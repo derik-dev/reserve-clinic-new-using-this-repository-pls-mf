@@ -139,29 +139,5 @@ export async function authHeaders(): Promise<Record<string, string> | null> {
   return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : null;
 }
 
-export type PerfilPix = { cpf_cnpj: string | null; email_contato: string | null; telefone: string | null };
-export type PixKeyOption = { id: string; type: "CPF" | "CNPJ" | "EMAIL" | "PHONE"; label: string; value: string };
-
-/**
- * O servidor só aceita como destino uma chave que pertença ao perfil da clínica
- * (CPF/CNPJ, e-mail ou telefone cadastrados): oferecemos exatamente essas.
- */
-export function pixKeyOptions(perfil: PerfilPix | null): PixKeyOption[] {
-  if (!perfil) return [];
-  const options: PixKeyOption[] = [];
-  const doc = (perfil.cpf_cnpj ?? "").replace(/\D/g, "");
-  if (doc.length === 11) options.push({ id: "cpf", type: "CPF", label: "CPF", value: doc });
-  else if (doc.length === 14) options.push({ id: "cnpj", type: "CNPJ", label: "CNPJ", value: doc });
-  if (perfil.email_contato?.trim()) options.push({ id: "email", type: "EMAIL", label: "E-mail", value: perfil.email_contato.trim() });
-  const phone = (perfil.telefone ?? "").replace(/\D/g, "");
-  if (phone.length >= 10) options.push({ id: "phone", type: "PHONE", label: "Telefone", value: phone });
-  return options;
-}
-
-/** Máscara só para exibição (a chave enviada ao servidor é sempre o valor puro). */
-export function maskPixKey(option: PixKeyOption) {
-  if (option.type === "CPF") return option.value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  if (option.type === "CNPJ") return option.value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-  if (option.type === "PHONE") return option.value.replace(/^(\d{2})(\d{4,5})(\d{4})$/, "($1) $2-$3");
-  return option.value;
-}
+/** Chave Pix de saque salva no perfil (cadastrada em Configurações). */
+export type PerfilPix = { chave_pix: string | null; tipo_chave_pix: string | null; chave_pix_alterada_em: string | null };

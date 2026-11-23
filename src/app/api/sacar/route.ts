@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminSupabase, authenticateRequest } from "@/lib/apiAuth";
-import { findPerfil, saldoDaClinica, type Perfil } from "@/lib/saldoClinica";
+import { findPerfil, saldoDaClinica } from "@/lib/saldoClinica";
+import { formatLiberacao, isPixKeyType, liberadaEm } from "@/lib/pixKey";
 
 const ASAAS_BASE = process.env.ASAAS_BASE_URL ?? "https://api.asaas.com/v3";
 
@@ -13,38 +14,16 @@ function brl(value: number) {
   return `R$ ${value.toFixed(2).replace(".", ",")}`;
 }
 
-function digits(value: string | null | undefined) {
-  return (value ?? "").replace(/\D/g, "");
-}
-
-// O destino do saque só pode ser uma chave que comprovadamente pertence à clínica.
-// A chave aleatória (EVP) não pode ser verificada, então só vale se for a padrão do servidor.
-function destinationBelongsToPerfil(perfil: Perfil, key: string, type: string) {
-  if (type === "CPF" || type === "CNPJ") return digits(key) !== "" && digits(key) === digits(perfil.cpf_cnpj);
-  if (type === "EMAIL") return !!perfil.email_contato && key.toLowerCase() === perfil.email_contato.trim().toLowerCase();
-  if (type === "PHONE") {
-    const own = digits(perfil.telefone);
-    const sent = digits(key);
-    return own !== "" && sent !== "" && (own === sent || own === sent.replace(/^55/, "") || sent === `55${own}`);
-  }
-  return false;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const user = await authenticateRequest(req);
     if (!user) return NextResponse.json({ error: "Sessão expirada. Entre novamente para sacar." }, { status: 401 });
 
     const apiKey = process.env.ASAAS_API_KEY;
-    const defaultPixAddressKey = process.env.ASAAS_TRANSFER_PIX_KEY;
-    const defaultPixAddressKeyType = process.env.ASAAS_TRANSFER_PIX_KEY_TYPE?.toUpperCase();
     if (!apiKey) return NextResponse.json({ error: "A integração financeira ainda não está configurada no servidor." }, { status: 503 });
 
-    const body = await req.json().catch(() => null) as { value?: unknown; pixAddressKey?: unknown; pixAddressKeyType?: unknown } | null;
-    const pixAddressKey = typeof body?.pixAddressKey === "string" && body.pixAddressKey.trim() ? body.pixAddressKey.trim() : defaultPixAddressKey;
-    const pixAddressKeyType = typeof body?.pixAddressKeyType === "string" && body.pixAddressKeyType.trim() ? body.pixAddressKeyType.trim().toUpperCase() : defaultPixAddressKeyType;
-    if (!pixAddressKey || !pixAddressKeyType) return NextResponse.json({ error: "Informe a chave Pix e o tipo da chave de destino." }, { status: 400 });
-    if (!(["CPF", "CNPJ", "EMAIL", "PHONE", "EVP"] as string[]).includes(pixAddressKeyType)) return NextResponse.json({ error: "Tipo de chave Pix inválido." }, { status: 400 });
+    // O destino do saque vem sempre da chave Pix salva no perfil: o navegador não escolhe a chave.
+    const body = await req.json().catch(() => null) as { value?: unknown } | null;
 
     const value = typeof body?.value === "number" ? body.value : Number(body?.value);
     if (!Number.isFinite(value) || value <= 0) {
@@ -58,9 +37,19 @@ export async function POST(req: NextRequest) {
     const perfil = await findPerfil(db, user.id);
     if (!perfil) return NextResponse.json({ error: "Perfil não encontrado." }, { status: 404 });
 
-    const usingServerDefault = !!defaultPixAddressKey && pixAddressKey === defaultPixAddressKey && pixAddressKeyType === defaultPixAddressKeyType;
-    if (!usingServerDefault && !destinationBelongsToPerfil(perfil, pixAddressKey, pixAddressKeyType)) {
-      return NextResponse.json({ error: "A chave Pix de destino precisa ser o CPF/CNPJ, e-mail ou telefone cadastrado no perfil da clínica." }, { status: 403 });
+    const { data: chave } = await db.from("perfis").select("chave_pix, tipo_chave_pix, chave_pix_alterada_em").eq("id", perfil.id).maybeSingle();
+    const pixAddressKey = (chave?.chave_pix as string | null | undefined) ?? "";
+    const pixAddressKeyType = (chave?.tipo_chave_pix as string | null | undefined) ?? "";
+    if (!pixAddressKey || !isPixKeyType(pixAddressKeyType)) {
+      return NextResponse.json({ error: "Cadastre sua chave Pix em Configurações antes de sacar.", code: "sem_chave" }, { status: 400 });
+    }
+    const libera = liberadaEm(chave?.chave_pix_alterada_em as string | null | undefined);
+    if (libera && libera.getTime() > Date.now()) {
+      return NextResponse.json({
+        error: `Sua chave Pix foi cadastrada há pouco e só poderá receber saques a partir de ${formatLiberacao(libera)}.`,
+        code: "chave_em_carencia",
+        liberadaEm: libera.toISOString(),
+      }, { status: 403 });
     }
 
     // DB-first: o registro "pendente" funciona como trava. O índice único parcial

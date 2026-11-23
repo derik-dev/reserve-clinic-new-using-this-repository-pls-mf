@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowDownToLine, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { addMonths, capitalize, startOfMonth } from "@/lib/agenda";
 import {
-  ASAAS_FEE, TRANSFER_STATUS, dailySeries, doctorRanking, isPaid, money, percentChange, pixKeyOptions, summarize,
+  ASAAS_FEE, TRANSFER_STATUS, dailySeries, doctorRanking, isPaid, money, percentChange, summarize,
 } from "@/lib/financeiro";
 import { DailyBars, DoctorRanking, RequestsFunnel } from "@/components/financeiro/FinanceCharts";
 import { RecebimentosList } from "@/components/financeiro/RecebimentosList";
@@ -24,7 +24,6 @@ export default function FinanceiroPage() {
   const series = useMemo(() => dailySeries(atual, month), [atual, month]);
   const ranking = useMemo(() => doctorRanking(atual), [atual]);
   const recebimentos = useMemo(() => atual.filter(isPaid).sort((a, b) => new Date(b.data_hora).getTime() - new Date(a.data_hora).getTime()), [atual]);
-  const options = useMemo(() => pixKeyOptions(perfil), [perfil]);
 
   const monthLabel = capitalize(month.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }));
   const previousName = addMonths(month, -1).toLocaleDateString("pt-BR", { month: "long" });
@@ -178,7 +177,7 @@ export default function FinanceiroPage() {
     {dialogOpen && (
       <WithdrawDialog
         available={wallet.balance}
-        options={options}
+        chave={perfil}
         onClose={() => setDialogOpen(false)}
         onDone={() => { setDialogOpen(false); setNotice("Saque solicitado. Ele aparece no histórico assim que o banco confirmar."); reload(); }}
       />

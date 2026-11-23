@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { authHeaders, maskPixKey, money, type PixKeyOption } from "@/lib/financeiro";
+import { authHeaders, money, type PerfilPix } from "@/lib/financeiro";
+import { PIX_KEY_TYPES, emCarencia, formatLiberacao, liberadaEm, maskPixKeyValue } from "@/lib/pixKey";
 
 type Props = {
   /** Saldo disponível; null quando não foi possível consultar. */
   available: number | null;
-  options: PixKeyOption[];
+  /** Chave Pix salva no perfil; null enquanto carrega. */
+  chave: PerfilPix | null;
   onClose: () => void;
   onDone: () => void;
 };
@@ -18,9 +20,8 @@ function parseAmount(raw: string) {
   return Number.isFinite(n) ? n : NaN;
 }
 
-export function WithdrawDialog({ available, options, onClose, onDone }: Props) {
+export function WithdrawDialog({ available, chave, onClose, onDone }: Props) {
   const [amount, setAmount] = useState("");
-  const [keyId, setKeyId] = useState(options[0]?.id ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -32,7 +33,10 @@ export function WithdrawDialog({ available, options, onClose, onDone }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, submitting]);
 
-  const option = options.find(o => o.id === keyId);
+  const temChave = !!chave?.chave_pix && !!chave.tipo_chave_pix;
+  const libera = liberadaEm(chave?.chave_pix_alterada_em);
+  const bloqueada = temChave && emCarencia(chave?.chave_pix_alterada_em);
+  const tipoLabel = PIX_KEY_TYPES.find(t => t.value === chave?.tipo_chave_pix)?.label ?? "Chave";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +45,8 @@ export function WithdrawDialog({ available, options, onClose, onDone }: Props) {
     if (!Number.isFinite(value) || value <= 0) { setError("Informe um valor maior que zero."); return; }
     if (Math.round(value * 100) !== value * 100) { setError("O valor deve ter no máximo duas casas decimais."); return; }
     if (available !== null && value > available) { setError(`O valor é maior que o saldo disponível (${money(available)}).`); return; }
-    if (!option) { setError("Escolha a chave Pix de destino."); return; }
+    if (!temChave) { setError("Cadastre sua chave Pix em Configurações antes de sacar."); return; }
+    if (bloqueada && libera) { setError(`Sua chave Pix só poderá receber saques a partir de ${formatLiberacao(libera)}.`); return; }
 
     setSubmitting(true);
     try {
@@ -50,7 +55,7 @@ export function WithdrawDialog({ available, options, onClose, onDone }: Props) {
       const res = await fetch("/api/sacar", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ value, pixAddressKey: option.value, pixAddressKeyType: option.type }),
+        body: JSON.stringify({ value }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error ?? "Não foi possível solicitar o saque.");
@@ -78,22 +83,20 @@ export function WithdrawDialog({ available, options, onClose, onDone }: Props) {
             <input ref={inputRef} inputMode="decimal" placeholder="0,00" value={amount} onChange={e => setAmount(e.target.value)} autoComplete="off" />
           </label>
 
-          {options.length === 0 ? (
+          {!temChave ? (
             <p className="dxNote">
-              Para sacar, cadastre o CPF/CNPJ, e-mail ou telefone da clínica em <Link href="/configuracoes">Configurações</Link>. O Pix só pode ser enviado a uma chave do próprio cadastro.
+              Para sacar, cadastre sua chave Pix uma vez em <Link href="/configuracoes">Configurações &gt; Chave Pix</Link>. O saque sempre vai para a chave cadastrada.
             </p>
           ) : (
-            <fieldset className="dxField dxChoices">
-              <legend>Chave Pix de destino</legend>
-              {options.map(o => (
-                <label key={o.id} className={`dxChoice${keyId === o.id ? " isActive" : ""}`}>
-                  <input type="radio" name="pix-key" value={o.id} checked={keyId === o.id} onChange={() => setKeyId(o.id)} />
-                  <span>{o.label}</span>
-                  <strong>{maskPixKey(o)}</strong>
-                </label>
-              ))}
-              <small>O Pix só pode ser enviado a uma chave do cadastro da clínica.</small>
-            </fieldset>
+            <div className="dxField">
+              <span>Chave Pix de destino</span>
+              <p className="dxNote" style={{ margin: 0 }}>
+                <strong>{tipoLabel}: {maskPixKeyValue(chave?.tipo_chave_pix, chave?.chave_pix)}</strong>
+                {bloqueada && libera
+                  ? <><br />Chave nova: liberada para saque em <strong>{formatLiberacao(libera)}</strong>.</>
+                  : <><br />Para trocar a chave, vá em <Link href="/configuracoes">Configurações &gt; Chave Pix</Link>.</>}
+              </p>
+            </div>
           )}
 
           {error && <p className="dxFormError" role="alert">{error}</p>}
@@ -101,7 +104,7 @@ export function WithdrawDialog({ available, options, onClose, onDone }: Props) {
 
         <footer>
           <button type="button" className="secondaryButton" onClick={onClose} disabled={submitting}>Cancelar</button>
-          <button type="submit" className="primaryButton" disabled={submitting || options.length === 0}>{submitting ? "Solicitando…" : "Confirmar saque"}</button>
+          <button type="submit" className="primaryButton" disabled={submitting || !temChave || bloqueada}>{submitting ? "Solicitando…" : "Confirmar saque"}</button>
         </footer>
       </form>
     </div>
