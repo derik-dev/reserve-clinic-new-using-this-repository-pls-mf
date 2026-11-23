@@ -2,102 +2,149 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 export function LandingDashboardShowcase() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<number | null>(null);
-  const targetRef = useRef({ x: 0, y: 0 });
-  const currentRef = useRef({ x: 0, y: 0 });
+  const sectionRef  = useRef<HTMLElement>(null);
+  const stageRef    = useRef<HTMLDivElement>(null);   // callout CSS vars
+  const scrollWrap  = useRef<HTMLDivElement>(null);   // GSAP scroll tilt
+  const dashInner   = useRef<HTMLDivElement>(null);   // GSAP pointer tilt
+  const rotXQ       = useRef<gsap.core.Tween | null>(null);
+  const rotYQ       = useRef<gsap.core.Tween | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
+  /* ── intersection: trigger CSS entry animations ── */
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsVisible(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.18 });
-    observer.observe(section);
-    return () => observer.disconnect();
+    const io = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setIsVisible(true); io.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    io.observe(section);
+    return () => io.disconnect();
   }, []);
 
-  useEffect(() => () => {
-    if (frameRef.current) cancelAnimationFrame(frameRef.current);
-  }, []);
+  /* ── GSAP scroll + pointer ── */
+  useEffect(() => {
+    const wrap = scrollWrap.current;
+    const inner = dashInner.current;
+    const section = sectionRef.current;
+    if (!wrap || !section) return;
 
-  function animateTilt() {
-    if (frameRef.current) return;
-    const tick = () => {
-      const current = currentRef.current;
-      const target = targetRef.current;
-      current.x += (target.x - current.x) * 0.11;
-      current.y += (target.y - current.y) * 0.11;
-      const stage = stageRef.current;
-      if (stage) {
-        stage.style.setProperty("--tilt-x", `${current.x.toFixed(3)}deg`);
-        stage.style.setProperty("--tilt-y", `${current.y.toFixed(3)}deg`);
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const mobile  = window.matchMedia("(max-width: 768px)").matches;
+
+    /* static fallback for reduced-motion */
+    if (reduced) {
+      gsap.set(wrap, { transformPerspective: 1200, rotateX: 0, scale: 1 });
+      return;
+    }
+
+    const startRotX  = mobile ? 8  : 18;
+    const startScale = mobile ? 0.96 : 0.93;
+
+    /* scroll-driven perspective unfold */
+    const st = gsap.fromTo(
+      wrap,
+      { transformPerspective: 1200, transformOrigin: "50% 28%", rotateX: startRotX, scale: startScale },
+      {
+        rotateX: 0,
+        scale: 1,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top 82%",
+          end: "center 42%",
+          scrub: 1.4,
+        },
       }
-      if (Math.abs(target.x - current.x) > 0.01 || Math.abs(target.y - current.y) > 0.01) {
-        frameRef.current = requestAnimationFrame(tick);
-      } else {
-        frameRef.current = null;
-      }
+    );
+
+    /* pointer tilt via quickTo — only desktop */
+    if (inner && !mobile) {
+      rotXQ.current = gsap.quickTo(inner, "rotateX", { duration: 0.7, ease: "power2.out" }) as unknown as gsap.core.Tween;
+      rotYQ.current = gsap.quickTo(inner, "rotateY", { duration: 0.7, ease: "power2.out" }) as unknown as gsap.core.Tween;
+    }
+
+    return () => {
+      st.kill();
+      ScrollTrigger.getAll().forEach(s => s.kill());
     };
-    frameRef.current = requestAnimationFrame(tick);
-  }
+  }, []);
 
-  function handlePointerMove(event: PointerEvent<HTMLElement>) {
-    if (event.pointerType === "touch" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  /* ── pointer move: callout parallax + pointer tilt ── */
+  function handlePointerMove(e: PointerEvent<HTMLElement>) {
+    if (e.pointerType === "touch") return;
     const stage = stageRef.current;
     if (!stage) return;
-    const rect = stage.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-    targetRef.current = { x: y * -5.5, y: x * 7 };
-    stage.style.setProperty("--pix-x", `${(x * -12).toFixed(2)}px`);
-    stage.style.setProperty("--pix-y", `${(y * -9).toFixed(2)}px`);
-    stage.style.setProperty("--whatsapp-x", `${(x * 8).toFixed(2)}px`);
-    stage.style.setProperty("--whatsapp-y", `${(y * 6).toFixed(2)}px`);
-    stage.style.setProperty("--spot-x", `${((x + 0.5) * 100).toFixed(1)}%`);
-    stage.style.setProperty("--spot-y", `${((y + 0.5) * 100).toFixed(1)}%`);
-    animateTilt();
+    const r = stage.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width  - 0.5;
+    const y = (e.clientY - r.top)  / r.height - 0.5;
+
+    /* callout parallax via CSS vars */
+    stage.style.setProperty("--pix-x",    `${(x * -10).toFixed(2)}px`);
+    stage.style.setProperty("--pix-y",    `${(y * -7).toFixed(2)}px`);
+    stage.style.setProperty("--agenda-x", `${(x *  8).toFixed(2)}px`);
+    stage.style.setProperty("--agenda-y", `${(y * -6).toFixed(2)}px`);
+    stage.style.setProperty("--ocup-x",   `${(x * -6).toFixed(2)}px`);
+    stage.style.setProperty("--ocup-y",   `${(y *  7).toFixed(2)}px`);
+    stage.style.setProperty("--whats-x",  `${(x *  7).toFixed(2)}px`);
+    stage.style.setProperty("--whats-y",  `${(y *  6).toFixed(2)}px`);
+
+    /* pointer tilt on dashboard inner */
+    (rotXQ.current as unknown as (v: number) => void)?.(y * -3);
+    (rotYQ.current as unknown as (v: number) => void)?.(x *  4);
   }
 
   function handlePointerLeave() {
-    targetRef.current = { x: 0, y: 0 };
     const stage = stageRef.current;
-    stage?.style.setProperty("--spot-x", "50%");
-    stage?.style.setProperty("--spot-y", "50%");
-    stage?.style.setProperty("--pix-x", "0px");
-    stage?.style.setProperty("--pix-y", "0px");
-    stage?.style.setProperty("--whatsapp-x", "0px");
-    stage?.style.setProperty("--whatsapp-y", "0px");
-    animateTilt();
+    if (stage) {
+      ["--pix-x","--pix-y","--agenda-x","--agenda-y","--ocup-x","--ocup-y","--whats-x","--whats-y"]
+        .forEach(v => stage.style.setProperty(v, "0px"));
+    }
+    (rotXQ.current as unknown as (v: number) => void)?.(0);
+    (rotYQ.current as unknown as (v: number) => void)?.(0);
   }
 
   return (
-    <section ref={sectionRef} className={`dashboardShowcase landingDashboard${isVisible ? " isVisible" : ""}`}>
-      <div className="sectionTitle dashboardTitle">
-        <small>VISÃO DA CLÍNICA</small>
-        <h2>Uma operação inteira, em uma tela só</h2>
-        <p>Do primeiro agendamento ao pagamento confirmado, sua equipe enxerga o que importa.</p>
+    <section
+      ref={sectionRef}
+      className={`dsShowcase${isVisible ? " dsVisible" : ""}`}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      <div className="dsGrid" aria-hidden="true" />
+      <div className="dsGlow" aria-hidden="true" />
+
+      {/* header */}
+      <div className="dsHeader">
+        <span className="dsEyebrow">VISÃO DA CLÍNICA</span>
+        <h2 className="dsHeadline">Uma operação inteira,<br />em uma tela só</h2>
       </div>
-      <div ref={stageRef} className="heroVisual dashboardInteractive" id="dashboard" onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
-        <div className="dashboardSpotlight" aria-hidden="true" />
-        <div className="floatCard pix">
-          <small>PIX RECEBIDO</small>
-          <strong>R$ 60,00</strong>
-          <span>Maria Oliveira</span>
+
+      {/* stage: callouts positioned here, relative to this */}
+      <div ref={stageRef} className="dsStage">
+
+        {/* scroll wrap: GSAP anima perspectiva/rotação/escala aqui */}
+        <div ref={scrollWrap} className="dsScrollWrap">
+          {/* dashboard inner: pointer tilt aqui */}
+          <div ref={dashInner} className="dsDashboardWrap">
+            <img
+              src="/dashboard.svg"
+              className="dsDashboardImg"
+              alt="Dashboard Reserve Clinic"
+              width={1140}
+              height={720}
+            />
+          </div>
         </div>
-        <img src="/dashboard.svg" className="browser" alt="Dashboard Reserve Clinic" />
-        <div className="floatCard whatsapp">
-          <small>WhatsApp · agora</small>
-          <span>Sua consulta amanhã às 14h foi confirmada</span>
-        </div>
+
       </div>
+
     </section>
   );
 }

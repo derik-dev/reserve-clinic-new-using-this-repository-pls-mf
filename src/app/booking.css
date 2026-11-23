@@ -46,21 +46,6 @@
 .bookingPage .formRow input::placeholder,.bookingPage .formRow textarea::placeholder{color:#94a3b8}
 .bookingPage .formRow input:focus,.bookingPage .formRow textarea:focus{border-color:#1d4ed8!important;box-shadow:0 0 0 3px rgba(29,78,216,.1)!important;background:#fff!important}
 
-/* ─── Professional picker ─── */
-.bookingProfessionalPicker{padding:18px 20px;border:1px solid #e2e8f0;border-radius:14px;background:#f8faff}
-.bookingProfessionalOptions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:10px}
-.bookingProfessionalOption{min-height:80px!important;padding:12px 14px!important;border-radius:11px!important;border:1px solid #e2e8f0!important;background:#fff!important;color:#1b2335!important;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.bookingProfessionalOption:hover{border-color:#93c5fd!important;box-shadow:0 2px 8px rgba(29,78,216,.1)!important}
-.bookingProfessionalOption.isSelected{border-color:#1d4ed8!important;background:linear-gradient(135deg,#eff6ff,#f0f5ff)!important;box-shadow:0 0 0 1px rgba(29,78,216,.22),0 4px 12px rgba(29,78,216,.1)!important}
-.bookingProfessionalOption>span{min-width:0;flex:1}
-.bookingProfessionalOption strong{font-size:13px!important;color:#0f172a!important;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bookingProfessionalOption small{font-size:11px!important;color:#64748b!important;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bookingProfessionalOption.isSelected small{color:#1d4ed8!important}
-.bookingProfessionalOption>i{width:16px!important;height:16px!important;border:1.5px solid #cbd5e1!important;border-radius:50%;display:block;flex-shrink:0;position:relative}
-.bookingProfessionalOption.isSelected>i{border-color:#1d4ed8!important;background:#1d4ed8!important;box-shadow:0 0 8px rgba(29,78,216,.35)}
-.bookingProfessionalOption.isSelected>i:after{content:"";position:absolute;width:6px;height:3.5px;border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;transform:rotate(-45deg);left:3px;top:3.5px}
-.professionalAvatar{background:#eff6ff!important;color:#1d4ed8!important}
-.bookingProfessionalOption>.professionalAvatar{flex:0 0 26px;min-width:26px;width:26px;height:26px;border-radius:50%}
 
 /* ─── Calendar ─── */
 .bookingCalendarWrap{border:1px solid #e2e8f0;border-radius:14px;background:#fff;overflow:hidden}
@@ -116,17 +101,12 @@
 .bookingPixInfo strong{font-size:14px;color:#0f172a}
 .bookingPixInfo code{display:block;font-size:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;word-break:break-all;color:#1b2335;margin-top:4px}
 
-/* ─── Professional selecionado (link com parâmetro ?p=) ─── */
-.bookingSelectedProfessional{margin-bottom:14px;border:1px solid #e2e8f0!important;border-radius:14px;background:#f8faff!important;color:#1b2335}
-.bookingSelectedProfessional strong{color:#0f172a!important}
-.bookingSelectedProfessional small{color:#64748b!important}
 
 /* ─── Footer ─── */
 .bookingFooter{max-width:none;padding:2px 20px 32px;text-align:center;color:#94a3b8;font-size:13px}
 .bookingFooter strong{color:#475569}
 
 /* ─── Responsive ─── */
-@media(max-width:900px){.bookingProfessionalOptions{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){
   .bookingHeader{height:58px;padding:0 16px}
   .bookingBrandLogo{width:140px}
@@ -140,9 +120,6 @@
   .bookingSteps>i{margin:0 8px}
   .bookingStepHint{font-size:13px}
   .bookingFormPanel>.formGrid{padding:18px 14px 16px!important;gap:18px!important}
-  .bookingProfessionalPicker{padding:14px 12px}
-  .bookingProfessionalOptions{grid-template-columns:1fr;gap:8px}
-  .bookingProfessionalOption{min-height:66px!important}
   .bookingCalHead{padding:12px 14px}
   .bookingCalCell{height:38px;font-size:13px}
   .bookingTimeOption{flex:1;min-width:calc(33.333% - 6px)}

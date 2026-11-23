@@ -1,9 +1,13 @@
 "use client";
 
-import { Award, Camera, Check, ChevronDown, Copy, Link2, Pencil, Phone, Plus, Search, Stethoscope, Trash2, X, BarChart3 } from "lucide-react";
+import { Award, Camera, Check, ChevronDown, Copy, Link2, Phone, Plus, X, BarChart3 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { StatusBadge } from "@/components/StatusBadge";
+import { AdminDialog, ConfirmDialog, OperationNotice, Pagination, RecordAvatar, RowActions, SearchInput, TableState, TableToolbar, type Confirmation } from "@/components/AdminTable";
+import { useAdminRecords } from "@/components/useAdminRecords";
 import { supabase } from "@/lib/supabase";
 import { initials } from "@/lib/db";
 
@@ -65,9 +69,6 @@ async function withTimeout<T>(promise: PromiseLike<T>, message: string): Promise
 }
 
 export default function ProfissionaisPage() {
-  const [profissionais, setProfissionais] = useState<Profissional[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Profissional | null>(null);
@@ -79,33 +80,40 @@ export default function ProfissionaisPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedProf, setSelectedProf] = useState<Profissional | null>(null);
   const [perfilSlug, setPerfilSlug] = useState<string | null>(null);
-  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null);
   const [councilOpen, setCouncilOpen] = useState(false);
   const [councilQuery, setCouncilQuery] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const councilSelectRef = useRef<HTMLDivElement>(null);
 
-  async function load() {
-    setLoading(true);
-    setLoadError(false);
-    try {
-      const { data } = await Promise.race([
-        supabase.from("profissionais").select("*").order("nome"),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 10000)),
-      ]);
-      setProfissionais((data as Profissional[] | null) ?? []);
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) supabase.from("perfis").select("slug").eq("id", user.id).maybeSingle().then(({ data: perf }) => setPerfilSlug((perf as { slug: string } | null)?.slug ?? null));
-      });
-    } catch {
-      setLoadError(true);
-      setProfissionais([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [status, setStatus] = useState("todos");
+  const [specialty, setSpecialty] = useState("");
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
+  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const { records: profissionais, total, loading, loadError, load } = useAdminRecords<Profissional>({ table: "profissionais", query, status, specialty, page, onPageChange: setPage });
+  const hasFilters = !!query || status !== "todos" || !!specialty;
+  function clearFilters() { setQuery(""); setStatus("todos"); setSpecialty(""); setPage(1); }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    let active = true;
+    async function loadMetadata() {
+      const values = new Set<string>();
+      for (let offset = 0; ; offset += 500) {
+        const { data, error } = await supabase.from("profissionais").select("especialidade").order("id").range(offset, offset + 499).abortSignal(AbortSignal.timeout(10000));
+        if (!active || error) return;
+        for (const item of data ?? []) if (item.especialidade) values.add(item.especialidade);
+        if ((data?.length ?? 0) < 500) break;
+      }
+      if (active) setSpecialties(Array.from(values).sort((a, b) => a.localeCompare(b, "pt-BR")));
+    }
+    void loadMetadata();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) supabase.from("perfis").select("slug").eq("id", user.id).maybeSingle().then(({ data }) => { if (active) setPerfilSlug(data?.slug ?? null); });
+    });
+    return () => { active = false; };
+  }, [saving]);
 
   useEffect(() => {
     if (!councilOpen) return;
@@ -118,16 +126,6 @@ export default function ProfissionaisPage() {
     document.addEventListener("pointerdown", closeOnOutsideClick);
     return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
   }, [councilOpen]);
-
-  const filtered = useMemo(() => {
-    if (!query.trim()) return profissionais;
-    const q = query.toLowerCase();
-    return profissionais.filter(p =>
-      p.nome.toLowerCase().includes(q) ||
-      (p.especialidade ?? "").toLowerCase().includes(q) ||
-      (p.cpf ?? "").includes(q)
-    );
-  }, [profissionais, query]);
 
   const selectedCouncil = ORGAOS_PROFISSIONAIS.find((option) => `${option.profissao}|${option.registro}` === form.orgao) ?? ORGAOS_PROFISSIONAIS[0];
   const filteredCouncils = useMemo(() => {
@@ -224,6 +222,7 @@ export default function ProfissionaisPage() {
       if (result.error) throw new Error(result.error.message);
 
       closeModal();
+      setNotice({ ok: true, message: editing ? "Profissional atualizado." : "Profissional cadastrado." });
       await load();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Não foi possível completar o cadastro. Tente novamente.");
@@ -233,140 +232,67 @@ export default function ProfissionaisPage() {
   }
 
   async function handleDelete(id: string) {
-    setDeleting(id);
-    await supabase.from("profissionais").delete().eq("id", id);
-    setDeleting(null);
-    load();
+    setDeleting(id); setBusy(true);
+    try {
+      const { error } = await supabase.from("profissionais").delete().eq("id", id);
+      if (error) throw error;
+      setNotice({ ok: true, message: "Profissional excluído." }); await load();
+    } catch { setNotice({ ok: false, message: "Não foi possível excluir o profissional. Verifique os vínculos existentes e tente novamente." }); }
+    finally { setDeleting(null); setBusy(false); setConfirmation(null); }
   }
 
   async function toggleAtivo(p: Profissional) {
-    await supabase.from("profissionais").update({ ativo: !p.ativo }).eq("id", p.id);
-    load();
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("profissionais").update({ ativo: !p.ativo }).eq("id", p.id);
+      if (error) throw error;
+      setNotice({ ok: true, message: p.ativo ? "Profissional desativado." : "Profissional ativado." }); await load();
+    } catch { setNotice({ ok: false, message: "Não foi possível alterar o status do profissional." }); }
+    finally { setBusy(false); setConfirmation(null); }
   }
 
-  return <>
-    <PageHeader
-      title="Profissionais"
-      description="Gerencie os profissionais da sua clínica."
-    />
+  function requestStatus(p: Profissional) {
+    if (p.ativo) setConfirmation({ title: "Desativar profissional?", description: p.nome + " será marcado como inativo.", label: "Desativar profissional", onConfirm: () => toggleAtivo(p) });
+    else void toggleAtivo(p);
+  }
 
-    <section className="panel dataPanel">
-      {/* Toolbar */}
-      <div className="profToolbar">
-        <label className="pacientesSearch">
-          <Search size={15} />
-          <input
-            placeholder="Buscar por nome ou especialidade"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <span className="pacientesCount">
-          {filtered.length} de {profissionais.length} profissional{profissionais.length !== 1 ? "is" : ""}
-        </span>
-        <button className="primaryButton" onClick={openCreate}><Plus size={17} /> Novo profissional</button>
+  async function copyLink(p: Profissional) {
+    try {
+      await navigator.clipboard.writeText(window.location.origin + "/agendamento/" + perfilSlug + "?p=" + p.id);
+      setNotice({ ok: true, message: "Link de agendamento copiado." });
+    } catch { setNotice({ ok: false, message: "Não foi possível copiar o link. Tente novamente." }); }
+  }
+
+  return <div className="adminPage">
+    <PageHeader title="Profissionais" actions={<button className="primaryButton" onClick={openCreate}><Plus size={17} /> Novo profissional</button>} />
+    <OperationNotice notice={notice} />
+    <section className="panel dataPanel adminPanel" aria-label="Listagem de profissionais">
+      <TableToolbar>
+        <SearchInput value={query} onChange={setQuery} placeholder="Buscar por nome ou especialidade" />
+        <select aria-label="Filtrar por especialidade" value={specialty} onChange={(e) => { setSpecialty(e.target.value); setPage(1); }}><option value="">Todas as especialidades</option>{specialties.map(value => <option key={value} value={value}>{value}</option>)}<option value="__sem__">Sem especialidade</option></select>
+        <select aria-label="Filtrar profissionais por status" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}><option value="todos">Todos os status</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select>
+      </TableToolbar>
+      <div className="tableScroll adminTableScroll" tabIndex={0} role="region" aria-label="Tabela de profissionais. Role horizontalmente para ver todas as colunas." aria-busy={loading}>
+        <table className="adminTable adminProfissionaisTable">
+          <thead><tr><th scope="col">Profissional</th><th scope="col">Especialidade</th><th scope="col">Status</th><th scope="col" className="adminActionsHeading">Ações</th></tr></thead>
+          <tbody>{loading || loadError || profissionais.length === 0 ? <TableState columns={4} loading={loading} error={loadError} empty={hasFilters ? "Nenhum profissional encontrado." : "Nenhum profissional cadastrado."} onRetry={load} onClear={hasFilters ? clearFilters : undefined} /> : profissionais.map(p => <tr key={p.id} className="rowClickable" onClick={() => setSelectedProf(p)}>
+            <td><div className="patientCell"><RecordAvatar name={p.nome} src={p.foto_url} /><div><button className="adminName" onClick={(e) => { e.stopPropagation(); setSelectedProf(p); }}>{p.nome}</button>{p.crm && <small>{p.crm}</small>}</div></div></td>
+            <td>{p.especialidade || "Não informada"}</td>
+            <td><StatusBadge status={p.ativo ? "Ativo" : "Inativo"} /></td>
+            <td onClick={(e) => e.stopPropagation()}><div className="adminRowActions"><RowActions name={p.nome} disabled={busy || deleting === p.id} actions={[
+              { label: "Ver cadastro", onClick: () => setSelectedProf(p) },
+              { label: "Editar profissional", onClick: () => openEdit(p) },
+              { label: "Ver relatório", href: "/profissionais/" + p.id },
+              ...(perfilSlug ? [{ label: "Copiar link de agendamento", onClick: () => { void copyLink(p); } }] : []),
+              { label: p.ativo ? "Desativar profissional" : "Ativar profissional", danger: p.ativo, onClick: () => requestStatus(p) },
+              { label: "Excluir profissional", danger: true, onClick: () => setConfirmation({ title: "Excluir profissional?", description: "O cadastro de " + p.nome + " será excluído permanentemente. Esta ação não pode ser desfeita.", label: "Excluir profissional", onConfirm: () => handleDelete(p.id) }) },
+            ]} /></div></td>
+          </tr>)}</tbody>
+        </table>
       </div>
-
-      {/* Card grid or empty/loading states */}
-      {loading ? (
-        <div className="tableEmpty">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Carregando…</span>
-        </div>
-      ) : loadError ? (
-        <div className="tableEmpty">
-          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
-            Não foi possível carregar os profissionais.{" "}
-            <button className="linkButton" onClick={load}>Tentar novamente</button>
-          </span>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="tableEmpty">
-          <Stethoscope size={38} strokeWidth={1.4} />
-          <div>
-            <strong>{profissionais.length === 0 ? "Nenhum profissional cadastrado ainda" : "Nenhum profissional encontrado"}</strong>
-            <small>{profissionais.length === 0 ? "Cadastre a sua equipe para associar profissionais a horários e consultas." : "Ajuste a busca para encontrar outros profissionais."}</small>
-            {profissionais.length === 0 && (
-              <button className="primaryButton emptyStateAction" onClick={openCreate}>
-                <Plus size={16} /> Cadastrar profissional
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="profGrid">
-          {filtered.map(p => (
-            <div
-              key={p.id}
-              className="profCard"
-              style={{ borderTop: `3px solid ${p.ativo ? "var(--success)" : "rgba(255,255,255,.10)"}` }}
-              onClick={() => setSelectedProf(p)}
-            >
-              <div className="profCardTop">
-                <div className="profCardAvatar">
-                  {p.foto_url
-                    ? <img src={p.foto_url} alt={p.nome} />
-                    : initials(p.nome)}
-                </div>
-                <p className="profCardName">{p.nome}</p>
-                {p.especialidade && <span className="profCardSpec">{p.especialidade}</span>}
-                <button
-                  className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`}
-                  style={{ border: 0, cursor: "pointer" }}
-                  onClick={(e) => { e.stopPropagation(); toggleAtivo(p); }}
-                >
-                  {p.ativo ? "Ativo" : "Inativo"}
-                </button>
-              </div>
-
-              <div className="profCardActions">
-                {perfilSlug && (
-                  <button
-                    className="iconButton"
-                    title="Copiar link de agendamento"
-                    aria-label="Copiar link de agendamento"
-                    style={{ color: copiedLinkId === p.id ? "#15967e" : undefined }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigator.clipboard.writeText(`${window.location.origin}/agendamento/${perfilSlug}?p=${p.id}`);
-                      setCopiedLinkId(p.id);
-                      setTimeout(() => setCopiedLinkId(null), 1600);
-                    }}
-                  >
-                    {copiedLinkId === p.id ? <Check size={15} /> : <Link2 size={15} />}
-                  </button>
-                )}
-                <Link
-                  href={`/profissionais/${p.id}`}
-                  className="iconButton"
-                  title="Ver relatório"
-                  aria-label="Ver relatório"
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ textDecoration: "none" }}
-                >
-                  <BarChart3 size={15} />
-                </Link>
-                <button
-                  className="iconButton"
-                  onClick={(e) => { e.stopPropagation(); openEdit(p); }}
-                  aria-label="Editar"
-                >
-                  <Pencil size={15} />
-                </button>
-                <button
-                  className="iconButton"
-                  onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
-                  disabled={deleting === p.id}
-                  aria-label="Excluir"
-                  style={{ color: "#e5484d" }}
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {!loadError && <Pagination page={page} total={total} onChange={setPage} disabled={loading} />}
     </section>
+    {confirmation && <ConfirmDialog confirmation={confirmation} busy={busy} onClose={() => setConfirmation(null)} />}
 
     {/* Detail popup */}
     {selectedProf && (
@@ -380,33 +306,32 @@ export default function ProfissionaisPage() {
 
     {/* Create / Edit modal */}
     {modalOpen && (
-      <div className="modalBackdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) closeModal(); }}>
-        <div className="modalCard">
+      <AdminDialog title={editing ? "Editar profissional" : "Novo profissional"} onClose={closeModal} busy={saving}>
           <header className="modalHeader">
             <h2>{editing ? "Editar profissional" : "Novo profissional"}</h2>
-            <button className="iconButton" onClick={closeModal} aria-label="Fechar"><X size={17} /></button>
+            <button className="iconButton" disabled={saving} onClick={closeModal} aria-label="Fechar"><X size={17} /></button>
           </header>
           <div className="modalBody">
             <div className="formGroup">
               <div className="professionalPhotoField">
                 <button className="professionalPhotoPicker" type="button" onClick={() => fileRef.current?.click()} aria-label={fotoPreview ? "Trocar foto do profissional" : "Adicionar foto do profissional"}>
-                  {fotoPreview ? <img src={fotoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome ? initials(form.nome) : <Camera size={22} />)}
+                  {fotoPreview ? <Image unoptimized width={64} height={64} src={fotoPreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (form.nome ? initials(form.nome) : <Camera size={22} />)}
                 </button>
                 <input ref={fileRef} type="file" accept="image/*" className="visuallyHiddenInput" onChange={(e) => handleFoto(e.target.files?.[0] ?? null)} />
                 <div>
                   <small style={{ display: "block", color: "#858d9f", fontSize: 11, marginTop: 5 }}>JPG, PNG ou WebP. Recomendado 400×400.</small>
                 </div>
               </div>
-              <div className="formRow"><label>Nome completo</label><input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Dr. Carlos Souza" /></div>
-              <div className="formRow"><label>Especialidade</label><input value={form.especialidade} onChange={(e) => setForm({ ...form, especialidade: e.target.value })} placeholder="Ex.: Fisioterapeuta, Psicólogo…" /></div>
+              <div className="formRow"><label htmlFor="admin-nome-completo">Nome completo</label><input id="admin-nome-completo" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Dr. Carlos Souza" /></div>
+              <div className="formRow"><label htmlFor="admin-especialidade">Especialidade</label><input id="admin-especialidade" value={form.especialidade} onChange={(e) => setForm({ ...form, especialidade: e.target.value })} placeholder="Ex.: Fisioterapeuta, Psicólogo…" /></div>
               <div className="formRow split">
-                <div className="formRow"><label>WhatsApp</label><input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
-                <div className="formRow"><label>CPF</label><input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" /></div>
+                <div className="formRow"><label htmlFor="admin-whatsapp">WhatsApp</label><input id="admin-whatsapp" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="(11) 99999-9999" /></div>
+                <div className="formRow"><label htmlFor="admin-cpf">CPF</label><input id="admin-cpf" value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" /></div>
               </div>
               <div className="formRow split">
                 <div className="formRow">
                   <label>Órgão profissional</label>
-                  <div className="councilSelect" ref={councilSelectRef}>
+                  <div className="councilSelect" ref={councilSelectRef} onKeyDown={(e) => { if (e.key === "Escape" && councilOpen) { e.stopPropagation(); setCouncilOpen(false); setCouncilQuery(""); } }}>
                     <button type="button" className="councilSelectTrigger" onClick={() => { setCouncilOpen((open) => !open); setCouncilQuery(""); }} onKeyDown={(e) => {
                       if (e.key === "Escape") { setCouncilOpen(false); setCouncilQuery(""); return; }
                       if (e.key.length === 1 && /\S/.test(e.key)) { e.preventDefault(); setCouncilOpen(true); setCouncilQuery((query) => query + e.key); }
@@ -429,21 +354,20 @@ export default function ProfissionaisPage() {
                   </div>
                 </div>
                 <div className="formRow">
-                  <label>Número do registro</label>
-                  <input type="text" value={form.registro} onChange={(e) => setForm({ ...form, registro: e.target.value })} placeholder={`Ex.: ${form.orgao.split("|")[1] ?? form.orgao}-SP 123456`} />
+                  <label htmlFor="admin-numero-do-registro">Número do registro</label>
+                  <input id="admin-numero-do-registro" type="text" value={form.registro} onChange={(e) => setForm({ ...form, registro: e.target.value })} placeholder={`Ex.: ${form.orgao.split("|")[1] ?? form.orgao}-SP 123456`} />
                 </div>
               </div>
             </div>
             {error && <div className="onboardingError">{error}</div>}
           </div>
           <footer className="modalFooter">
-            <button className="secondaryButton" onClick={closeModal}>Cancelar</button>
+            <button className="secondaryButton" disabled={saving} onClick={closeModal}>Cancelar</button>
             <button className="primaryButton" disabled={saving} onClick={handleSave}>{saving ? "Salvando…" : editing ? "Salvar alterações" : "Cadastrar"}</button>
           </footer>
-        </div>
-      </div>
+      </AdminDialog>
     )}
-  </>;
+  </div>;
 }
 
 function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Profissional; perfilSlug: string | null; onClose: () => void; onEdit: () => void }) {
@@ -451,18 +375,13 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
   const bookingPath = perfilSlug ? `/agendamento/${perfilSlug}?p=${p.id}` : null;
 
   return (
-    <div className="modalBackdrop" onClick={onClose}>
-      <div className="profpopup" onClick={(e) => e.stopPropagation()}>
+    <AdminDialog title={"Cadastro de " + p.nome} className="profpopup" onClose={onClose}>
         {/* Close button */}
         <button className="iconButton ppopupClose" onClick={onClose} aria-label="Fechar"><X size={17} /></button>
 
         {/* Header: avatar + name + specialty + status */}
         <div className="profpopupProfile">
-          <div className="profpopupAvatar">
-            {p.foto_url
-              ? <img src={p.foto_url} alt={p.nome} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : initials(p.nome)}
-          </div>
+          <RecordAvatar name={p.nome} src={p.foto_url} />
           <p className="profpopupName">{p.nome}</p>
           {p.especialidade && <span className="profpopupSpec">{p.especialidade}</span>}
           <span className={`statusBadge ${p.ativo ? "statusAtivo" : "statusConcluida"}`}>
@@ -494,7 +413,7 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
           {p.crm && (
             <div className="profpopupInfoRow">
               <Award size={15} />
-              <span>CRM {p.crm}</span>
+              <span>{p.crm}</span>
             </div>
           )}
 
@@ -502,7 +421,7 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
           {bookingPath && (
             <div className="profpopupLink">
               <Link2 size={14} style={{ flexShrink: 0, color: "var(--text-subtle)" }} />
-              <code>{bookingPath}</code>
+              <span className="profpopupLinkLabel">Link de agendamento do profissional</span>
               <button
                 className="iconButton"
                 aria-label="Copiar link"
@@ -528,7 +447,6 @@ function ProfissionalPopup({ prof: p, perfilSlug, onClose, onEdit }: { prof: Pro
           </Link>
           <button className="primaryButton" onClick={onEdit}>Editar profissional</button>
         </div>
-      </div>
-    </div>
+    </AdminDialog>
   );
 }

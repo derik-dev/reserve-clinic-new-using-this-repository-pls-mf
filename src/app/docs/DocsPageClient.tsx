@@ -104,7 +104,7 @@ const schemaCards: SchemaCard[] = [
   {
     name: "perfis",
     badge: "tenant",
-    purpose: "Registro da clínica/profissional. O campo `slug` alimenta o link público `/agendamento/[slug]`.",
+    purpose: "Registro do consultório/profissional. O campo `slug` alimenta o link público `/agendamento/[slug]`.",
     fields: [
       { name: "id", type: "uuid", note: "PK vinculada a `auth.users(id)`" },
       { name: "tipo", type: "text", note: "`clinica` ou `autonomo` no onboarding" },
@@ -229,7 +229,7 @@ const bookingSteps = [
   },
   {
     title: "Pix Asaas",
-    text: "`PixCheckout` chama `/api/criar-pagamento`, cria cliente/cobrança PIX, busca QR Code e grava `pix_id`.",
+    text: "`BookingPix` (link público) chama `/api/criar-pagamento`, cria cliente/cobrança PIX, mostra o QR Code gerado e consulta `/api/status-agendamento` até o webhook confirmar o pagamento.",
   },
   {
     title: "Confirmação automática",
@@ -256,7 +256,7 @@ const professionalSteps = [
   },
   {
     title: "Clique em Cadastrar",
-    text: "A tela obtém o usuário autenticado e grava o registro em `profissionais` com `perfil_id` igual ao usuário da clínica, além dos dados preenchidos e da foto, quando enviada.",
+    text: "A tela obtém o usuário autenticado e grava o registro em `profissionais` com `perfil_id` igual ao usuário do consultório, além dos dados preenchidos e da foto, quando enviada.",
   },
   {
     title: "Configure os dias de atendimento",
@@ -278,7 +278,7 @@ const integrations = [
       "O código usa `ASAAS_BASE_URL ?? https://api.asaas.com/v3`; em desenvolvimento, defina sandbox explicitamente.",
       "O QR Code pode demorar; a rota tenta buscar 6 vezes com intervalo de 3 segundos.",
       "A rota de pagamento atual usa a chave global `ASAAS_API_KEY`, mesmo existindo subconta salva no perfil.",
-      "Saques usam `POST /api/sacar`: o saldo é calculado por clínica, o destino Pix precisa ser o CPF/CNPJ, e-mail ou telefone do perfil, e o browser nunca recebe a chave Asaas.",
+      "Saques usam `POST /api/sacar`: o saldo é calculado por consultório, o destino Pix precisa ser o CPF/CNPJ, e-mail ou telefone do perfil, e o browser nunca recebe a chave Asaas.",
       "O mecanismo de validação de saque via webhook ainda deve ser ativado e testado separadamente na conta Asaas; transferências do tipo `TRANSFER` são recusadas pelo webhook enquanto não houver registro local da operação.",
     ],
   },
@@ -318,8 +318,6 @@ const integrations = [
 ];
 
 const envVars: EnvVar[] = [
-  { name: "OPENAI_API_KEY", scope: "server", required: "Navi", description: "Chave usada exclusivamente pela rota server-side do assistente Navi. Nunca expor no frontend." },
-  { name: "OPENAI_MODEL", scope: "server", required: "Opcional", description: "Modelo usado pelo Navi; quando ausente, a rota utiliza `gpt-4o-mini`." },
   { name: "NEXT_PUBLIC_SUPABASE_URL", scope: "client", required: "Sim", description: "URL do projeto Supabase usada no browser e nas rotas server." },
   { name: "NEXT_PUBLIC_SUPABASE_ANON_KEY", scope: "client", required: "Sim", description: "Chave anônima do Supabase para Auth e queries públicas permitidas por RLS." },
   { name: "SUPABASE_SERVICE_ROLE_KEY", scope: "server", required: "Sim", description: "Chave administrativa usada por APIs internas. Nunca deve ir para o client." },
@@ -497,7 +495,7 @@ export function DocsPageClient() {
               <div className={styles.productSignal}>
                 <Globe2 size={24} />
                 <strong>/agendamento/[slug]</strong>
-                <small>Link público por clínica</small>
+                <small>Link público por consultório</small>
               </div>
               <div className={styles.signalGrid}>
                 <span>Pix Asaas</span>

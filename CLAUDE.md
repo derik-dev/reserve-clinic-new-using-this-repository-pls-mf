@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Stack
 
-Next.js 16 App Router + React 19 + TypeScript (strict). Icons via `lucide-react`. Supabase JS client (`@supabase/supabase-js`) instantiated once in `src/lib/supabase.ts` from `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`; `SUPABASE_SERVICE_ROLE_KEY` is server-only). Fonts (IBM Plex Sans, Space Grotesk) loaded through `next/font/google` in `src/app/layout.tsx` and exposed as `--font-plex` / `--font-space` CSS variables. Path alias `@/*` → `src/*`. UI language is Brazilian Portuguese (`lang="pt-BR"`). Default to React Server Components; add `"use client"` only when browser APIs, event handlers, or state are needed.
+Next.js 16 App Router + React 19 + TypeScript (strict). Icons via `lucide-react`. Supabase JS client (`@supabase/supabase-js`) instantiated once in `src/lib/supabase.ts` from `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`; `SUPABASE_SERVICE_ROLE_KEY` is server-only). Font: Poppins (weights 400/500/600: regular body text, semibold only where emphasis is needed), loaded through `next/font/google` in `src/app/layout.tsx` as `--font-poppins`; the legacy `--font-plex` / `--font-space` / `--font-serif` / `--font-inter` variables are aliases to it in `globals.css`, and `font-synthesis: none` prevents faux bold. Path alias `@/*` → `src/*`. UI language is Brazilian Portuguese (`lang="pt-BR"`). Default to React Server Components; add `"use client"` only when browser APIs, event handlers, or state are needed.
 
 ## Architecture
 

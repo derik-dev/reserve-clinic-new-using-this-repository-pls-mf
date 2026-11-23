@@ -291,7 +291,7 @@ export default function ConfiguracoesPage() {
 
     <div className="cfgLayout">
       {/* Sidebar */}
-      <nav className="cfgSidebar panel">
+      <nav className="cfgSidebar">
         {TABS.map(t => (
           <button
             key={t.id}

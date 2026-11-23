@@ -2,14 +2,15 @@ import Image from "next/image";
 import { ArrowRight, BellRing, CalendarDays, CalendarPlus, Check, Link2, ShieldCheck, Sparkles, UserRoundCheck } from "lucide-react";
 import { LandingSteps } from "@/components/LandingSteps";
 import { LandingDashboardShowcase } from "@/components/LandingDashboardShowcase";
+import { LandingComparison } from "@/components/LandingComparison";
 
 const features = [
   {
     eyebrow: "LINK DE AGENDAMENTO",
     title: "O paciente marca e paga sozinho",
-    text: "Gere um link exclusivo da sua clínica. O paciente escolhe o profissional, o dia e o horário, preenche os dados e paga o sinal via Pix.",
+    text: "Gere um link exclusivo do seu consultório. O paciente escolhe o dia e o horário, preenche os dados e paga o sinal via Pix.",
     color: "#1d4ed8",
-    bullets: ["Link único e personalizável para sua clínica", "Cadastro do paciente em apenas 1 minuto", "Cobrança do sinal via Pix com QR code instantâneo"],
+    bullets: ["Link único e personalizável para seu consultório", "Cadastro do paciente em apenas 1 minuto", "Cobrança do sinal via Pix com QR code instantâneo"],
     visual: "phone",
   },
   {
@@ -22,7 +23,7 @@ const features = [
   },
   {
     eyebrow: "AGENDA CENTRALIZADA",
-    title: "Toda a clínica, numa agenda só",
+    title: "Todo o consultório, numa agenda só",
     text: "Cada profissional, sala e horário visível em uma única tela. Chega de planilha, WhatsApp e caderno de recados para saber quem atende quando.",
     color: "#1d4ed8",
     bullets: ["Visão semanal de todos os profissionais e salas", "Bloqueio automático de conflitos de horário", "Filtro por profissional, especialidade ou status"],
@@ -33,7 +34,7 @@ const features = [
 const comparison = [
   { before: "30 minutos por dia confirmando consulta por telefone", after: "Confirmação automática por WhatsApp, sem a recepção precisar ligar" },
   { before: "Paciente esquece o horário e simplesmente não aparece", after: "Sinal cobrado via Pix na marcação — quem paga, comparece" },
-  { before: "Agenda em planilha, WhatsApp e caderno da recepção", after: "Toda a clínica em uma tela só, atualizada em tempo real" },
+  { before: "Agenda em planilha, WhatsApp e caderno da recepção", after: "Todo o consultório em uma tela só, atualizado em tempo real" },
   { before: "Cadeira vazia é faturamento perdido no fim do mês", after: "Cada horário reservado entra no caixa antes do atendimento" },
 ];
 
@@ -47,7 +48,7 @@ const faqs = [
 
 const planFeatures = [
   "Profissionais e serviços ilimitados",
-  "Agenda centralizada da clínica",
+  "Agenda centralizada do consultório",
   "Link de agendamento personalizado",
   "Cobrança de sinal via Pix",
   "Lembretes automáticos por WhatsApp",
@@ -57,7 +58,7 @@ const planFeatures = [
 ];
 
 const steps = [
-  { num: "01", title: "Cadastre a clínica", desc: "Em minutos configure seus profissionais, especialidades e horários de atendimento." },
+  { num: "01", title: "Cadastre o consultório", desc: "Em minutos configure seus horários de atendimento e o valor da consulta." },
   { num: "02", title: "Ative o link", desc: "Receba um link exclusivo e personalizável para compartilhar com seus pacientes." },
   { num: "03", title: "Pacientes agendam", desc: "O paciente escolhe o horário e paga o sinal via Pix — tudo pelo celular, sem ligar." },
   { num: "04", title: "Agenda cheia", desc: "Lembretes automáticos garantem comparecimento e sua agenda opera no máximo." },
@@ -134,22 +135,28 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="hero" id="produto">
-        <div className="heroLeft">
+      {/* HERO V2 */}
+      <section className="hero heroV2" id="produto">
+        <div className="heroV2Mesh" aria-hidden="true" />
+        <div className="heroV2Glow" aria-hidden="true" />
+
+        <div className="heroV2Content">
           <div className="pill">
             <Sparkles size={13} />
-            Feito para clínicas médicas de todos os portes
+            Feito para consultórios de psicologia de todos os portes
           </div>
-          <h1>
+
+          <h1 className="heroV2Headline">
             Paciente que paga antes,<br />
             <span>não falta depois.</span>
           </h1>
-          <p>
-            Cada consulta perdida é uma cadeira vazia que sua clínica não vai faturar. O Reserve Clinic cobra o sinal via Pix na hora da marcação, envia lembretes automáticos e transforma horário reservado em faturamento previsto.
+
+          <p className="heroV2Sub">
+            Receba o sinal via Pix, confirme automaticamente e mantenha<br className="heroV2Break" />
+            sua agenda previsível — sem depender de cobranças manuais.
           </p>
-          <p className="heroDescriptionShort">Receba o sinal via Pix, confirme automaticamente e mantenha sua agenda previsivel, sem perder tempo com cobrancas e ligacoes.</p>
-          <div className="heroActions">
+
+          <div className="heroV2Actions">
             <a className="button primary" href="/registro">
               Começar teste grátis <ArrowRight size={15} />
             </a>
@@ -158,17 +165,62 @@ export default function Home() {
             </a>
           </div>
           <small className="ctaAssurance">Sem cartão de crédito · Cancele quando quiser</small>
-          <div className="trust">
-            <span className="trustDot" />
-            Em uso hoje por uma clínica de audiologia no Rio de Janeiro
+        </div>
+
+        {/* Mockup Stage */}
+        <div className="heroV2Stage">
+          <div className="heroV2FloatCard heroV2FloatPix">
+            <span className="heroV2FloatDot" />
+            <div>
+              <strong>Pix recebido</strong>
+              <small>R$ 150,00 · Sinal confirmado</small>
+            </div>
           </div>
-          <div className="heroBenefits" aria-label="BenefÃ­cios principais">
-            <div className="heroBenefit"><span><CalendarDays size={17} /></span><strong>Sinal antes</strong><small>Menos faltas no dia</small></div>
-            <div className="heroBenefit"><span><BellRing size={17} /></span><strong>Lembretes automÃ¡ticos</strong><small>ConfirmaÃ§Ã£o sem ligaÃ§Ãµes</small></div>
-            <div className="heroBenefit"><span><ShieldCheck size={17} /></span><strong>Agenda em uma tela</strong><small>Equipe sempre alinhada</small></div>
+
+          <div className="heroV2FloatCard heroV2FloatAgenda">
+            <CalendarDays size={14} className="heroV2FloatIcon" />
+            <div>
+              <strong>Agendamento confirmado</strong>
+              <small>Ana Souza · hoje às 14h</small>
+            </div>
+          </div>
+
+          <div className="heroV2FloatCard heroV2FloatLembrete">
+            <BellRing size={14} className="heroV2FloatIcon" />
+            <div>
+              <strong>Lembrete enviado</strong>
+              <small>24h antes da consulta</small>
+            </div>
+          </div>
+
+          <div className="heroV2MockupWrap">
+            <img
+              src="/dashboard.svg"
+              alt="Dashboard Reserve Clinic"
+              className="heroV2MockupImg"
+              width={1140}
+              height={720}
+            />
           </div>
         </div>
 
+        {/* Bottom strip */}
+        <div className="heroV2Strip">
+          <div className="heroV2StripItem">
+            <CalendarDays size={16} />
+            <span><strong>Sinal antes</strong> — menos faltas no dia</span>
+          </div>
+          <div className="heroV2StripDiv" aria-hidden="true" />
+          <div className="heroV2StripItem">
+            <BellRing size={16} />
+            <span><strong>Lembretes automáticos</strong> — confirmação sem ligações</span>
+          </div>
+          <div className="heroV2StripDiv" aria-hidden="true" />
+          <div className="heroV2StripItem">
+            <ShieldCheck size={16} />
+            <span><strong>Agenda em uma tela</strong> — equipe sempre alinhada</span>
+          </div>
+        </div>
       </section>
 
       {/* STEPS */}
@@ -197,52 +249,9 @@ export default function Home() {
 
       {/* DASHBOARD VISUAL */}
       <LandingDashboardShowcase />
-      <section className="dashboardShowcase landingDashboardLegacy">
-        <div className="sectionTitle dashboardTitle">
-          <small>VISÃO DA CLÍNICA</small>
-          <h2>Uma operação inteira, em uma tela só</h2>
-          <p>Do primeiro agendamento ao pagamento confirmado, sua equipe enxerga o que importa.</p>
-        </div>
-        <div className="heroVisual" id="dashboard">
-        <div className="floatCard pix">
-          <small>PIX RECEBIDO</small>
-          <strong>R$ 60,00</strong>
-          <span>Maria Oliveira</span>
-        </div>
-        <img
-          src="/dashboard.svg"
-          className="browser"
-          alt="Dashboard Reserve Clinic"
-          style={{ display: "block", height: "auto" }}
-        />
-        <div className="floatCard whatsapp">
-          <small>● WhatsApp · agora</small>
-          <span>Sua consulta amanhã às 14h foi confirmada ✅</span>
-        </div>
-        </div>
-      </section>
 
       {/* COMPARISON */}
-      <section className="comparison" id="resultado">
-        <div className="sectionTitle">
-          <small>ROTINA DA CLÍNICA</small>
-          <h2>O que muda quando o sinal é cobrado antes</h2>
-        </div>
-        <div className="comparisonGrid">
-          <div className="comparisonCol">
-            <span className="comparisonTag">Sem o Reserve Clinic</span>
-            {comparison.map((c) => (
-              <p key={c.before}><span className="comparisonIcon mutedIcon">×</span>{c.before}</p>
-            ))}
-          </div>
-          <div className="comparisonCol after">
-            <span className="comparisonTag afterTag">Com o Reserve Clinic</span>
-            {comparison.map((c) => (
-              <p key={c.after}><span className="comparisonIcon"><Check size={15} /></span>{c.after}</p>
-            ))}
-          </div>
-        </div>
-      </section>
+      <LandingComparison />
 
       {/* FEATURES */}
       <div id="recursos">
@@ -278,7 +287,7 @@ export default function Home() {
               <strong>R$ 127</strong>
               <span>/mês</span>
             </div>
-            <p>Um plano só, sem pegadinha de upgrade. Toda a clínica com agenda centralizada, cobrança de sinal via Pix e lembretes automáticos.</p>
+            <p>Um plano só, sem pegadinha de upgrade. Todo o consultório com agenda centralizada, cobrança de sinal via Pix e lembretes automáticos.</p>
             <a className="button primary" href="/registro">
               Começar teste grátis →
             </a>
@@ -327,7 +336,7 @@ export default function Home() {
         <div className="footerGrid">
           <div>
             <Logo />
-            <p>Agendamento, confirmação e cobrança de sinal via Pix para clínicas médicas.</p>
+            <p>Agendamento, confirmação e cobrança de sinal via Pix para consultórios de psicologia.</p>
           </div>
           {[
             ["Produto", "Agenda", "Link de agendamento", "Pagamentos via Pix", "Lembretes automáticos"],

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminSupabase } from "@/lib/apiAuth";
 import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
 import { rateLimited } from "@/lib/rateLimit";
+import { consultaDoAgendamento } from "@/lib/reservas";
 
 function horaAgora() {
   return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
@@ -45,17 +46,13 @@ export async function POST(req: NextRequest) {
     // O valor cobrado é o da consulta gravada no banco — nunca o enviado pelo navegador.
     const admin = adminSupabase();
     const { data: agendamento } = throwIfSupabaseError(
-      await admin.from("agendamentos").select("status, perfil_id, data, hora").eq("id", agendamentoId).maybeSingle(),
+      await admin.from("agendamentos").select("status, perfil_id, cliente_nome, data, hora").eq("id", agendamentoId).maybeSingle(),
       "criar-pagamento.select agendamento"
     );
     if (!agendamento) return NextResponse.json({ error: "Agendamento não encontrado." }, { status: 404 });
     if (agendamento.status === "confirmado") return NextResponse.json({ error: "Este agendamento já foi pago." }, { status: 409 });
 
-    const dataHoraIso = new Date(`${agendamento.data}T${(agendamento.hora as string).slice(0, 5)}:00`).toISOString();
-    const { data: consulta } = throwIfSupabaseError(
-      await admin.from("consultas").select("valor").eq("perfil_id", agendamento.perfil_id).eq("data_hora", dataHoraIso).maybeSingle(),
-      "criar-pagamento.select consulta"
-    );
+    const consulta = await consultaDoAgendamento(admin, agendamento);
     const valor = Number(consulta?.valor ?? 0);
     if (!Number.isFinite(valor) || valor <= 0) {
       return NextResponse.json({ error: "Esta consulta não tem valor definido para pagamento." }, { status: 400 });

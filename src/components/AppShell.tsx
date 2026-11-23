@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowRight, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard,
-  Bot, CircleAlert, LogOut, Menu, Moon, Search, Settings, Sun, UserRoundCheck, Users, X,
+  CalendarDays, ClipboardList, LayoutDashboard,
+  CircleAlert, LogOut, Menu, Moon, Search, Settings, Sun, UserRoundCheck, Users, Wallet, X,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
@@ -27,7 +27,7 @@ const navigation = [
   { href: "/consultas", label: "Consultas", icon: ClipboardList },
   { href: "/pacientes", label: "Pacientes", icon: Users },
   { href: "/profissionais", label: "Profissionais", icon: UserRoundCheck },
-  { href: "/navi", label: "Navi IA", icon: Bot },
+  { href: "/financeiro", label: "Financeiro", icon: Wallet },
 ] as const;
 
 const mobileNav = [
@@ -100,30 +100,19 @@ export function AppShell({ children, perfil }: { children: ReactNode; perfil: Pe
 
   return (
     
-    <div className={`appShell ${theme === "dark" ? "theme-dark" : ""}`} style={{ ["--brand-primary" as string]: primary, ["--brand-secondary" as string]: secondary }}>
+    <div className={`appShell rc ${theme === "dark" ? "theme-dark" : ""}${pathname.startsWith("/agenda") ? " isWhite" : ""}`} style={{ ["--brand-primary" as string]: primary, ["--brand-secondary" as string]: secondary }}>
       <aside className={`appSidebar ${menuOpen ? "isOpen" : ""}`}>
         <div className="appBrand"><span className="appBrandSymbol"><img className="appBrandLogo" src="/logo.svg" alt="" /></span><span className="appBrandName">Reserve Clinic</span><button className="mobileClose" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={20} /></button></div>
-        <div className="clinicSwitcher"><span className="clinicAvatar" style={{ background: primary, color: "#fff", overflow: "hidden" }}>{perfil.logo_url ? <img src={perfil.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : clinicInitials}</span><div><strong>{perfil.nome}</strong><small>Unidade principal</small></div><ChevronDown size={15} /></div>
+        <div className="clinicSwitcher"><span className="clinicAvatar" style={{ background: primary, color: "#fff", overflow: "hidden" }}>{perfil.logo_url ? <img src={perfil.logo_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : clinicInitials}</span><div><strong>{perfil.nome}</strong><small>Unidade principal</small></div></div>
         <nav className="appNavigation" aria-label="Navegação principal">
-          <span className="navGroupLabel">GESTÃO</span>
-          {navigation.map(({ href, label, icon: Icon }) => <Link className={pathname === href || (href !== "/dashboard" && pathname.startsWith(href)) ? "active" : ""} href={href} key={href} onClick={() => setMenuOpen(false)}><Icon size={18} /><span>{label}</span>{href === "/navi" && <span className="navBeta">Beta</span>}{navAlerts[href] && <CircleAlert className="navAlert" size={15} aria-label={`${label}: configuração pendente`} />}</Link>)}
-          <span className="navGroupLabel navGroupSettings">CONTA</span>
-          <Link className={pathname === "/configuracoes" ? "active" : ""} href="/configuracoes" onClick={() => setMenuOpen(false)}><Settings size={18} /><span>Configurações</span>{navAlerts["/configuracoes"] && <CircleAlert className="navAlert" size={15} aria-label="Configurações: configuração pendente" />}</Link>
+          {navigation.map(({ href, label, icon: Icon }) => <Link className={pathname === href || (href !== "/dashboard" && pathname.startsWith(href)) ? "active" : ""} href={href} key={href} onClick={() => setMenuOpen(false)}><Icon size={18} /><span>{label}</span>{navAlerts[href] && <CircleAlert className="navAlert" size={15} aria-label={`${label}: configuração pendente`} />}</Link>)}
+          <Link className={`navSpacer ${pathname === "/configuracoes" ? "active" : ""}`} href="/configuracoes" onClick={() => setMenuOpen(false)}><Settings size={18} /><span>Configurações</span>{navAlerts["/configuracoes"] && <CircleAlert className="navAlert" size={15} aria-label="Configurações: configuração pendente" />}</Link>
         </nav>
-        <div className="sidebarNaviCard">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <strong>Navi IA</strong>
-            <p>Seu assistente inteligente para uma clínica mais produtiva.</p>
-          </div>
-          <Link href="/navi" className="sidebarNaviBtn" onClick={() => setMenuOpen(false)}>
-            <ArrowRight size={14} />
-          </Link>
-        </div>
-        <div className="sidebarUser"><span className="userAvatar">{userInitials}</span><div><strong>{perfil.email ?? "Usuário"}</strong><small>Administrador</small></div><button onClick={handleLogout} aria-label="Sair" style={{ background: "transparent", border: 0, cursor: "pointer", color: "inherit", padding: 0 }}><LogOut size={17} /></button></div>
+        <div className="sidebarUser"><span className="userAvatar">{userInitials}</span><div><strong>{perfil.email ?? "Usuário"}</strong><small>Administrador</small></div><button className="sidebarLogout" onClick={handleLogout} aria-label="Sair" title="Sair"><LogOut size={17} /></button></div>
       </aside>
       {menuOpen && <button className="sidebarBackdrop" aria-label="Fechar menu" onClick={() => setMenuOpen(false)} />}
       <div className="appBody">
-        <header className="appTopbar"><button className="menuTrigger" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><Menu size={21} /></button><label className="globalSearch"><Search size={18} /><input placeholder="Buscar paciente, consulta..." aria-label="Buscar" /><kbd>⌘ K</kbd></label><div className="topbarDate"><span>Hoje</span><strong>{new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</strong></div><button className="themeToggle" onClick={toggleTheme} aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"} title={theme === "light" ? "Modo escuro" : "Modo claro"}>{theme === "light" ? <Moon size={17} /> : <Sun size={17} />}</button><button className="notificationButton" aria-label="Notificações">◦</button></header>
+        <header className="appTopbar"><button className="menuTrigger" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><Menu size={21} /></button><label className="globalSearch"><Search size={18} /><input placeholder="Buscar paciente, consulta..." aria-label="Buscar" /><kbd>⌘ K</kbd></label><button className="themeToggle" onClick={toggleTheme} aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"} title={theme === "light" ? "Modo escuro" : "Modo claro"}>{theme === "light" ? <Moon size={17} /> : <Sun size={17} />}</button></header>
         <main className="appContent">{children}</main>
       </div>
       <nav className="mobileTabbar" aria-label="Navegação">

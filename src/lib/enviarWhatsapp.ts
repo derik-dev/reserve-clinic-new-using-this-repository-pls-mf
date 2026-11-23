@@ -19,7 +19,7 @@ export async function enviarWhatsapp(telefone: string, mensagem: string): Promis
   if (clientToken) headers["Client-Token"] = clientToken;
 
   const res = await fetch(
-    `https://api.z-api.io/instances/${instanceId}/token/${token}/send-text`,
+    `${process.env.ZAPI_BASE_URL ?? "https://api.z-api.io"}/instances/${instanceId}/token/${token}/send-text`,
     {
       method: "POST",
       headers,

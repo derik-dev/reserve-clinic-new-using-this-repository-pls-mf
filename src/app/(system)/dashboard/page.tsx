@@ -1,575 +1,236 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
-import { ArrowUpRight, BarChart3, CalendarDays, Check, ChevronRight, Clock3, Copy, DollarSign, ExternalLink, Plus, TrendingUp, UsersRound } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, ChevronRight, Copy, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { formatCurrency, initials, STATUS_CLASS, STATUS_LABEL, type Consulta, type ConsultaStatus, type Paciente } from "@/lib/db";
-import { reportarErroCliente } from "@/lib/reportarErroCliente";
-import AsaasTransfersPanel from "@/components/AsaasTransfersPanel";
+import { StatusBadge } from "@/components/StatusBadge";
+import { STATUS_LABEL, type Consulta } from "@/lib/db";
+import { addDays, isSameDay, startOfDay, toIsoDate } from "@/lib/agenda";
+import styles from "./dashboard.module.css";
 
-type DayKey = "seg" | "ter" | "qua" | "qui" | "sex" | "sab" | "dom";
-type DayConfig = { aberto: boolean; inicio: string; fim: string };
-type AgendaConfig = {
-  dias: Record<DayKey, DayConfig>;
-  feriados: string[];
-  profissionais: { id: string; nome: string; dias: DayKey[] }[];
-  duracao_min: number;
-  disponibilidade: Record<string, { dias?: Partial<Record<DayKey, DayConfig>> }>;
+type Appointment = Pick<Consulta, "id" | "paciente_nome" | "data_hora" | "duracao_min" | "servico" | "profissional" | "status">;
+type WeekAppointment = Pick<Consulta, "data_hora" | "status">;
+type Overview = {
+  now: Date;
+  today: WeekAppointment[];
+  upcoming: Appointment[];
+  pending: Appointment[];
+  pendingCount: number;
+  pastPendingCount: number;
+  week: WeekAppointment[];
 };
-type ProfessionalSetup = { id: string; valor_consulta: number | null; ativo: boolean };
+type BookingSetup = { slug: string | null; ready: boolean; issue: string | null; href: string };
 
-const DAY_ORDER: DayKey[] = ["seg", "ter", "qua", "qui", "sex", "sab", "dom"];
-const DEFAULT_CONFIG: AgendaConfig = {
-  dias: {
-    seg: { aberto: true, inicio: "08:00", fim: "18:00" },
-    ter: { aberto: true, inicio: "08:00", fim: "18:00" },
-    qua: { aberto: true, inicio: "08:00", fim: "18:00" },
-    qui: { aberto: true, inicio: "08:00", fim: "18:00" },
-    sex: { aberto: true, inicio: "08:00", fim: "18:00" },
-    sab: { aberto: false, inicio: "08:00", fim: "13:00" },
-    dom: { aberto: false, inicio: "08:00", fim: "13:00" },
-  },
-  feriados: [],
-  profissionais: [],
-  duracao_min: 60,
-  disponibilidade: {},
-};
+const APPOINTMENT_FIELDS = "id, paciente_nome, data_hora, duracao_min, servico, profissional, status";
+const REQUEST_TIMEOUT = 10000;
 
-const WEEKDAY_LABEL = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"];
-
-function timeToMin(t: string) { const [h, m] = t.split(":").map(Number); return h * 60 + m; }
-function minToLabel(min: number) { return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`; }
-function jsDayToKey(d: Date): DayKey { return DAY_ORDER[(d.getDay() + 6) % 7]; }
-function toIsoDate(d: Date) { return d.toISOString().slice(0, 10); }
-function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
-function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
-function startOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth(), 1); }
-function endOfMonth(d: Date) { return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999); }
-
-function mergeConfig(raw: unknown): AgendaConfig {
-  const r = (raw ?? {}) as Partial<AgendaConfig>;
-  return {
-    dias: { ...DEFAULT_CONFIG.dias, ...(r.dias ?? {}) },
-    feriados: Array.isArray(r.feriados) ? r.feriados : [],
-    profissionais: Array.isArray(r.profissionais) ? r.profissionais : [],
-    duracao_min: typeof r.duracao_min === "number" && r.duracao_min > 0 ? r.duracao_min : 60,
-    disponibilidade: r.disponibilidade && typeof r.disponibilidade === "object" ? r.disponibilidade as AgendaConfig["disponibilidade"] : {},
-  };
+function dayLabel(iso: string, now: Date) {
+  const date = new Date(iso);
+  if (isSameDay(date, now)) return "Hoje";
+  if (isSameDay(date, addDays(now, 1))) return "Amanhã";
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" as const } : {}) }).replace(".", "");
 }
 
-function monthGrid(view: Date) {
-  const first = startOfMonth(view);
-  const start = addDays(first, -first.getDay());
-  return Array.from({ length: 42 }, (_, i) => addDays(start, i));
+async function loadWeek(from: Date, to: Date): Promise<WeekAppointment[]> {
+  const records: WeekAppointment[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await supabase.from("consultas").select("data_hora, status")
+      .gte("data_hora", from.toISOString()).lt("data_hora", to.toISOString())
+      .order("data_hora").order("id").range(offset, offset + 499)
+      .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT));
+    if (error) throw error;
+    records.push(...(data ?? []));
+    if ((data?.length ?? 0) < 500) return records;
+  }
 }
 
-function ProgressRing({ value, size = 148, stroke = 8, label, sub }: { value: number; size?: number; stroke?: number; label: string; sub?: string }) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(1, value));
-  const dash = c * pct;
-  return (
-    <div className="dashRing" style={{ width: size, height: size }}>
-      <svg width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="#1d4ed8"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${dash} ${c - dash}`}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ filter: "drop-shadow(0 0 8px rgba(29,78,216,0.55))", transition: "stroke-dasharray .8s cubic-bezier(.4,0,.2,1)" }}
-        />
-      </svg>
-      <div className="dashRingCenter">
-        <strong>{Math.round(pct * 100)}%</strong>
-        <span>{label}</span>
-        {sub ? <em>{sub}</em> : null}
-      </div>
-    </div>
-  );
+function AppointmentRow({ appointment, now, pending = false }: { appointment: Appointment; now: Date; pending?: boolean }) {
+  const date = new Date(appointment.data_hora);
+  return <li>
+    <Link className={styles.appointment} href={"/consultas?editar=" + appointment.id} aria-label={"Abrir consulta de " + appointment.paciente_nome + ", " + date.toLocaleString("pt-BR")}>
+      <span className={styles.when}><strong>{date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</strong><span>{dayLabel(appointment.data_hora, now)}</span></span>
+      <span className={styles.identity}>
+        <strong>{appointment.paciente_nome}</strong>
+        <span>{[appointment.servico, appointment.profissional].filter(Boolean).join(" · ") || "Profissional e serviço não informados"}</span>
+        {pending && date < now && <span className={styles.pastDue}>Horário já passou</span>}
+      </span>
+      {!pending && <span className={styles.appointmentStatus}><StatusBadge status={STATUS_LABEL[appointment.status]} /></span>}
+      <ChevronRight className={styles.rowArrow} size={18} aria-hidden="true" />
+    </Link>
+  </li>;
 }
 
-function StatusRing({ segments, total, size = 148, stroke = 10 }: { segments: { color: string; value: number }[]; total: number; size?: number; stroke?: number }) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  let acc = 0;
-  const arcs = segments.map((s) => {
-    const frac = total > 0 ? s.value / total : 0;
-    const len = c * frac;
-    const arc = { color: s.color, dash: `${len} ${c - len}`, offset: -acc };
-    acc += len;
-    return arc;
-  });
-  return (
-    <svg width={size} height={size} className="dashStatusRing">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
-      {total > 0 && arcs.map((a, i) => (
-        <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={a.color} strokeWidth={stroke} strokeLinecap="butt" strokeDasharray={a.dash} strokeDashoffset={a.offset} transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      ))}
-    </svg>
-  );
-}
-
-function AreaChart({ data }: { data: { day: number; value: number }[] }) {
-  const W = 800, H = 200, padL = 44, padR = 20, padT = 18, padB = 28;
-  const iw = W - padL - padR;
-  const ih = H - padT - padB;
-  const rawMax = Math.max(...data.map(d => d.value), 0);
-  const max = rawMax > 0 ? rawMax : 1;
-  const step = data.length > 1 ? iw / (data.length - 1) : 0;
-  const pts = data.map((d, i) => ({ x: padL + i * step, y: padT + ih - (d.value / max) * ih, day: d.day, value: d.value }));
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaPath = pts.length ? `${linePath} L${pts[pts.length - 1].x.toFixed(1)},${(padT + ih).toFixed(1)} L${pts[0].x.toFixed(1)},${(padT + ih).toFixed(1)} Z` : "";
-  const ticks = 4;
-  const labelEvery = Math.max(1, Math.floor(data.length / 7));
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="dashChartSvg" preserveAspectRatio="none" role="img" aria-label="Faturamento diário">
-      <defs>
-        <linearGradient id="dashChartFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1d4ed8" stopOpacity="0.32" />
-          <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {Array.from({ length: ticks + 1 }, (_, i) => {
-        const y = padT + (ih / ticks) * i;
-        return <line key={i} x1={padL} x2={W - padR} y1={y} y2={y} stroke="rgba(255,255,255,0.04)" strokeWidth="1" />;
-      })}
-      {rawMax > 0 && <path d={areaPath} fill="url(#dashChartFill)" />}
-      {rawMax > 0 && <path d={linePath} fill="none" stroke="#1d4ed8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />}
-      {pts.filter((_, i) => i % labelEvery === 0 || i === pts.length - 1).map(p => (
-        <text key={p.day} x={p.x} y={H - 10} fontSize="10" textAnchor="middle" fill="rgba(255,255,255,0.35)" fontFamily="var(--font-space)">{p.day}</text>
-      ))}
-    </svg>
-  );
+function LoadingRows() {
+  return <div className="dxSkeleton" role="status" aria-label="Carregando consultas"><span /><span /><span /></div>;
 }
 
 export default function DashboardPage() {
-  const [perfilNome, setPerfilNome] = useState("");
-  const [perfilSlug, setPerfilSlug] = useState<string | null>(null);
-  const [valorConsultaPadrao, setValorConsultaPadrao] = useState<number | null>(null);
-  const [perfilCreatedAt, setPerfilCreatedAt] = useState<string | null>(null);
-  const [perfilTipo, setPerfilTipo] = useState<"autonomo" | "clinica">("clinica");
-  const [config, setConfig] = useState<AgendaConfig>(DEFAULT_CONFIG);
-  const [profissionaisSetup, setProfissionaisSetup] = useState<ProfessionalSetup[]>([]);
-  const [consultas, setConsultas] = useState<Consulta[]>([]);
-  const [pacientes, setPacientes] = useState<Paciente[]>([]);
-  const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(new Date()));
-  const [selectedDay, setSelectedDay] = useState<Date>(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
-  const [tab, setTab] = useState<"calendario" | "pacientes">("calendario");
-  const [copied, setCopied] = useState(false);
+  const [overview, setOverview] = useState<Overview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [setup, setSetup] = useState<BookingSetup | null>(null);
+  const [setupError, setSetupError] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
+  const [initialDay] = useState(() => startOfDay(new Date()));
+  const requestSequence = useRef(0);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-      const { data: session } = await supabase.auth.getUser();
-      if (!session.user) return;
-      const [{ data: p, error: pErr }, { data: conf }, { data: ps }, { data: profs }] = await Promise.all([
-        supabase.from("perfis").select("nome, slug, tipo, created_at, valor_consulta").eq("id", session.user.id).maybeSingle(),
-        supabase.from("configuracoes").select("agenda_config").eq("perfil_id", session.user.id).maybeSingle(),
-        supabase.from("pacientes").select("*"),
-        supabase.from("profissionais").select("id, valor_consulta, ativo").eq("ativo", true),
-      ]);
-      if (p) {
-        const pp = p as { nome: string; slug: string; tipo: string; created_at: string | null; valor_consulta: number | null };
-        setPerfilNome(pp.nome ?? "");
-        setPerfilSlug(pp.slug ?? null);
-        setValorConsultaPadrao(pp.valor_consulta != null ? Number(pp.valor_consulta) : null);
-        setPerfilCreatedAt(pp.created_at ?? null);
-        setPerfilTipo(pp.tipo === "autonomo" ? "autonomo" : "clinica");
-      } else if (pErr) {
-        // coluna `tipo` pode não existir ainda — busca sem ela para não perder slug e nome
-        const { data: pFallback } = await supabase.from("perfis").select("nome, slug, valor_consulta").eq("id", session.user.id).maybeSingle();
-        if (pFallback) {
-          const pf = pFallback as { nome: string; slug: string; valor_consulta: number | null };
-          setPerfilNome(pf.nome ?? "");
-          setPerfilSlug(pf.slug ?? null);
-          setValorConsultaPadrao(pf.valor_consulta != null ? Number(pf.valor_consulta) : null);
-        }
-      }
-      setConfig(mergeConfig(conf?.agenda_config));
-      setProfissionaisSetup((profs as ProfessionalSetup[] | null) ?? []);
-      setPacientes((ps as Paciente[] | null) ?? []);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        void reportarErroCliente("dashboard.init", msg);
-      }
-    })();
-  }, []);
-
-  const fetchConsultas = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.from("consultas").select("*").order("data_hora");
-      if (error) throw new Error(error.message);
-      setConsultas((data as Consulta[] | null) ?? []);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      void reportarErroCliente("dashboard.consultas", msg);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchConsultas(); }, [fetchConsultas]);
-
-  useEffect(() => {
-    function onFocus() { fetchConsultas(); }
-    function onVisibility() { if (document.visibilityState === "visible") fetchConsultas(); }
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [fetchConsultas]);
-
-  const linkPublico = useMemo(() => {
-    if (!perfilSlug) return "";
-    const base = typeof window !== "undefined" ? window.location.origin : "";
-    return `${base}/agendamento/${perfilSlug}`;
-  }, [perfilSlug]);
-
-  const linkFaltando = useMemo(() => {
-    const itens: string[] = [];
-    if (profissionaisSetup.length === 0) itens.push("Cadastre pelo menos 1 profissional");
-    else if (!profissionaisSetup.some(p => Number(p.valor_consulta ?? valorConsultaPadrao) > 0)) itens.push("Defina o valor da consulta em Configurações");
-    return itens;
-  }, [profissionaisSetup, valorConsultaPadrao]);
-
-  const linkLiberado = useMemo(() => {
-    if (profissionaisSetup.length === 0) return false;
-    return profissionaisSetup.some((professional) => {
-      return Number(professional.valor_consulta ?? valorConsultaPadrao) > 0;
-    });
-  }, [profissionaisSetup, valorConsultaPadrao]);
-
-  const faturamentoMes = useMemo(() => {
-    const from = startOfMonth(viewMonth).getTime();
-    const to = endOfMonth(viewMonth).getTime();
-    return consultas
-      .filter(c => {
-        if (c.status !== "concluida" && c.status !== "confirmada") return false;
-        const t = new Date(c.data_hora).getTime();
-        return t >= from && t <= to;
-      })
-      .reduce((s, c) => s + (Number(c.valor) || 0), 0);
-  }, [consultas, viewMonth]);
-
-  const consultasPorDia = useMemo(() => {
-    const map = new Map<string, Consulta[]>();
-    for (const c of consultas) {
-      const key = toIsoDate(new Date(c.data_hora));
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(c);
-    }
-    return map;
-  }, [consultas]);
-
-  const slotsDoDia = useMemo(() => {
-    const key = jsDayToKey(selectedDay);
-    const dc = config.dias[key];
-    const feriado = config.feriados.includes(toIsoDate(selectedDay));
-    const doDia = consultasPorDia.get(toIsoDate(selectedDay)) ?? [];
-    if (!dc.aberto) return { fechado: true as const, motivo: "Não atende neste dia da semana.", ocupadas: doDia };
-    if (feriado) return { fechado: true as const, motivo: "Feriado — sem atendimento.", ocupadas: doDia };
-    const inicioMin = timeToMin(dc.inicio);
-    const fimMin = timeToMin(dc.fim);
-    const dur = config.duracao_min;
-    const arr: { hora: string; horaMin: number; consulta?: Consulta }[] = [];
-    for (let m = inicioMin; m + dur <= fimMin; m += dur) {
-      const consulta = doDia.find(c => {
-        const dt = new Date(c.data_hora);
-        const cMin = dt.getHours() * 60 + dt.getMinutes();
-        return cMin === m;
-      });
-      arr.push({ hora: minToLabel(m), horaMin: m, consulta });
-    }
-    return { fechado: false as const, slots: arr };
-  }, [selectedDay, config, consultasPorDia]);
-
-  const dias = useMemo(() => monthGrid(viewMonth), [viewMonth]);
-  const hoje = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
-
-  const ocupacaoAgenda = useMemo(() => {
-    let slots = 0;
-    const h = new Date(); h.setHours(0, 0, 0, 0);
-    const inicio = new Date(h); inicio.setDate(h.getDate() - ((h.getDay() + 6) % 7));
-    for (let i = 0; i < 7; i++) {
-      const d = addDays(inicio, i);
-      const k = jsDayToKey(d);
-      const dc = config.dias[k];
-      if (!dc.aberto || config.feriados.includes(toIsoDate(d))) continue;
-      slots += Math.max(0, Math.floor((timeToMin(dc.fim) - timeToMin(dc.inicio)) / config.duracao_min));
-    }
-    const ocup = consultas.filter(c => { const dt = new Date(c.data_hora); return dt >= inicio && dt < addDays(inicio, 7); }).length;
-    return { pct: slots > 0 ? ocup / slots : 0, ocup, slots };
-  }, [config, consultas]);
-
-  const statusCounts = useMemo(() => {
-    const m: Record<ConsultaStatus, number> = { aguardando: 0, confirmada: 0, concluida: 0, cancelada: 0 };
-    for (const c of consultas) m[c.status]++;
-    return m;
-  }, [consultas]);
-  const statusTotal = statusCounts.aguardando + statusCounts.confirmada + statusCounts.concluida + statusCounts.cancelada;
-
-  const semanaOcup = useMemo(() => {
-    const h = new Date(); h.setHours(0, 0, 0, 0);
-    const inicio = new Date(h); inicio.setDate(h.getDate() - ((h.getDay() + 6) % 7));
-    const labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-    return labels.map((label, i) => {
-      const d = addDays(inicio, i);
-      const k = jsDayToKey(d);
-      const dc = config.dias[k];
-      const feriado = config.feriados.includes(toIsoDate(d));
-      if (!dc.aberto || feriado) return { label, pct: 0, ocupados: 0, slots: 0, closed: true, isToday: isSameDay(d, h) };
-      const total = timeToMin(dc.fim) - timeToMin(dc.inicio);
-      const slots = Math.max(1, Math.floor(total / config.duracao_min));
-      const ocupados = consultas.filter(c => isSameDay(new Date(c.data_hora), d)).length;
-      return { label, pct: Math.min(1, ocupados / slots), ocupados, slots, closed: false, isToday: isSameDay(d, h) };
-    });
-  }, [config, consultas]);
-
-  const upcomings = useMemo(() => {
+  const loadOverview = useCallback(async () => {
+    const sequence = ++requestSequence.current;
     const now = new Date();
-    return consultas
-      .filter(c => new Date(c.data_hora) >= now && c.status !== "cancelada")
-      .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime())
-      .slice(0, 5);
-  }, [consultas]);
-
-  const chartData = useMemo(() => {
-    const total = endOfMonth(viewMonth).getDate();
-    const arr: { day: number; value: number }[] = [];
-    for (let d = 1; d <= total; d++) {
-      const iso = toIsoDate(new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d));
-      const doDia = consultasPorDia.get(iso) ?? [];
-      const value = doDia
-        .filter(c => c.status === "concluida" || c.status === "confirmada")
-        .reduce((s, c) => s + (Number(c.valor) || 0), 0);
-      arr.push({ day: d, value });
+    const today = startOfDay(now);
+    setLoading(true);
+    setError("");
+    try {
+      const [upcomingResult, pendingResult, pastPending, week] = await Promise.all([
+        supabase.from("consultas").select(APPOINTMENT_FIELDS)
+          .in("status", ["aguardando", "confirmada"]).gte("data_hora", now.toISOString())
+          .order("data_hora").order("id").limit(6).abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
+        supabase.from("consultas").select(APPOINTMENT_FIELDS, { count: "exact" })
+          .eq("status", "aguardando").order("data_hora").order("id").limit(5)
+          .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
+        supabase.from("consultas").select("id", { count: "exact", head: true })
+          .eq("status", "aguardando").lt("data_hora", now.toISOString())
+          .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
+        loadWeek(today, addDays(today, 7)),
+      ]);
+      for (const result of [upcomingResult, pendingResult, pastPending]) if (result.error) throw result.error;
+      if (sequence !== requestSequence.current) return;
+      setOverview({
+        now,
+        today: week.filter(appointment => isSameDay(new Date(appointment.data_hora), now)),
+        upcoming: (upcomingResult.data ?? []) as Appointment[],
+        pending: (pendingResult.data ?? []) as Appointment[],
+        pendingCount: pendingResult.count ?? 0,
+        pastPendingCount: pastPending.count ?? 0,
+        week,
+      });
+    } catch {
+      if (sequence === requestSequence.current) setError("Não foi possível atualizar as consultas. Tente novamente.");
+    } finally {
+      if (sequence === requestSequence.current) setLoading(false);
     }
-    return arr;
-  }, [consultasPorDia, viewMonth]);
-  const chartEmpty = chartData.every(d => d.value === 0);
+  }, []);
 
-  const consultasHoje = useMemo(() => consultas.filter(c => isSameDay(new Date(c.data_hora), hoje)), [consultas, hoje]);
-  const consultasHojeRestantes = useMemo(() => {
-    const agora = new Date();
-    return consultasHoje.filter(c => new Date(c.data_hora) >= agora && c.status !== "cancelada").length;
-  }, [consultasHoje]);
-  const pacientesAtivos = useMemo(() => pacientes.filter(p => p.status === "ativo").length, [pacientes]);
+  const loadSetup = useCallback(async () => {
+    setSetupError(false);
+    try {
+      const { data: session, error: sessionError } = await supabase.auth.getUser();
+      if (sessionError || !session.user) throw new Error("Sessão indisponível");
+      const [profile, professionals] = await Promise.all([
+        supabase.from("perfis").select("slug, valor_consulta").eq("id", session.user.id)
+          .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)).maybeSingle(),
+        supabase.from("profissionais").select("id, valor_consulta").eq("ativo", true)
+          .abortSignal(AbortSignal.timeout(REQUEST_TIMEOUT)),
+      ]);
+      if (profile.error || professionals.error || !profile.data) throw new Error("Configuração indisponível");
+      const profileData = profile.data;
+      const hasProfessionals = (professionals.data?.length ?? 0) > 0;
+      const hasValue = (professionals.data ?? []).some(professional => Number(professional.valor_consulta ?? profileData.valor_consulta) > 0);
+      setSetup({
+        slug: profileData.slug,
+        ready: hasProfessionals && hasValue && !!profileData.slug,
+        issue: !hasProfessionals ? "Cadastre um profissional para liberar o link de agendamento." : !hasValue ? "Defina o valor da consulta para liberar o link de agendamento." : !profileData.slug ? "Conclua a configuração do link de agendamento." : null,
+        href: hasProfessionals ? "/configuracoes" : "/profissionais",
+      });
+    } catch { setSetupError(true); }
+  }, []);
 
-  async function handleCopy() {
-    if (!linkLiberado || !linkPublico) return;
-    await navigator.clipboard.writeText(linkPublico);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
+  useEffect(() => {
+    void loadOverview();
+    void loadSetup();
+    const refresh = () => { if (document.visibilityState === "visible") void loadOverview(); };
+    const timer = setInterval(refresh, 60000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [loadOverview, loadSetup]);
+
+  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+
+  async function copyBookingLink() {
+    if (!setup?.ready || !setup.slug) return;
+    try {
+      await navigator.clipboard.writeText(window.location.origin + "/agendamento/" + setup.slug);
+      setCopied(true);
+      setNotice({ ok: true, message: "Link de agendamento copiado." });
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), 1800);
+    } catch { setNotice({ ok: false, message: "Não foi possível copiar o link. Tente novamente." }); }
   }
 
-  const primeiroNome = perfilNome.split(" ")[0] || "profissional";
-  const greeting = perfilTipo === "autonomo"
-    ? `Olá, ${primeiroNome}`
-    : `Olá, equipe ${perfilNome}`;
+  const now = overview?.now ?? initialDay;
+  const today = startOfDay(now);
+  const dayISO = toIsoDate(today);
+  const available = !!overview && !error;
+  const activeToday = overview?.today.filter(appointment => appointment.status !== "cancelada") ?? [];
+  const completedToday = activeToday.filter(appointment => appointment.status === "concluida").length;
+  const pendingToday = activeToday.filter(appointment => appointment.status === "aguardando").length;
+  const nextSeven = overview?.week.filter(appointment => new Date(appointment.data_hora) >= now && (appointment.status === "aguardando" || appointment.status === "confirmada")).length ?? 0;
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = addDays(today, i);
+    const records = overview?.week.filter(appointment => isSameDay(new Date(appointment.data_hora), date)) ?? [];
+    return { date, active: records.filter(appointment => appointment.status !== "cancelada").length, cancelled: records.filter(appointment => appointment.status === "cancelada").length };
+  });
+  const headingDate = today.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const newAppointmentHref = "/consultas?nova=1&data=" + dayISO;
 
-  return <>
-    {/* Hero */}
-    <section className="dashHero2">
-      <div className="dashHero2Left">
-        <span className="dashHero2Greeting">Bom dia,</span>
-        <h1>Equipe {perfilNome || "Reserve Clinic"}</h1>
-        <p>{perfilTipo === "autonomo" ? "Gerencie sua agenda e acompanhe seus pacientes." : "Gerencie os horários e acompanhe os pacientes da equipe."}</p>
+  return <div className={styles.page}>
+    <header className={"dxHeader " + styles.header}>
+      <div><h1>Visão geral</h1><p className="dxMeta">{headingDate}</p></div>
+      <div className="dxActions">
+        <button className="secondaryButton" onClick={copyBookingLink} disabled={!setup?.ready || setupError}>
+          {copied ? <Check size={16} /> : <Copy size={16} />}{copied ? "Link copiado" : "Copiar link de agendamento"}
+        </button>
+        <Link href={newAppointmentHref} className="primaryButton"><Plus size={17} /> Nova consulta</Link>
       </div>
-      <div className="dashHero2Img">
-        <img src="/dashboard-clinic-banner.png" alt="" />
-      </div>
-      {perfilSlug && (
-        <div className="dashHero2LinkWrap">
-          <div className="dashHero2LinkLabel">
-            <CalendarDays size={14} />
-            Seu link de agendamento
-          </div>
-          <div className="dashHero2LinkRow">
-            <code>{linkPublico}</code>
-            <button className="primaryButton" style={{ height: 34, fontSize: 12, flexShrink: 0 }} onClick={handleCopy} disabled={!linkLiberado}>
-              {copied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
-            </button>
-          </div>
-          {!linkLiberado && linkFaltando.length > 0 && (
-            <div className="dashLinkBlockedHint" style={{ marginTop: 8 }}>
-              <span>Para liberar: {linkFaltando[0]}</span>
-            </div>
-          )}
-        </div>
-      )}
+    </header>
+
+    {notice && <p className={styles.notice} role={notice.ok ? "status" : "alert"}>{notice.message}</p>}
+    {setupError ? <div className={styles.setupHint} role="alert"><span>Não foi possível carregar o link de agendamento.</span><button className="dxCardLink" onClick={loadSetup}>Tentar novamente</button></div> : setup?.issue && <div className={styles.setupHint}><span>{setup.issue}</span><Link href={setup.href} className="dxCardLink">Concluir configuração</Link></div>}
+    {error && <div className="dxError" role="alert"><span>{error}</span><button className="secondaryButton" onClick={loadOverview}>Tentar novamente</button></div>}
+
+    <section className={styles.metrics} aria-label="Resumo operacional" aria-busy={loading}>
+      <Link href={"/agenda?data=" + dayISO} className="dxKpi" data-metric="today">
+        <span className="dxKpiLabel">Consultas hoje</span><strong className="dxKpiValue">{available ? activeToday.length : "—"}</strong>
+        <span className="dxKpiHint">{available ? completedToday + (completedToday === 1 ? " concluída · " : " concluídas · ") + pendingToday + " a confirmar" : "Agenda do dia"}</span>
+      </Link>
+      <Link href="/consultas" className={"dxKpi" + (available && overview.pendingCount > 0 ? " isAlert" : "")} data-metric="pending">
+        <span className="dxKpiLabel">Aguardando confirmação</span><strong className="dxKpiValue">{available ? overview.pendingCount : "—"}</strong>
+        <span className="dxKpiHint">{available ? overview.pastPendingCount > 0 ? overview.pastPendingCount + " com horário já passado" : "Nenhum horário passado pendente" : "Pendências de todas as datas"}</span>
+      </Link>
+      <Link href={"/agenda?data=" + dayISO} className="dxKpi" data-metric="upcoming">
+        <span className="dxKpiLabel">Próximos 7 dias</span><strong className="dxKpiValue">{available ? nextSeven : "—"}</strong>
+        <span className="dxKpiHint">Por vir, de hoje a {addDays(today, 6).toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).replace(".", "")}</span>
+      </Link>
     </section>
 
-    {/* KPI Row */}
-    <div className="dashKpiRow2">
-      <Link href="/consultas" className="dashKpi2">
-        <div className="dashKpi2Icon" style={{ background: "rgba(29,78,216,.1)" }}>
-          <CalendarDays size={20} style={{ color: "#1d4ed8" }} />
-        </div>
-        <div className="dashKpi2Body">
-          <span>Consultas hoje</span>
-          <strong>{consultasHoje.length}</strong>
-          <small>{consultasHojeRestantes > 0 ? `${consultasHojeRestantes} ainda por vir` : consultasHoje.length > 0 ? "Todas realizadas" : "Nenhuma marcada"}</small>
-        </div>
-        <ChevronRight size={16} className="dashKpi2Arrow" />
-      </Link>
-      <Link href="/consultas" className="dashKpi2">
-        <div className="dashKpi2Icon" style={{ background: "rgba(5,150,105,.1)" }}>
-          <DollarSign size={20} style={{ color: "#059669" }} />
-        </div>
-        <div className="dashKpi2Body">
-          <span>Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long" })}</span>
-          <strong>{formatCurrency(faturamentoMes)}</strong>
-          <small>{statusCounts.confirmada + statusCounts.concluida} consultas contabilizadas</small>
-        </div>
-        <ChevronRight size={16} className="dashKpi2Arrow" />
-      </Link>
-      <Link href="/consultas" className={`dashKpi2${statusCounts.aguardando > 0 ? " isAlert" : ""}`}>
-        <div className="dashKpi2Icon" style={{ background: statusCounts.aguardando > 0 ? "rgba(217,119,6,.12)" : "rgba(0,0,0,.06)" }}>
-          <Clock3 size={20} style={{ color: statusCounts.aguardando > 0 ? "#d97706" : "#94a3b8" }} />
-        </div>
-        <div className="dashKpi2Body">
-          <span>Aguardando confirmação</span>
-          <strong>{statusCounts.aguardando}</strong>
-          <small>{statusCounts.aguardando > 0 ? "Precisam de atenção" : "Nenhuma pendência"}</small>
-        </div>
-        <ChevronRight size={16} className="dashKpi2Arrow" />
-      </Link>
-      <Link href="/pacientes" className="dashKpi2">
-        <div className="dashKpi2Icon" style={{ background: "rgba(124,58,237,.1)" }}>
-          <UsersRound size={20} style={{ color: "#7c3aed" }} />
-        </div>
-        <div className="dashKpi2Body">
-          <span>Pacientes ativos</span>
-          <strong>{pacientesAtivos}</strong>
-          <small>{pacientes.length} cadastrados no total</small>
-        </div>
-        <ChevronRight size={16} className="dashKpi2Arrow" />
-      </Link>
+    <div className={styles.mainGrid}>
+      <section className="dxCard" aria-labelledby="dashboard-upcoming">
+        <div className="dxCardHead"><h2 id="dashboard-upcoming">Próximos atendimentos</h2><Link href={"/agenda?data=" + dayISO} className="dxCardLink">Ver agenda</Link></div>
+        {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Consultas indisponíveis</strong><p>Tente atualizar os dados acima.</p></div> : overview.upcoming.length === 0 ? <div className="dxEmpty"><strong>Nenhum atendimento por vir</strong><p>As próximas consultas aparecerão aqui.</p><Link href={newAppointmentHref} className="dxCardLink">Nova consulta</Link></div> : <ul className={styles.appointments}>{overview.upcoming.map(appointment => <AppointmentRow key={appointment.id} appointment={appointment} now={now} />)}</ul>}
+      </section>
+      <section className={"dxCard " + styles.pendingSection} aria-labelledby="dashboard-pending">
+        <div className="dxCardHead"><h2 id="dashboard-pending">Aguardando confirmação</h2><Link href="/consultas" className="dxCardLink">Ver todas</Link></div>
+        {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Pendências indisponíveis</strong><p>Tente atualizar os dados acima.</p></div> : overview.pending.length === 0 ? <div className="dxEmpty"><strong>Nenhuma confirmação pendente</strong><p>Você está em dia com as confirmações.</p></div> : <ul className={styles.appointments}>{overview.pending.map(appointment => <AppointmentRow key={appointment.id} appointment={appointment} now={now} pending />)}</ul>}
+      </section>
     </div>
 
-    {/* Main Grid */}
-    <div className="dashGrid2">
-      <div className="dashGrid2Left">
-        {/* Agenda de hoje */}
-        <section className="dashAgenda">
-          <div className="dashAgendaHeader">
-            <CalendarDays size={18} />
-            <strong>Agenda de hoje</strong>
-            <span className="dashAgendaDate">
-              {hoje.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-            </span>
-            <Link href={`/consultas?nova=1&data=${toIsoDate(hoje)}`} className="primaryButton" style={{ marginLeft: "auto", height: 34, fontSize: 12 }}>
-              <Plus size={15} /> Nova consulta
-            </Link>
-          </div>
-          {slotsDoDia.fechado ? (
-            <div className="dashAgendaEmpty">{slotsDoDia.motivo}</div>
-          ) : slotsDoDia.slots.length === 0 ? (
-            <div className="dashAgendaEmpty">Sem horários dentro do intervalo configurado.</div>
-          ) : (
-            <div className="dashAgendaList">
-              {slotsDoDia.slots.slice(0, 8).map(s => (
-                <div key={s.hora} className="dashAgendaSlot">
-                  <span className={`dashAgendaBullet ${s.consulta ? "isBooked" : "isFree"}`} />
-                  <span className={`dashAgendaTime${!s.consulta ? " isFreeTime" : ""}`}>{s.hora}</span>
-                  {s.consulta ? (
-                    <>
-                      <div className="dashAgendaPatientAvatar">{initials(s.consulta.paciente_nome)}</div>
-                      <span className="dashAgendaName">{s.consulta.paciente_nome}</span>
-                      <em className={`statusBadge ${STATUS_CLASS[s.consulta.status]}`}>{STATUS_LABEL[s.consulta.status]}</em>
-                    </>
-                  ) : (
-                    <>
-                      <span className="dashAgendaFree">Horário livre</span>
-                      <Link href={`/consultas?nova=1&data=${toIsoDate(hoje)}&hora=${s.hora}`} className="dashAgendaMarcar">Marcar</Link>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Próximos atendimentos */}
-        <section className="dashProximos">
-          <div className="dashProximosHeader">
-            <div>
-              <CalendarDays size={16} style={{ color: "#1d4ed8" }} />
-              <strong>Próximos atendimentos</strong>
-            </div>
-            <Link href="/agenda" className="dashProximosLink">Ver agenda <ArrowUpRight size={13} /></Link>
-          </div>
-          {upcomings.length === 0 ? (
-            <div className="dashProximosEmpty">Nenhum atendimento futuro agendado.</div>
-          ) : upcomings.map(c => {
-            const dt = new Date(c.data_hora);
-            const day = dt.getDate().toString().padStart(2, "0");
-            const month = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
-            const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-            return (
-              <div key={c.id} className="dashProximosItem">
-                <div className="dashProximosDate">
-                  <strong>{day}</strong>
-                  <span>{month}</span>
-                </div>
-                <span className="dashProximosTime">{hora}</span>
-                <div className="dashProximosAvatar">{initials(c.paciente_nome)}</div>
-                <span className="dashProximosName">{c.paciente_nome}</span>
-                <em className={`statusBadge ${STATUS_CLASS[c.status]}`}>{STATUS_LABEL[c.status]}</em>
-                <ChevronRight size={14} className="dashProximosArrow" />
-              </div>
-            );
-          })}
-        </section>
-      </div>
-
-      <div className="dashGrid2Right">
-        {/* Faturamento */}
-        <section className="dashFatur">
-          <div className="dashFaturHeader">
-            <div>
-              <span><BarChart3 size={14} />Faturamento em {viewMonth.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}</span>
-              <div className="dashFaturTotal">{formatCurrency(faturamentoMes)}</div>
-              <div className={`dashFaturTrend${faturamentoMes === 0 ? " isNeutral" : ""}`}>
-                {faturamentoMes > 0 ? <TrendingUp size={12} /> : null}
-                {faturamentoMes > 0 ? `${statusCounts.confirmada + statusCounts.concluida} consultas` : "Sem faturamento neste mês"}
-              </div>
-            </div>
-          </div>
-          <div className="dashFaturChart">
-            <AreaChart data={chartData} />
-          </div>
-          <AsaasTransfersPanel compact />
-        </section>
-
-        {/* Ocupação da semana */}
-        <section className="dashOcup">
-          <div className="dashOcupHeader">
-            <strong>Ocupação da semana</strong>
-          </div>
-          <div className="dashOcupBars">
-            {semanaOcup.map(d => (
-              <div key={d.label} className={`dashOcupBar${d.isToday ? " isToday" : ""}${d.closed ? " isClosed" : ""}`}>
-                <span className="dashOcupBarPct">{d.closed ? "—" : `${Math.round(d.pct * 100)}%`}</span>
-                <div className="dashOcupBarTrack">
-                  <div className="dashOcupBarFill" style={{ height: d.closed ? "0%" : `${Math.max(4, Math.round(d.pct * 100))}%` }} />
-                </div>
-                <span className="dashOcupBarLabel">{d.label}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
-  </>;
+    <section className={"dxCard " + styles.weekSection} aria-labelledby="dashboard-week">
+      <div className="dxCardHead"><h2 id="dashboard-week">Agenda dos próximos dias</h2><Link href="/agenda" className="dxCardLink">Abrir agenda</Link></div>
+      {loading && !overview ? <LoadingRows /> : !available ? <div className="dxEmpty"><strong>Agenda indisponível</strong><p>Tente atualizar os dados acima.</p></div> : <div className={styles.week}>
+        {days.map(({ date, active, cancelled }, index) => <Link key={toIsoDate(date)} href={"/agenda?data=" + toIsoDate(date)} className={styles.weekDay} aria-label={date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }) + ": " + active + " consultas, " + cancelled + " canceladas"}>
+          <span className={styles.weekDate}>{index === 0 ? "Hoje" : date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}<span>{date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span></span>
+          <strong>{active}</strong><span className={styles.weekCount}>{active === 1 ? "consulta" : "consultas"}</span>
+          {cancelled > 0 && <span className={styles.weekCancelled}>{cancelled} {cancelled === 1 ? "cancelada" : "canceladas"}</span>}
+        </Link>)}
+      </div>}
+    </section>
+  </div>;
 }

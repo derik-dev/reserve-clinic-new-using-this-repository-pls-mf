@@ -5,7 +5,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 
 const steps = [
-  { num: "01", title: "Cadastre a clínica", desc: "Em minutos configure seus profissionais, especialidades e horários de atendimento.", icon: CalendarPlus },
+  { num: "01", title: "Cadastre o consultório", desc: "Em minutos configure seus horários de atendimento e o valor da consulta.", icon: CalendarPlus },
   { num: "02", title: "Ative o link", desc: "Receba um link exclusivo e personalizável para compartilhar com seus pacientes.", icon: Link2, featured: true },
   { num: "03", title: "Pacientes agendam", desc: "O paciente escolhe o horário e paga o sinal via Pix — tudo pelo celular, sem ligar.", icon: UserRoundCheck },
   { num: "04", title: "Agenda cheia", desc: "Lembretes automáticos garantem comparecimento e sua agenda opera no máximo.", icon: ShieldCheck, featured: true },
@@ -33,7 +33,7 @@ export function LandingSteps() {
       <div className="journeyHeader">
         <span className="journeyEyebrow">COMO FUNCIONA</span>
         <h2 id="journey-title">Agendamento simples do jeito certo</h2>
-        <p>Da configuração à agenda cheia, tudo em poucos passos.<br className="journeyDesktopBreak" /> Mais tempo para cuidar do que realmente importa.</p>
+
       </div>
 
       <div className="journeyCanvas">
@@ -61,11 +61,6 @@ export function LandingSteps() {
         </div>
       </div>
 
-      <div className="journeyNotes" aria-label="Benefícios">
-        <div><Zap size={18} /><span><strong>Implementação rápida</strong><small>Comece em minutos</small></span></div>
-        <div><ShieldCheck size={18} /><span><strong>Seguro e confiável</strong><small>Mais tranquilidade na rotina</small></span></div>
-        <div><Check size={18} /><span><strong>Mais tempo para você</strong><small>Menos tarefas manuais</small></span></div>
-      </div>
     </section>
   );
 }

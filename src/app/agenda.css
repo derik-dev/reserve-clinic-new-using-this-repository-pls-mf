@@ -1,0 +1,209 @@
+/*
+ * Agenda. Usa os tokens de system.css; fundo branco, divisórias de 1px,
+ * cor só em estados (azul = ação/seleção; amarelo/verde = status).
+ * O parent só contém regras aninhadas (declarações diretas no parent são
+ * descartadas pelo compilador de CSS).
+ */
+.appShell.rc.isWhite:not(.theme-dark) { --bg: #ffffff; }
+
+.appShell.rc.rc.rc {
+  .agxHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-5); flex-wrap: wrap; }
+  .agxHeader h1 { margin: 0; font: 600 24px/1.25 var(--font-space); letter-spacing: -.01em; color: var(--text); }
+  .agxHeader p { margin: var(--space-1) 0 0; font-size: var(--fs-md); color: var(--text-subtle); }
+  .agxHeaderActions { display: flex; gap: var(--space-3); }
+
+  .agxLayout { display: flex; align-items: flex-start; gap: var(--space-5); }
+  .agxMain { flex: 1; min-width: 0; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+
+  /* ── Coluna esquerda ───────────────────────────────────── */
+  .agxSide { width: 248px; flex-shrink: 0; display: flex; flex-direction: column; gap: var(--space-5); }
+  .agxSide > section, .agxSide > details { padding-top: var(--space-5); border-top: 1px solid var(--border); }
+  .agxSide > section:first-child { padding-top: 0; border-top: 0; }
+  .agxSideTitle { margin: 0; font-size: var(--fs-xs); font-weight: 600; color: var(--text-subtle); }
+  .agxMuted { color: var(--text-subtle); font-size: var(--fs-sm); }
+
+  .agxIconBtn { width: 40px; height: 40px; display: inline-grid; place-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: background .12s ease, color .12s ease; }
+  .agxIconBtn:hover { background: var(--hover); color: var(--text); }
+  .agxLinkBtn { display: inline-flex; align-items: center; min-height: 40px; padding: 0; border: 0; background: none; color: var(--accent-text); font: 500 var(--fs-sm) var(--font-plex); cursor: pointer; text-decoration: none; }
+  .agxLinkBtn:hover { text-decoration: underline; }
+  .agxDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .agxDot.isAll { background: transparent; border: 2px solid var(--text-subtle); }
+
+  .agxMiniHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
+  .agxMiniHead strong { font-size: var(--fs-md); font-weight: 600; color: var(--text); }
+  .agxMiniHead > div { display: flex; }
+  .agxMiniHead .agxIconBtn { width: 36px; height: 36px; border-color: transparent; background: transparent; }
+  .agxMiniHead .agxIconBtn:hover { background: var(--hover); }
+  .agxMiniWeekdays, .agxMiniGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .agxMiniWeekdays span { text-align: center; font-size: var(--fs-xs); font-weight: 500; color: var(--text-subtle); padding: var(--space-1) 0; }
+  .agxMiniCell { position: relative; aspect-ratio: 1; min-height: 32px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: var(--fs-xs); cursor: pointer; }
+  .agxMiniCell:hover { background: var(--hover); }
+  .agxMiniCell.isOutside { color: var(--text-subtle); opacity: .55; }
+  .agxMiniCell.isToday { color: var(--accent-text); font-weight: 700; box-shadow: inset 0 0 0 1px var(--accent); }
+  .agxMiniCell.isSelected { background: var(--accent); color: #fff; font-weight: 600; box-shadow: none; }
+  .agxMiniDot { position: absolute; bottom: 3px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+  .agxMiniCell.isSelected .agxMiniDot { background: #fff; }
+  .agxMini > .agxLinkBtn { margin-top: var(--space-1); }
+
+  .agxFilters .agxSideTitle { margin-bottom: var(--space-2); }
+  .agxSide .agxFilterSearch { width: 100%; height: 40px; margin-bottom: var(--space-2); padding: 0 var(--space-3); box-sizing: border-box; font-size: var(--fs-sm); border: 1px solid var(--border-strong); box-shadow: none; background: var(--surface); }
+  .agxSide .agxFilterSearch:focus { border-color: var(--accent); }
+  .agxFilterList { list-style: none; margin: 0; padding: 0; max-height: 264px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+  .agxFilter { width: 100%; min-height: 40px; display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: 400 var(--fs-sm) var(--font-plex); text-align: left; cursor: pointer; }
+  .agxFilter:hover { background: var(--hover); }
+  .agxFilter.isActive { background: var(--accent-soft); font-weight: 600; }
+  .agxFilterName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agxFilterEmpty { padding: var(--space-2) var(--space-3); color: var(--text-subtle); font-size: var(--fs-sm); }
+
+  .agxUpcoming summary { display: flex; align-items: center; justify-content: space-between; min-height: 32px; cursor: pointer; list-style: none; }
+  .agxUpcoming summary::-webkit-details-marker { display: none; }
+  .agxUpcomingChevron { color: var(--text-subtle); transition: transform .12s ease; }
+  .agxUpcoming[open] .agxUpcomingChevron { transform: rotate(90deg); }
+  .agxUpcoming ul { list-style: none; margin: var(--space-2) 0 var(--space-1); padding: 0; display: flex; flex-direction: column; }
+  .agxUpcoming li button { width: 100%; display: grid; gap: 2px; justify-items: start; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; text-align: left; cursor: pointer; font-family: inherit; }
+  .agxUpcoming li button:hover { background: var(--hover); }
+  .agxUpcomingWhen { font-size: var(--fs-xs); color: var(--text-subtle); font-variant-numeric: tabular-nums; }
+  .agxUpcoming li strong { font-size: var(--fs-sm); font-weight: 600; color: var(--text); }
+  .agxUpcoming p { margin: var(--space-2) 0; }
+
+  /* ── Barra de ferramentas ──────────────────────────────── */
+  .agxToolbar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3) var(--space-5); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+  .agxToolbarNav { display: flex; align-items: center; gap: var(--space-2); }
+  .agxPeriod { margin: 0 var(--space-2); min-width: 8ch; font: 600 var(--fs-lg) var(--font-space); letter-spacing: -.01em; color: var(--text); }
+  .agxTodayBtn { height: 40px; padding: 0 var(--space-4); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: 500 var(--fs-sm) var(--font-plex); cursor: pointer; margin-left: var(--space-1); }
+  .agxTodayBtn:hover { background: var(--hover); }
+  .agxToolbarEnd { display: flex; align-items: center; gap: var(--space-3); margin-left: auto; }
+  .agxSegmented { display: inline-flex; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); overflow: hidden; }
+  .agxSegmented button { height: 38px; padding: 0 var(--space-4); border: 0; border-left: 1px solid var(--border); background: var(--surface); color: var(--text-muted); font: 500 var(--fs-sm) var(--font-plex); cursor: pointer; }
+  .agxSegmented button:first-child { border-left: 0; }
+  .agxSegmented button:hover { background: var(--hover); }
+  .agxSegmented button.isActive { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+  .agxFiltersToggle { display: none; align-items: center; gap: var(--space-2); height: 40px; padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: 500 var(--fs-sm) var(--font-plex); cursor: pointer; }
+  .agxFiltersToggle.isActive { background: var(--accent-soft); color: var(--accent-text); }
+
+  .agxSummary { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-5); margin: 0; order: 3; width: 100%; }
+  .agxSummary > div { display: flex; align-items: baseline; gap: var(--space-2); }
+  .agxSummary dd { margin: 0; font: 600 var(--fs-lg) var(--font-space); font-variant-numeric: tabular-nums; color: var(--text); }
+  .agxSummary dt { font-size: var(--fs-xs); color: var(--text-subtle); }
+  .agxSummary .isPending dd { color: var(--warning); }
+
+  /* ── Grade ─────────────────────────────────────────────── */
+  .agxGridWrap { position: relative; display: flex; flex-direction: column; min-height: 0; }
+  .agxProgress { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; z-index: 8; opacity: 0; }
+  .agxProgress.isLoading { opacity: 1; }
+  .agxProgress span { display: block; width: 35%; height: 100%; background: var(--accent); animation: agxSlide 1.1s ease-in-out infinite; }
+  @keyframes agxSlide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+  .agxBanner { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); font-size: var(--fs-sm); color: var(--text-muted); }
+  .agxBanner.isError { background: var(--danger-bg); color: var(--danger); border-bottom-color: var(--danger); }
+  .agxBanner .secondaryButton { height: 36px; flex-shrink: 0; }
+  .agxScroll { position: relative; overflow: auto; min-height: 420px; max-height: calc(100dvh - 300px); scrollbar-gutter: stable; }
+
+  .agxWeekHead { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 64px repeat(var(--agx-cols), minmax(0, 1fr)); background: var(--surface); border-bottom: 1px solid var(--border); }
+  .agxWeekDay { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-2) 0; border: 0; border-left: 1px solid var(--border); background: transparent; color: var(--text-muted); font-family: inherit; cursor: pointer; }
+  .agxWeekDay:hover { background: var(--hover); }
+  .agxWeekDay span { font-size: var(--fs-xs); text-transform: capitalize; }
+  .agxWeekDay strong { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; font: 600 var(--fs-lg) var(--font-space); color: var(--text); }
+  .agxWeekDay.isToday strong { background: var(--accent); color: #fff; }
+  .agxWeekDay.isClosed strong { color: var(--text-subtle); }
+
+  .agxBody { position: relative; display: grid; grid-template-columns: 64px repeat(var(--agx-cols), minmax(0, 1fr)); user-select: none; }
+  .agxGutter { position: relative; }
+  .agxGutter span { position: absolute; right: var(--space-2); font-size: var(--fs-xs); color: var(--text-subtle); font-variant-numeric: tabular-nums; transform: translateY(4px); }
+  .agxCol { position: relative; border-left: 1px solid var(--border); background-image:
+    linear-gradient(to bottom, var(--border) 0, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, transparent calc(50% - .5px), var(--line-soft) calc(50% - .5px), var(--line-soft) calc(50% + .5px), transparent calc(50% + .5px));
+    background-size: 100% var(--agx-hour); }
+  .agxClosed { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; background: repeating-linear-gradient(135deg, transparent 0 7px, var(--line-soft) 7px 8px); }
+  .agxClosed span { position: absolute; top: var(--space-2); left: var(--space-2); padding: 2px var(--space-2); border-radius: 4px; background: var(--surface); color: var(--text-subtle); font-size: var(--fs-xs); }
+  .agxHover { position: absolute; left: 2px; right: 2px; z-index: 2; display: flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-1) var(--space-2); box-sizing: border-box; border: 1px dashed var(--accent); border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-text); font-size: var(--fs-xs); white-space: nowrap; overflow: hidden; pointer-events: none; }
+  .agxHover span:last-child { font-weight: 600; }
+  .agxNow { position: absolute; left: 0; right: 0; z-index: 5; height: 2px; background: var(--danger); pointer-events: none; }
+  .agxNow span { position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
+
+  /* ── Consultas ─────────────────────────────────────────── */
+  .agxEvent { position: absolute; z-index: 3; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 1px; padding: var(--space-1) var(--space-2); text-align: left; font-family: inherit; line-height: 1.25; color: var(--text); border: 1px solid var(--border-strong); border-left-width: 3px; border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; overflow: hidden; transition: box-shadow .12s ease; }
+  .agxEvent:hover { box-shadow: 0 1px 4px rgba(15, 23, 42, .18); }
+  .agxEvent.isRow { flex-direction: row; align-items: center; gap: var(--space-3); }
+  .agxEvent.isRoomy { padding: var(--space-2) var(--space-3); gap: 2px; }
+  .agxEventTitle { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .agxEvent.isRow .agxEventTitle { flex: 1; }
+  .agxEventTitle strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-sm); font-weight: 600; }
+  .agxEventTime { font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .agxEventMeta { display: flex; flex-wrap: wrap; gap: 0 var(--space-3); font-size: var(--fs-xs); color: var(--text-muted); }
+  .agxMoreEvt { position: absolute; z-index: 3; box-sizing: border-box; border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-muted); font: 600 var(--fs-sm) var(--font-plex); cursor: pointer; }
+  .agxMoreEvt:hover { background: var(--hover); color: var(--text); }
+  .agxEvent.st-aguardando { background: var(--warning-bg); border-color: color-mix(in srgb, var(--warning) 30%, transparent); border-left-color: var(--warning); }
+  .agxEvent.st-confirmada { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 28%, transparent); border-left-color: var(--accent); }
+  .agxEvent.st-concluida { background: var(--success-bg); border-color: color-mix(in srgb, var(--success) 28%, transparent); border-left-color: var(--success); }
+  .agxEvent.st-cancelada { background: var(--surface); color: var(--text-subtle); }
+  .agxEvent.st-cancelada strong { text-decoration: line-through; font-weight: 500; }
+
+  /* ── Visão mensal ──────────────────────────────────────── */
+  .agxMonthHead { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); background: var(--surface); border-bottom: 1px solid var(--border); }
+  .agxMonthHead span { padding: var(--space-2); text-align: center; font-size: var(--fs-xs); font-weight: 500; color: var(--text-subtle); text-transform: capitalize; }
+  .agxMonth { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: minmax(136px, 1fr); }
+  .agxMonthCell { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: var(--space-1); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .agxMonthCell:nth-child(7n) { border-right: 0; }
+  .agxMonthCell.isOutside { opacity: .5; }
+  .agxMonthCell ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .agxMonthDay { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: 32px; padding: 0 var(--space-1); border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer; font-family: inherit; }
+  .agxMonthDay:hover { background: var(--hover); }
+  .agxMonthNum { display: grid; place-items: center; min-width: 28px; height: 28px; border-radius: 50%; font-size: var(--fs-sm); font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+  .agxMonthCell.isToday .agxMonthNum { background: var(--accent); color: #fff; font-weight: 600; }
+  .agxMonthCell.isSelected:not(.isToday) .agxMonthNum { box-shadow: inset 0 0 0 2px var(--accent); }
+  .agxMonthCell.isClosed .agxMonthNum { color: var(--text-subtle); }
+  .agxMonthTag { font-size: var(--fs-xs); color: var(--text-subtle); }
+  .agxChip { width: 100%; display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 var(--space-2); border: 0; border-left: 3px solid var(--border-strong); border-radius: 4px; background: var(--surface-hover); color: var(--text); font: 400 var(--fs-xs) var(--font-plex); text-align: left; cursor: pointer; overflow: hidden; }
+  .agxChip time { color: var(--text-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .agxChip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .agxChip.st-aguardando { background: var(--warning-bg); border-left-color: var(--warning); }
+  .agxChip.st-confirmada { background: var(--accent-soft); border-left-color: var(--accent); }
+  .agxChip.st-concluida { background: var(--success-bg); border-left-color: var(--success); }
+  .agxChip.st-cancelada { background: var(--surface); color: var(--text-subtle); }
+  .agxChip.st-cancelada span { text-decoration: line-through; }
+  .agxMore { align-self: flex-start; min-height: 28px; padding: 0 var(--space-2); border: 0; background: none; color: var(--accent-text); font: 500 var(--fs-xs) var(--font-plex); cursor: pointer; }
+  .agxMore:hover { text-decoration: underline; }
+
+  /* ── Detalhes da consulta ──────────────────────────────── */
+  .agxDetails { width: min(460px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 16px 40px rgba(15, 23, 42, .18); }
+  .agxDetails header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); padding: var(--space-5) var(--space-6); border-bottom: 1px solid var(--border); }
+  .agxDetails h2 { margin: 0; font: 600 var(--fs-xl) / 1.25 var(--font-space); color: var(--text); overflow-wrap: anywhere; }
+  .agxDetails header p { margin: var(--space-1) 0 0; font-size: var(--fs-sm); color: var(--text-muted); }
+  .agxDetails dl { margin: 0; padding: var(--space-2) var(--space-6); }
+  .agxDetails dl > div { display: grid; grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: var(--space-3); min-height: 48px; border-bottom: 1px solid var(--border); }
+  .agxDetails dl > div:last-child { border-bottom: 0; }
+  .agxDetails dt { display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm); color: var(--text-subtle); }
+  .agxDetails dd { margin: 0; font-size: var(--fs-md); color: var(--text); font-weight: 500; }
+  .agxStatusDot { width: 8px; height: 8px; margin: 0 4px; border-radius: 50%; background: var(--text-subtle); }
+  .agxDetails footer { display: flex; justify-content: flex-end; gap: var(--space-3); padding: var(--space-4) var(--space-6); border-top: 1px solid var(--border); }
+
+  /* ── Responsivo ────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .agxLayout { flex-direction: column; gap: var(--space-4); }
+    .agxMain { width: 100%; }
+    .agxSide { display: none; width: 100%; box-sizing: border-box; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius); }
+    .agxSide.isOpen { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-6); }
+    .agxSide > section, .agxSide > details { padding-top: 0; border-top: 0; }
+    .agxFiltersToggle { display: inline-flex; }
+  }
+  @media (max-width: 800px) {
+    .agxScroll { max-height: calc(100dvh - 340px); }
+  }
+  @media (max-width: 720px) {
+    .agxHideSm { display: none; }
+    .agxToolbar { gap: var(--space-3); }
+    .agxToolbarEnd { width: 100%; margin-left: 0; justify-content: space-between; }
+    .agxPeriod { font-size: var(--fs-md); min-width: 0; }
+    .agxMonth { grid-auto-rows: minmax(84px, 1fr); }
+    .agxChip time, .agxMonthTag { display: none; }
+    .agxDetails dl > div { grid-template-columns: 1fr; gap: 2px; padding: var(--space-2) 0; }
+  }
+  @media (max-width: 480px) {
+    .agxHeaderActions { width: 100%; }
+    .agxHeaderActions > * { flex: 1; justify-content: center; }
+    .agxToolbarNav { width: 100%; }
+    .agxToolbarNav .agxPeriod { flex: 1; text-align: center; }
+    .agxSegmented { flex: 1; }
+    .agxSegmented button { flex: 1; }
+  }
+}

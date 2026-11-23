@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, Space_Grotesk, Instrument_Serif, Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import "./product.css";
 import "./product-tables.css";
@@ -7,31 +7,17 @@ import "./login.css";
 import "./booking.css";
 import "./onboarding.css";
 import "./tour.css";
-import "./navi.css";
+import "./system.css";
+import "./agenda.css";
 
-const plex = IBM_Plex_Sans({
+// Fonte única do produto: Poppins. Texto corrido em regular (400); 500 e 600 para ênfase onde for preciso
+// (títulos, valores, seleções). Pesos acima de 600 usam o 600. Sem bold falso (font-synthesis: none em globals.css).
+// As variáveis antigas (--font-plex, --font-space, --font-serif, --font-inter) apontam para ela em globals.css.
+const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plex",
-});
-
-const space = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-space",
-});
-
-const serif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
-  variable: "--font-serif",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-inter",
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -42,7 +28,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pt-BR" className={`${plex.variable} ${space.variable} ${serif.variable} ${inter.variable}`}>
+    <html lang="pt-BR" className={poppins.variable}>
       <body>{children}</body>
     </html>
   );

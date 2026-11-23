@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminSupabase } from "@/lib/apiAuth";
+import { consultaDoAgendamento } from "@/lib/reservas";
 
 // Só para desenvolvimento/teste: confirma um agendamento sem pagamento real.
 // Em produção fica desligada, a menos que ENABLE_PAYMENT_SIMULATION=true.
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const { data: ag } = await admin
     .from("agendamentos")
-    .select("perfil_id, data, hora")
+    .select("perfil_id, cliente_nome, data, hora")
     .eq("id", agendamentoId)
     .maybeSingle();
 
@@ -25,13 +26,8 @@ export async function POST(req: NextRequest) {
 
   await admin.from("agendamentos").update({ status: "confirmado" }).eq("id", agendamentoId);
 
-  const horaStr = (ag.hora as string).slice(0, 5);
-  const dataHoraIso = new Date(`${ag.data}T${horaStr}:00`).toISOString();
-  await admin
-    .from("consultas")
-    .update({ status: "confirmada" })
-    .eq("perfil_id", ag.perfil_id)
-    .eq("data_hora", dataHoraIso);
+  const consulta = await consultaDoAgendamento(admin, ag);
+  if (consulta) await admin.from("consultas").update({ status: "confirmada" }).eq("id", consulta.id);
 
   return NextResponse.json({ ok: true });
 }

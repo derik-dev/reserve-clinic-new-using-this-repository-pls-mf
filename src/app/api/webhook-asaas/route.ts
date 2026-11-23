@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { adminSupabase } from "@/lib/apiAuth";
 import { enviarWhatsapp } from "@/lib/enviarWhatsapp";
+import { consultaDoAgendamento, existeConflito } from "@/lib/reservas";
 import { notificarDiscord, throwIfSupabaseError } from "@/lib/notificarDiscord";
 
 function horaAgora() {
@@ -125,33 +126,29 @@ export async function POST(req: NextRequest) {
       const jaConfirmado = agendamento.status === "confirmado";
       const valorPago = body.payment.value ?? null;
 
-      // Consulta correspondente (mesma chave usada na criação do agendamento)
-      let consultaFiltro: { perfilId: string; dataHoraIso: string } | null = null;
-      let consultaSemValor = false;
-      if (agendamento.perfil_id && agendamento.data && agendamento.hora) {
-        const horaStr = (agendamento.hora as string).slice(0, 5);
-        consultaFiltro = {
-          perfilId: agendamento.perfil_id as string,
-          dataHoraIso: new Date(`${agendamento.data}T${horaStr}:00`).toISOString(),
-        };
-      }
+      // A consulta é identificada por clínica + horário + paciente: dois médicos no mesmo horário
+      // têm consultas diferentes, e o pagamento de um nunca pode confirmar a do outro.
+      const consulta = await consultaDoAgendamento(admin, agendamento);
+      if (!consulta) console.warn("[webhook-asaas] consulta do agendamento não encontrada:", agendamentoId);
 
       // Nunca confirmar um pagamento de valor diferente do cobrado
-      if (consultaFiltro && valorPago != null) {
-        const { data: consulta } = throwIfSupabaseError(
-          await admin
-            .from("consultas")
-            .select("valor")
-            .eq("perfil_id", consultaFiltro.perfilId)
-            .eq("data_hora", consultaFiltro.dataHoraIso)
-            .maybeSingle(),
-          "webhook-asaas.select consulta"
+      const esperado = consulta?.valor != null ? Number(consulta.valor) : null;
+      if (esperado != null && valorPago != null && Math.round(esperado * 100) !== Math.round(valorPago * 100)) {
+        await notificarDiscord(
+          `🔴 /api/webhook-asaas às ${horaAgora()}: valor pago (R$ ${valorPago}) diferente do cobrado (R$ ${esperado}) no agendamento ${agendamentoId}. Confirmação bloqueada — conferir manualmente.`,
+          "critico"
         );
-        const esperado = consulta?.valor != null ? Number(consulta.valor) : null;
-        consultaSemValor = esperado == null;
-        if (esperado != null && Math.round(esperado * 100) !== Math.round(valorPago * 100)) {
+        return NextResponse.json({ received: true });
+      }
+
+      // Pagamento tardio: se a reserva já foi cancelada por falta de pagamento, só reabre quando o horário continua livre.
+      if (consulta?.status === "cancelada") {
+        const inicio = new Date(consulta.data_hora);
+        const fim = new Date(inicio.getTime() + (consulta.duracao_min > 0 ? consulta.duracao_min : 30) * 60000);
+        const ocupado = await existeConflito(admin, { perfilId: agendamento.perfil_id as string, profissionalId: consulta.profissional_id, inicio, fim, ignoreId: consulta.id });
+        if (ocupado) {
           await notificarDiscord(
-            `🔴 /api/webhook-asaas às ${horaAgora()}: valor pago (R$ ${valorPago}) diferente do cobrado (R$ ${esperado}) no agendamento ${agendamentoId}. Confirmação bloqueada — conferir manualmente.`,
+            `🔴 /api/webhook-asaas às ${horaAgora()}: pagamento recebido DEPOIS de a reserva expirar e o horário já foi ocupado (agendamento ${agendamentoId}, paciente ${agendamento.cliente_nome}). Reembolsar o paciente na Asaas.`,
             "critico"
           );
           return NextResponse.json({ received: true });
@@ -163,24 +160,25 @@ export async function POST(req: NextRequest) {
         "webhook-asaas.update status"
       );
 
-      if (consultaFiltro) {
+      if (consulta) {
         const consultaUpdate = await admin
           .from("consultas")
-          .update({ status: "confirmada", ...(consultaSemValor && valorPago != null ? { valor: valorPago } : {}) })
-          .eq("perfil_id", consultaFiltro.perfilId)
-          .eq("data_hora", consultaFiltro.dataHoraIso);
+          .update({ status: "confirmada", ...(esperado == null && valorPago != null ? { valor: valorPago } : {}) })
+          .eq("id", consulta.id);
         if (consultaUpdate.error) console.error("[webhook-asaas] erro ao atualizar consulta:", consultaUpdate.error.message);
       }
 
       // Envia WhatsApp apenas se era a primeira confirmação (evita reenvio)
       if (!jaConfirmado && agendamento.cliente_telefone) {
         try {
+          const { data: perfil } = await admin.from("perfis").select("nome").eq("id", agendamento.perfil_id).maybeSingle();
+          const clinica = (perfil?.nome as string | undefined) ?? "nosso consultório";
           const [ano, mes, dia] = (agendamento.data as string).split("-");
           const dataFormatada = `${dia}/${mes}/${ano}`;
           const horaFormatada = (agendamento.hora as string).slice(0, 5);
           const mensagem =
             `Olá, ${agendamento.cliente_nome}! ` +
-            `Seu agendamento no Centro Auditivo Macaé foi confirmado para ` +
+            `Seu agendamento${consulta?.profissional ? ` com ${consulta.profissional}` : ""} em ${clinica} foi confirmado para ` +
             `${dataFormatada} às ${horaFormatada}. ` +
             `Te esperamos! 💙`;
           await enviarWhatsapp(agendamento.cliente_telefone, mensagem);

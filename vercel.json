@@ -3,6 +3,10 @@
     {
       "path": "/api/health-supabase",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/limpar-reservas",
+      "schedule": "0 7 * * *"
     }
   ]
 }
