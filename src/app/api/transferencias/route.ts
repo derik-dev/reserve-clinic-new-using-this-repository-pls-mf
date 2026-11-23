@@ -3,7 +3,7 @@ import { adminSupabase, authenticateRequest } from "@/lib/apiAuth";
 import { findPerfil } from "@/lib/saldoClinica";
 
 // Status internos do saque, na nomenclatura de status de transferência usada pelo painel.
-const STATUS: Record<string, string> = { pendente: "PENDING", processando: "IN_BANK_PROCESSING", concluido: "DONE", falhou: "FAILED" };
+const STATUS: Record<string, string> = { pendente: "PENDING", processando: "IN_BANK_PROCESSING", autorizado: "IN_BANK_PROCESSING", concluido: "DONE", falhou: "FAILED" };
 
 // Histórico de saques da clínica logada (nunca as transferências de toda a conta Asaas).
 export async function GET(req: NextRequest) {

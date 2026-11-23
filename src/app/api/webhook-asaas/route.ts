@@ -30,43 +30,15 @@ function recusar(motivo: string, transferId?: string, status = 200) {
   return NextResponse.json({ status: "REFUSED", refuseReason: motivo }, { status });
 }
 
-const aguardar = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Autorização de saque via webhook (substitui o SMS): só aprova um saque que o
-// /api/sacar já registrou, ainda "processando" e com o mesmo valor. Todo o resto é recusado.
-async function autorizarTransferencia(req: NextRequest, body: TransferBody, webhookToken: string | undefined) {
-  const transferId = body.transfer?.id;
-
-  if (body.type !== "TRANSFER") return recusar("Tipo de evento não suportado.", transferId);
-  if (!webhookToken) return recusar("Autorização de saque indisponível: webhook sem token configurado.", transferId);
-  if (!tokenValido(req.headers.get("asaas-access-token"), webhookToken)) return recusar("Token do webhook inválido.", transferId, 401);
-  if (!transferId || typeof body.transfer?.value !== "number") return recusar("Transferência sem id ou valor.", transferId);
-
-  // O Asaas chama o webhook ~5s após criar a transferência, mas pode chegar antes de o
-  // /api/sacar gravar o asaas_transfer_id: tenta até 3x com 1s de intervalo.
-  const admin = adminSupabase();
-  let saque: { status: string; valor: number | string } | null = null;
-  for (let tentativa = 1; tentativa <= 3; tentativa++) {
-    const { data, error } = await admin.from("saques").select("status, valor").eq("asaas_transfer_id", transferId).maybeSingle();
-    if (error) return recusar("Erro ao consultar o saque.", transferId);
-    if (data) { saque = data; break; }
-    if (tentativa < 3) await aguardar(1000);
-  }
-  if (!saque) return recusar("Saque não encontrado no Reserve Clinic.", transferId);
-
-  if (saque.status !== "processando") return recusar(`Saque com status "${saque.status}" não pode ser autorizado.`, transferId);
-  if (Math.round(Number(saque.valor) * 100) !== Math.round(body.transfer.value * 100)) return recusar("Valor da transferência diferente do saque solicitado.", transferId);
-
-  console.log(`[webhook-asaas] autorização de saque APROVADA (${transferId})`);
-  return NextResponse.json({ status: "APPROVED" });
-}
+// A autorização de saque (type: "TRANSFER") agora é feita só por /api/webhook-saque.
+// Se o Asaas ainda apontar para esta URL, o saque é recusado em vez de aprovado por aqui.
 
 export async function POST(req: NextRequest) {
   const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
 
   // Eventos com `type` (autorização de saque) precisam sempre de uma resposta APPROVED/REFUSED.
   const preview = await req.clone().json().catch(() => null) as TransferBody | null;
-  if (preview && preview.type !== undefined) return autorizarTransferencia(req, preview, webhookToken);
+  if (preview && preview.type !== undefined) return recusar("Autorização de saque movida para /api/webhook-saque.", preview.transfer?.id);
 
   // Sem token configurado o webhook ficaria aberto a qualquer um: recusa.
   if (!webhookToken) {
@@ -98,7 +70,7 @@ export async function POST(req: NextRequest) {
         .from("saques")
         .update({ status: statusSaque, ...(statusSaque === "falhou" ? { error_message: `Asaas: ${body.event}` } : {}) })
         .eq("asaas_transfer_id", body.transfer.id)
-        .in("status", ["pendente", "processando"]);
+        .in("status", ["pendente", "processando", "autorizado"]);
       throwIfSupabaseError(atualizacao, "webhook-asaas.update saque");
       console.log(`[webhook-asaas] saque ${body.transfer.id} → ${statusSaque}`);
       return NextResponse.json({ received: true });
